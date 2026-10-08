@@ -1,0 +1,785 @@
+/* Genius do Piano, identidade visual Conectando (integrada ao Piano Gelatina).
+   Escopado sob .genius-root para conviver com o Piano Tipográfico (Tailwind)
+   no mesmo documento. */
+
+/* O cabeçalho segue a moldura comum: --ui-header-h e --ui-faixa-h vêm de
+   src/shared/ui/ui.css (a barra e a faixa do App ficam por cima dele). */
+
+.genius-root {
+  /* Paleta da marca */
+  --navy: #20274f;
+  --navy-2: #1a2046;
+  --navy-3: #161b3d;
+  --line-blue: #144686;
+  --cream: #fcfaf1;
+  --muted: #a9aed0;
+  --accent: #fde300;          /* amarelo do título */
+  --demo: #f2e299;            /* tecla: memorização (demonstração) */
+  --player: #01a0a0;          /* tecla: reprodução do jogador */
+  --good: #43b3b4;            /* turquesa do Dó no Gelatina */
+  --bad: #f0848f;             /* rosa do Ré no Gelatina */
+  --pink: #f0a49e;
+
+  /* Mantidas para o restante do código (debug etc.) */
+  --bg: var(--navy);
+  --bg-2: var(--navy-2);
+  --fg: var(--cream);
+  --white-key: #f8f8f3;
+  --black-key: #1b1b22;
+
+  position: relative;
+  height: 100vh;
+  width: 100%;
+  background-color: var(--navy);
+  /* Padrão de ondas sutis do fundo */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='184' height='140' viewBox='0 0 184 140'%3E%3Cg fill='none' stroke='%23000014' stroke-opacity='.075' stroke-width='4' stroke-linecap='round'%3E%3Cpath d='M-2 17.5q25-12 48 0t46 0t46 0t46 0'/%3E%3Cpath d='M-2 52.5q25-12 48 0t46 0t46 0t46 0'/%3E%3Cpath d='M-2 87.5q25-12 48 0t46 0t46 0t46 0'/%3E%3Cpath d='M-2 122.5q25-12 48 0t46 0t46 0t46 0'/%3E%3C/g%3E%3C/svg%3E");
+  background-size: 184px 140px;
+  color: var(--cream);
+  font-family: var(--ui-font);
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;
+}
+
+.genius-root * { box-sizing: border-box; }
+
+.genius-root #app {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+/* ─── Fundo decorativo ─── */
+.genius-bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+.genius-laco {
+  position: absolute;
+  height: auto;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+/* Tamanhos proporcionais à tela de referência (1920 × 1080). Os laços do
+   tema escuro são brancos com 20% de opacidade; os do claro, amarelos e
+   chapados. Cada tema mostra só o seu par. */
+.genius-laco-esq { left: 0; top: 0; width: 38.4vw; }
+.genius-laco-dir { right: 0; bottom: 0; width: 19.6vw; }
+.genius-laco.claro { display: none; }
+.genius-root[data-tema="claro"] .genius-laco.escuro { display: none; }
+.genius-root[data-tema="claro"] .genius-laco.claro { display: block; }
+/* no claro, o laço da direita sai um pouco pela borda de baixo, como na referência */
+.genius-root[data-tema="claro"] .genius-laco-dir { bottom: -4vw; }
+
+/* ─── Cabeçalho ───
+   Só o botão de configurações e o atalho A, à direita (a marca fica à esquerda, na barra). A barra do App (seletor de jogo,
+   modo de entrada, status e marca) e a faixa das mãos ficam por cima; a
+   margem de baixo reserva o espaço da faixa. */
+.topbar {
+  position: relative;
+  flex: none;
+  height: var(--ui-header-h);
+  margin-bottom: var(--ui-faixa-h);
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 0 24px;
+  box-sizing: border-box;
+}
+
+/* Gaveta de configurações: as peças vêm da moldura comum (.ui-gaveta). */
+.settings-panel.hidden { display: none; }
+.settings-panel.hidden + .settings-scrim { display: none; }
+
+/* ─── Palco: título, mensagens e botão ─── */
+.stage {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(8px, 1.6vh, 18px);
+  padding: 16px 24px;
+  text-align: center;
+}
+.genius-title {
+  margin: 0 0 clamp(4px, 1.2vh, 14px);
+  font-size: clamp(44px, 9.6vh, 112px);
+  font-weight: 600;
+  line-height: 1.05;
+  letter-spacing: 0;
+  color: var(--accent);
+}
+.message {
+  font-size: clamp(18px, 2.7vh, 30px);
+  line-height: 1.3;
+  max-width: 900px;
+  font-weight: 500;
+  color: var(--cream);
+  transition: opacity 200ms ease;
+}
+.message.pulse {
+  animation: messagePulse 380ms ease-out;
+}
+@keyframes messagePulse {
+  0%   { transform: scale(0.92); opacity: 0.5; color: var(--player); }
+  60%  { transform: scale(1.06); opacity: 1; color: #2fd0cf; }
+  100% { transform: scale(1); opacity: 1; }
+}
+.melody-name {
+  font-size: clamp(15px, 2vh, 21px);
+  color: var(--demo);
+  font-weight: 600;
+  min-height: 24px;
+}
+.melody-name:empty { display: none; }
+.stage-indicator {
+  font-size: 13px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--cream);
+  font-weight: 600;
+  padding: 5px 16px;
+  border: 2px solid var(--line-blue);
+  border-radius: 999px;
+}
+.stage-indicator.hidden { display: none; }
+.stage-indicator.lv1 { color: var(--good); border-color: rgba(67, 179, 180, 0.6); }
+.stage-indicator.lv2 { color: var(--accent); border-color: rgba(253, 227, 0, 0.55); }
+.stage-indicator.lv3 { color: var(--pink); border-color: rgba(240, 164, 158, 0.6); }
+
+.start-btn {
+  padding: 14px 34px;
+  font-size: clamp(15px, 1.8vh, 18px);
+  font-weight: 600;
+  color: var(--navy);
+  background: var(--accent);
+  border: none;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: transform 120ms ease, opacity 120ms ease, box-shadow 160ms ease;
+  font-family: inherit;
+}
+.start-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+.start-btn:not(:disabled):hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 24px rgba(253, 227, 0, 0.25);
+}
+.start-btn:not(:disabled):active { transform: translateY(1px); }
+
+/* ─── Piano (estrutura original; só cores e efeitos mudam) ─── */
+.piano-wrap {
+  flex: none;
+  padding: 0 24px 15vh;
+  display: flex;
+  justify-content: center;
+}
+.piano {
+  position: relative;
+  width: clamp(min(96vw, 880px), 78vw, 1500px);
+  height: clamp(190px, 25.8vh, 300px);
+  background: linear-gradient(180deg, #2a2a40, #16162a);
+  border-radius: 4px;
+  padding: 14px 14px 18px;
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+.key {
+  position: absolute;
+  top: 14px;
+  border-radius: 0 0 6px 6px;
+  transform-origin: 50% 0;
+  /* Soltar: a cor volta e a tecla sobe de forma suave */
+  transition:
+    background-color 190ms cubic-bezier(0.25, 0.6, 0.35, 1),
+    border-color 190ms cubic-bezier(0.25, 0.6, 0.35, 1),
+    transform 220ms cubic-bezier(0.25, 0.9, 0.35, 1.15),
+    box-shadow 220ms ease-out;
+  will-change: transform, background-color;
+  user-select: none;
+}
+.key.white {
+  height: calc(100% - 28px);
+  background-color: var(--white-key);
+  border: 1px solid #b8b8a8;
+  box-shadow: inset 0 -6px 12px rgba(0, 0, 0, 0.12);
+  z-index: 1;
+}
+.key.black {
+  height: 62%;
+  background-color: var(--black-key);
+  border: 1px solid #000;
+  box-shadow: inset 0 -4px 8px rgba(255, 255, 255, 0.08), 0 4px 6px rgba(0, 0, 0, 0.5);
+  z-index: 2;
+}
+
+/* Apertar: entrada rápida mas com curva, sem salto seco */
+.key.pressed,
+.key.player-pressed {
+  transition:
+    background-color 70ms ease-out,
+    border-color 70ms ease-out,
+    transform 90ms cubic-bezier(0.3, 0.7, 0.4, 1),
+    box-shadow 90ms ease-out;
+}
+
+/* Memorização: a melodia é demonstrada em amarelo, cor chapada */
+.key.pressed.white,
+.key.pressed.black {
+  background-color: var(--demo);
+  border-color: #c9b765;
+}
+.key.pressed.white {
+  transform: translateY(3px) scaleY(0.99);
+  box-shadow: inset 0 -3px 6px rgba(0, 0, 0, 0.08);
+}
+.key.pressed.black {
+  transform: translateY(2px) scaleY(0.985);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+}
+
+/* Reprodução: o jogador acerta em turquesa (as partículas vêm do piano.js) */
+.key.player-pressed.white,
+.key.player-pressed.black {
+  background-color: var(--player);
+  border-color: #017f80;
+}
+.key.player-pressed.white {
+  transform: translateY(3px) scaleY(0.99);
+  box-shadow: inset 0 -3px 6px rgba(0, 0, 0, 0.12);
+}
+.key.player-pressed.black {
+  transform: translateY(2px) scaleY(0.985);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+}
+
+/* Camada das partículas (estrelas e triângulos), acima de todas as teclas */
+.key-fx-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  pointer-events: none;
+  overflow: visible;
+}
+.key-fx {
+  position: absolute;
+  width: var(--size, 14px);
+  height: var(--size, 14px);
+  margin: calc(var(--size, 14px) / -2) 0 0 calc(var(--size, 14px) / -2);
+  background: var(--player);
+  opacity: 0;
+  backface-visibility: hidden;
+  will-change: transform, opacity;
+  animation:
+    keyFxMove var(--dur, 900ms) cubic-bezier(0.16, 0.84, 0.3, 1) var(--delay, 0ms) forwards,
+    keyFxFade var(--dur, 900ms) linear var(--delay, 0ms) forwards;
+}
+.key-fx.star {
+  clip-path: polygon(50% 0%, 61.8% 35.4%, 98% 35.4%, 68.7% 57.3%, 79.4% 91%, 50% 70%, 20.6% 91%, 31.3% 57.3%, 2% 35.4%, 38.2% 35.4%);
+}
+.key-fx.tri {
+  clip-path: polygon(50% 6%, 96% 90%, 4% 90%);
+}
+/* Movimento contínuo (uma só curva de desaceleração) e esmaecer separado,
+   para a peça não "travar" no meio do caminho */
+@keyframes keyFxMove {
+  from { transform: translate3d(0, 0, 0) rotate(var(--rot0, 0deg)) scale(0.3); }
+  25%  { transform: translate3d(calc(var(--dx) * 0.55), calc(var(--dy) * 0.55), 0) rotate(calc((var(--rot0, 0deg) + var(--rot1, 90deg)) / 2)) scale(1.05); }
+  to   { transform: translate3d(var(--dx), var(--dy), 0) rotate(var(--rot1, 90deg)) scale(0.75); }
+}
+@keyframes keyFxFade {
+  0%   { opacity: 0; }
+  12%  { opacity: 1; }
+  55%  { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+/* Letra do teclado do computador sobre a tecla (modo "Teclado") */
+.key-label {
+  position: absolute;
+  left: 50%;
+  bottom: 10px;
+  transform: translateX(-50%);
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  pointer-events: none;
+}
+.key.white .key-label { color: #6b6b80; }
+.key.black .key-label { color: #d8d8e8; bottom: 8px; font-size: 12px; }
+.key.pressed .key-label { color: #4a4220; }
+.key.player-pressed .key-label { color: var(--cream); }
+
+/* ─── Contagem 3, 2, 1 ─── */
+.countdown {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 6;
+  pointer-events: none;
+  background: rgba(22, 27, 61, 0.45);
+  backdrop-filter: blur(2px);
+}
+.countdown.hidden { display: none; }
+.countdown-num {
+  font-size: clamp(160px, 26vh, 280px);
+  font-weight: 700;
+  line-height: 1;
+  color: var(--accent);
+  text-shadow: 0 0 60px rgba(253, 227, 0, 0.35);
+  animation: countdownPop 700ms ease-out forwards;
+  font-variant-numeric: tabular-nums;
+}
+@keyframes countdownPop {
+  0%   { transform: scale(0.3); opacity: 0; }
+  18%  { transform: scale(1.25); opacity: 1; }
+  100% { transform: scale(0.95); opacity: 0.55; }
+}
+
+/* ─── Lista de melodias (modo desenvolvedor) ─── */
+.melody-picker {
+  /* O GeniusView leva a lista para o <body>, por cima da barra e da faixa
+     das mãos; por isso as cores e a fonte do Genius vêm declaradas aqui. */
+  --navy: #20274f;
+  --navy-2: #1a2046;
+  --line-blue: #2a66b3;
+  --cream: #fcfaf1;
+  --muted: #a9aed0;
+  --accent: #fde300;
+  position: fixed;
+  inset: 0;
+  box-sizing: border-box;
+  padding: 24px;
+  background: rgba(16, 20, 46, 0.86);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 20010;
+  color: var(--cream);
+  font-family: var(--ui-font);
+  -webkit-font-smoothing: antialiased;
+  animation: fadeIn 180ms ease;
+}
+.melody-picker * { box-sizing: border-box; }
+.melody-picker.hidden { display: none; }
+.melody-picker-card {
+  background: var(--navy-2);
+  border: 2px solid var(--line-blue);
+  border-radius: 18px;
+  padding: 22px 24px 18px;
+  width: 520px;
+  max-width: 100%;
+  max-height: calc(100vh - 48px);
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.5);
+}
+.picker-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  font-size: 13px;
+  color: var(--muted);
+  letter-spacing: 0.3px;
+}
+.picker-header span span {
+  color: var(--accent);
+  font-weight: 700;
+}
+.picker-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+.picker-item {
+  padding: 12px 16px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  color: var(--cream);
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+  transition: background 120ms ease, border-color 120ms ease, transform 120ms ease;
+}
+.picker-item:hover {
+  background: rgba(253, 227, 0, 0.08);
+  border-color: rgba(253, 227, 0, 0.45);
+  transform: translateX(3px);
+}
+.picker-item .picker-meta {
+  display: block;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 400;
+  margin-top: 4px;
+  letter-spacing: 0.3px;
+}
+.picker-footer {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  font-size: 11px;
+  color: var(--muted);
+  text-align: center;
+}
+
+/* ─── Observador (debug) ─── */
+.debug-panel {
+  position: fixed;
+  top: calc(var(--ui-topo) + 10px);
+  right: 14px;
+  width: 440px;
+  height: 340px;
+  background: rgba(16, 20, 46, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 10px;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  font-family: 'SF Mono', Menlo, Consolas, monospace;
+  color: var(--cream);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6);
+}
+.debug-panel.hidden { display: none; }
+.debug-header {
+  padding: 7px 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11px;
+  color: var(--muted);
+}
+.debug-title { letter-spacing: 0.5px; }
+.debug-actions { display: flex; gap: 6px; }
+.debug-btn {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--cream);
+  font-family: inherit;
+  font-size: 10px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+.debug-btn:hover { background: rgba(255, 255, 255, 0.12); }
+.debug-log {
+  flex: 1;
+  overflow-y: auto;
+  padding: 6px 10px;
+  font-size: 11px;
+  line-height: 1.45;
+}
+.debug-line {
+  white-space: pre-wrap;
+  word-break: break-word;
+  padding: 1px 0;
+}
+.debug-line.info    { color: #cbd5f5; }
+.debug-line.state   { color: #a5b4fc; font-weight: 600; }
+.debug-line.midi    { color: var(--demo); }
+.debug-line.midi-off{ color: rgba(242, 226, 153, 0.55); }
+.debug-line.ok      { color: var(--good); }
+.debug-line.err     { color: var(--bad); }
+.debug-line.ignored { color: var(--muted); }
+
+/* ─── Confete (vitória final do estágio 3) ─── */
+.confetti {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 11; /* acima do overlay para celebrar */
+  overflow: hidden;
+}
+.confetti.hidden { display: none; }
+.confetti-piece {
+  position: absolute;
+  top: -30px;
+  border-radius: 2px;
+  --rot-start: 0deg;
+  --rot-end: 720deg;
+  --drift: 0px;
+  transform: rotate(var(--rot-start));
+  animation: confettiFall linear forwards;
+}
+@keyframes confettiFall {
+  0%   { transform: translate(0, 0) rotate(var(--rot-start)); opacity: 1; }
+  100% { transform: translate(var(--drift), 110vh) rotate(var(--rot-end)); opacity: 0.85; }
+}
+
+/* ─── Resultado (vitória / derrota) ─── */
+.overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  background: rgba(22, 27, 61, 0.9);
+  backdrop-filter: blur(6px);
+  animation: fadeIn 200ms ease;
+}
+.overlay.hidden { display: none; }
+.overlay.win {
+  background: radial-gradient(circle at 50% 50%, rgba(1, 160, 160, 0.32), rgba(22, 27, 61, 0.94) 70%);
+  animation: fadeIn 220ms ease, winPulse 2.4s ease-in-out 220ms infinite;
+}
+.overlay.champion {
+  background: radial-gradient(circle at 50% 50%, rgba(253, 227, 0, 0.3), rgba(22, 27, 61, 0.94) 70%);
+  animation: fadeIn 220ms ease, championPulse 1.8s ease-in-out 220ms infinite;
+}
+.overlay.win.champion .overlay-card {
+  border-color: rgba(253, 227, 0, 0.75);
+  box-shadow: 0 0 90px rgba(253, 227, 0, 0.3), 0 30px 80px rgba(0, 0, 0, 0.45);
+}
+.overlay.champion .overlay-title {
+  color: var(--accent);
+  text-shadow: 0 0 28px rgba(253, 227, 0, 0.5);
+  animation: championTitlePulse 1.8s ease-in-out 700ms infinite;
+}
+@keyframes championTitlePulse {
+  0%, 100% { transform: scale(1); text-shadow: 0 0 28px rgba(253, 227, 0, 0.5); }
+  50%      { transform: scale(1.045); text-shadow: 0 0 48px rgba(253, 227, 0, 0.85), 0 0 20px rgba(255, 255, 255, 0.35); }
+}
+.tier-badge {
+  display: inline-block;
+  margin-top: 4px;
+  margin-bottom: 12px;
+  padding: 8px 20px;
+  border-radius: 999px;
+  font-weight: 600;
+  letter-spacing: 1.2px;
+  font-size: 14px;
+  text-transform: uppercase;
+}
+.tier-badge.t0 { background: rgba(240, 132, 143, 0.16); color: var(--bad); border: 2px solid rgba(240, 132, 143, 0.5); }
+.tier-badge.t1 { background: rgba(67, 179, 180, 0.16); color: var(--good); border: 2px solid rgba(67, 179, 180, 0.55); }
+.tier-badge.t2 { background: rgba(242, 226, 153, 0.14); color: var(--demo); border: 2px solid rgba(242, 226, 153, 0.55); }
+.tier-badge.t3 { background: var(--accent); color: var(--navy); border: 2px solid var(--accent); }
+@keyframes championPulse {
+  0%, 100% { background: radial-gradient(circle at 50% 50%, rgba(253, 227, 0, 0.26), rgba(22, 27, 61, 0.94) 70%); }
+  50%      { background: radial-gradient(circle at 50% 50%, rgba(253, 227, 0, 0.4), rgba(22, 27, 61, 0.94) 60%); }
+}
+.overlay.lose {
+  background: radial-gradient(circle at 50% 50%, rgba(240, 132, 143, 0.24), rgba(22, 27, 61, 0.95) 70%);
+  animation: fadeIn 220ms ease, screenShake 480ms ease-out;
+}
+.overlay-card {
+  background: var(--navy-2);
+  border: 3px solid var(--line-blue);
+  border-radius: 26px;
+  padding: 44px 60px;
+  text-align: center;
+  max-width: 600px;
+  min-width: 380px;
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.45);
+}
+.overlay.win .overlay-card {
+  border-color: rgba(1, 160, 160, 0.75);
+  box-shadow: 0 0 80px rgba(1, 160, 160, 0.3), 0 30px 80px rgba(0, 0, 0, 0.45);
+  animation: cardPop 520ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+.overlay.lose .overlay-card {
+  border-color: rgba(240, 132, 143, 0.65);
+  box-shadow: 0 0 60px rgba(240, 132, 143, 0.25), 0 30px 80px rgba(0, 0, 0, 0.45);
+  animation: cardShake 480ms ease-out both;
+}
+
+.overlay-title {
+  font-size: 48px;
+  font-weight: 700;
+  line-height: 1.15;
+  margin-bottom: 10px;
+  letter-spacing: 0;
+}
+.overlay-title.win { color: #2fd0cf; }
+.overlay-title.lose { color: var(--bad); }
+
+.overlay-score {
+  font-size: 72px;
+  font-weight: 700;
+  line-height: 1.1;
+  color: var(--accent);
+  margin: 6px 0 4px;
+  font-variant-numeric: tabular-nums;
+}
+.overlay-stars {
+  font-size: 38px;
+  letter-spacing: 10px;
+  margin-bottom: 14px;
+  color: var(--accent);
+}
+.overlay-sub {
+  font-size: 17px;
+  color: var(--muted);
+  margin-bottom: 28px;
+  line-height: 1.5;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes cardPop {
+  0%   { transform: scale(0.7); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+@keyframes cardShake {
+  0%, 100% { transform: translateX(0); }
+  15% { transform: translateX(-14px); }
+  30% { transform: translateX(12px); }
+  45% { transform: translateX(-8px); }
+  60% { transform: translateX(6px); }
+  75% { transform: translateX(-3px); }
+}
+@keyframes winPulse {
+  0%, 100% { background: radial-gradient(circle at 50% 50%, rgba(1, 160, 160, 0.28), rgba(22, 27, 61, 0.94) 70%); }
+  50%      { background: radial-gradient(circle at 50% 50%, rgba(1, 160, 160, 0.42), rgba(22, 27, 61, 0.94) 65%); }
+}
+@keyframes screenShake {
+  0%, 100% { transform: translate(0, 0); }
+  20% { transform: translate(-8px, 4px); }
+  40% { transform: translate(7px, -3px); }
+  60% { transform: translate(-4px, 2px); }
+  80% { transform: translate(3px, -1px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .key-fx { animation-duration: 1ms; }
+  .key, .key.pressed, .key.player-pressed { transition-duration: 1ms; }
+}
+
+/* ─── Tema claro ───
+   Creme (o mesmo do Gelatina claro) com ondas num tom mais escuro, laços
+   amarelos, tinta azul-marinho e título laranja. A resposta do jogador fica
+   laranja (#E9573B, o Fá do Gelatina) no lugar do turquesa. A tela de jogo e
+   as janelas por cima dela (contagem, resultado, lista de melodias e
+   observador) seguem as mesmas cores.
+   Paleta: creme #F6F6C7 · creme claro #FBFAE8 · azul-marinho #0E2366 ·
+   laranja #C94905 · azul #0175C5 · amarelo dos laços #F2E299. */
+.genius-root[data-tema="claro"] {
+  --navy: #f6f6c7;        /* fundo */
+  --navy-2: #fbfae8;      /* cartões */
+  --line-blue: #0e2366;   /* contornos */
+  --cream: #0e2366;       /* texto */
+  --muted: #4a5689;
+  --accent: #c94905;      /* título, pontuação e estrelas */
+  --player: #e9573b;      /* tecla do jogador */
+  --good: #0f7f80;
+  --bad: #b4232f;
+  --pink: #b4232f;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='184' height='140' viewBox='0 0 184 140'%3E%3Cg fill='none' stroke='%23d9d9a6' stroke-opacity='.55' stroke-width='4' stroke-linecap='round'%3E%3Cpath d='M-2 17.5q25-12 48 0t46 0t46 0t46 0'/%3E%3Cpath d='M-2 52.5q25-12 48 0t46 0t46 0t46 0'/%3E%3Cpath d='M-2 87.5q25-12 48 0t46 0t46 0t46 0'/%3E%3Cpath d='M-2 122.5q25-12 48 0t46 0t46 0t46 0'/%3E%3C/g%3E%3C/svg%3E");
+}
+
+/* Palco: botão Iniciar em azul-marinho (o laranja fica para o título) */
+.genius-root[data-tema="claro"] .start-btn { background: #0e2366; color: #f6f6c7; }
+.genius-root[data-tema="claro"] .start-btn:not(:disabled):hover { box-shadow: 0 8px 24px rgba(14, 35, 102, 0.25); }
+.genius-root[data-tema="claro"] .melody-name { color: #0e2366; }
+.genius-root[data-tema="claro"] .stage-indicator.lv1 { border-color: rgba(15, 127, 128, 0.55); }
+.genius-root[data-tema="claro"] .stage-indicator.lv2 { border-color: rgba(201, 73, 5, 0.5); }
+.genius-root[data-tema="claro"] .stage-indicator.lv3 { border-color: rgba(180, 35, 47, 0.5); }
+.genius-root[data-tema="claro"] .message.pulse { animation-name: messagePulseClaro; }
+@keyframes messagePulseClaro {
+  0%   { transform: scale(0.92); opacity: 0.5; color: #e9573b; }
+  60%  { transform: scale(1.06); opacity: 1; color: #b8402a; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+/* Piano sem contorno; a resposta do jogador em laranja */
+.genius-root[data-tema="claro"] .piano {
+  box-shadow: 0 30px 80px rgba(14, 35, 102, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+.genius-root[data-tema="claro"] .key.player-pressed.white,
+.genius-root[data-tema="claro"] .key.player-pressed.black { border-color: #b8402a; }
+.genius-root[data-tema="claro"] .key.player-pressed .key-label { color: #ffffff; }
+
+/* Contagem 3, 2, 1 */
+.genius-root[data-tema="claro"] .countdown { background: rgba(246, 246, 199, 0.6); }
+.genius-root[data-tema="claro"] .countdown-num { text-shadow: 0 0 50px rgba(201, 73, 5, 0.25); }
+
+/* Resultado (vitória, campeão e derrota) */
+.genius-root[data-tema="claro"] .overlay { background: rgba(246, 246, 199, 0.92); }
+.genius-root[data-tema="claro"] .overlay.win {
+  background: radial-gradient(circle at 50% 50%, rgba(1, 117, 197, 0.16), rgba(246, 246, 199, 0.95) 70%);
+  animation: fadeIn 220ms ease, winPulseClaro 2.4s ease-in-out 220ms infinite;
+}
+.genius-root[data-tema="claro"] .overlay.champion {
+  background: radial-gradient(circle at 50% 50%, rgba(242, 226, 153, 0.7), rgba(246, 246, 199, 0.95) 70%);
+  animation: fadeIn 220ms ease, championPulseClaro 1.8s ease-in-out 220ms infinite;
+}
+.genius-root[data-tema="claro"] .overlay.lose {
+  background: radial-gradient(circle at 50% 50%, rgba(180, 35, 47, 0.14), rgba(246, 246, 199, 0.95) 70%);
+}
+@keyframes winPulseClaro {
+  0%, 100% { background: radial-gradient(circle at 50% 50%, rgba(1, 117, 197, 0.16), rgba(246, 246, 199, 0.95) 70%); }
+  50%      { background: radial-gradient(circle at 50% 50%, rgba(1, 117, 197, 0.28), rgba(246, 246, 199, 0.95) 65%); }
+}
+@keyframes championPulseClaro {
+  0%, 100% { background: radial-gradient(circle at 50% 50%, rgba(242, 226, 153, 0.7), rgba(246, 246, 199, 0.95) 70%); }
+  50%      { background: radial-gradient(circle at 50% 50%, rgba(201, 73, 5, 0.22), rgba(246, 246, 199, 0.95) 60%); }
+}
+.genius-root[data-tema="claro"] .overlay-card { box-shadow: 0 30px 80px rgba(14, 35, 102, 0.18); }
+.genius-root[data-tema="claro"] .overlay.win .overlay-card {
+  border-color: #0175c5;
+  box-shadow: 0 0 60px rgba(1, 117, 197, 0.2), 0 30px 80px rgba(14, 35, 102, 0.18);
+}
+.genius-root[data-tema="claro"] .overlay.win.champion .overlay-card {
+  border-color: #c94905;
+  box-shadow: 0 0 70px rgba(201, 73, 5, 0.22), 0 30px 80px rgba(14, 35, 102, 0.18);
+}
+.genius-root[data-tema="claro"] .overlay.lose .overlay-card {
+  border-color: rgba(180, 35, 47, 0.6);
+  box-shadow: 0 0 50px rgba(180, 35, 47, 0.15), 0 30px 80px rgba(14, 35, 102, 0.18);
+}
+.genius-root[data-tema="claro"] .overlay-title.win { color: #0175c5; }
+.genius-root[data-tema="claro"] .overlay.champion .overlay-title { color: #c94905; text-shadow: none; animation-name: championTitlePulseClaro; }
+@keyframes championTitlePulseClaro {
+  0%, 100% { transform: scale(1); }
+  50%      { transform: scale(1.045); }
+}
+.genius-root[data-tema="claro"] .tier-badge.t0 { background: rgba(180, 35, 47, 0.08); color: #b4232f; border-color: rgba(180, 35, 47, 0.45); }
+.genius-root[data-tema="claro"] .tier-badge.t1 { background: rgba(15, 127, 128, 0.08); color: #0f7f80; border-color: rgba(15, 127, 128, 0.45); }
+.genius-root[data-tema="claro"] .tier-badge.t2 { background: #f2e299; color: #0e2366; border-color: #d9c46a; }
+.genius-root[data-tema="claro"] .tier-badge.t3 { background: #c94905; color: #fbfae8; border-color: #c94905; }
+
+/* Observador (console do desenvolvedor) */
+.genius-root[data-tema="claro"] .debug-panel {
+  background: rgba(251, 250, 232, 0.97);
+  border-color: rgba(14, 35, 102, 0.2);
+  box-shadow: 0 12px 40px rgba(14, 35, 102, 0.2);
+}
+.genius-root[data-tema="claro"] .debug-header { border-bottom-color: rgba(14, 35, 102, 0.12); }
+.genius-root[data-tema="claro"] .debug-btn { background: rgba(14, 35, 102, 0.06); border-color: rgba(14, 35, 102, 0.15); color: #0e2366; }
+.genius-root[data-tema="claro"] .debug-line.info    { color: #33415c; }
+.genius-root[data-tema="claro"] .debug-line.state   { color: #0e2366; }
+.genius-root[data-tema="claro"] .debug-line.midi    { color: #8a5a00; }
+.genius-root[data-tema="claro"] .debug-line.midi-off{ color: rgba(138, 90, 0, 0.6); }
+
+/* Lista de melodias: fica no <body> (fora do .genius-root), por isso o tema
+   claro dela é escolhido pelos atributos do <html> que a moldura usa. */
+:root[data-ui-tema="claro"][data-ui-jogo="genius"] .melody-picker {
+  --navy-2: #fbfae8;
+  --line-blue: #0e2366;
+  --cream: #0e2366;
+  --muted: #4a5689;
+  --accent: #c94905;
+  background: rgba(246, 246, 199, 0.88);
+}
+:root[data-ui-tema="claro"][data-ui-jogo="genius"] .melody-picker-card { box-shadow: 0 30px 80px rgba(14, 35, 102, 0.2); }
+:root[data-ui-tema="claro"][data-ui-jogo="genius"] .picker-item { background: rgba(14, 35, 102, 0.04); border-color: rgba(14, 35, 102, 0.15); }
+:root[data-ui-tema="claro"][data-ui-jogo="genius"] .picker-item:hover { background: rgba(201, 73, 5, 0.08); border-color: rgba(201, 73, 5, 0.5); }
+:root[data-ui-tema="claro"][data-ui-jogo="genius"] .picker-footer { border-top-color: rgba(14, 35, 102, 0.12); }
+:root[data-ui-tema="claro"][data-ui-jogo="genius"] .melody-picker .debug-btn { background: rgba(14, 35, 102, 0.06); border-color: rgba(14, 35, 102, 0.15); color: #0e2366; }

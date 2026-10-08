@@ -1,0 +1,113 @@
+{
+  "name": "piano-interativo",
+  "version": "0.1.0",
+  "description": "Genius no Piano, Piano Tipográfico e Piano Gelatina unidos, com seletor de modo",
+  "author": "Eduardo Novais",
+  "main": "electron/main.js",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "electron:dev": "concurrently -k \"vite\" \"wait-on tcp:127.0.0.1:5173 && cross-env ELECTRON_DEV=1 electron electron/main.js\"",
+    "dist:mac": "vite build && electron-builder --mac",
+    "dist:win": "vite build && electron-builder --win --x64",
+    "dist:all": "vite build && electron-builder --mac --win --x64"
+  },
+  "dependencies": {
+    "@fontsource/alfa-slab-one": "^5.3.0",
+    "@fontsource/bagel-fat-one": "^5.3.0",
+    "@fontsource/baloo-2": "^5.3.0",
+    "@fontsource/bebas-neue": "^5.3.0",
+    "@fontsource/black-ops-one": "^5.3.0",
+    "@fontsource/bowlby-one": "^5.3.0",
+    "@fontsource/bungee": "^5.3.0",
+    "@fontsource/cherry-bomb-one": "^5.3.0",
+    "@fontsource/dm-mono": "^5.3.0",
+    "@fontsource/fredoka": "^5.3.0",
+    "@fontsource/lilita-one": "^5.3.0",
+    "@fontsource/lobster": "^5.3.0",
+    "@fontsource/luckiest-guy": "^5.3.0",
+    "@fontsource/matemasie": "^5.3.0",
+    "@fontsource/megrim": "^5.3.0",
+    "@fontsource/mochiy-pop-p-one": "^5.3.0",
+    "@fontsource/modak": "^5.3.0",
+    "@fontsource/monoton": "^5.3.0",
+    "@fontsource/oswald": "^5.3.0",
+    "@fontsource/pacifico": "^5.3.0",
+    "@fontsource/permanent-marker": "^5.3.0",
+    "@fontsource/playfair-display": "^5.3.0",
+    "@fontsource/poppins": "^5.3.0",
+    "@fontsource/press-start-2p": "^5.3.0",
+    "@fontsource/roboto-mono": "^5.3.0",
+    "@fontsource/shrikhand": "^5.3.0",
+    "@fontsource/titan-one": "^5.3.0",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.14.0",
+    "@types/react": "^19.2.0",
+    "@types/react-dom": "^19.2.0",
+    "@vitejs/plugin-react": "^5.0.0",
+    "autoprefixer": "^10.4.20",
+    "concurrently": "^9.1.0",
+    "cross-env": "^7.0.3",
+    "electron": "^30.0.9",
+    "electron-builder": "^24.13.3",
+    "postcss": "^8.4.49",
+    "tailwindcss": "^3.4.17",
+    "typescript": "~5.8.2",
+    "vite": "^6.2.0",
+    "wait-on": "^8.0.1"
+  },
+  "build": {
+    "appId": "com.eduardonovais.pianointerativo",
+    "productName": "Piano Interativo",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "electron/**/*",
+      "package.json"
+    ],
+    "mac": {
+      "category": "public.app-category.games",
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "arm64",
+            "x64"
+          ]
+        }
+      ]
+    },
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true
+    }
+  },
+  "allowScripts": {
+    "electron@30.5.1": true,
+    "esbuild@0.25.12": true
+  }
+}

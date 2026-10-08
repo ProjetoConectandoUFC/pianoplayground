@@ -1,0 +1,247 @@
+import React, { useEffect, useState } from 'react';
+import { AppSettings, KnobValues, MidiDevice, NoteSystem } from '../types';
+import {
+    AKAI_MPK_MINI_KNOBS, FONT_OPTIONS, KNOB_MAPPINGS, NOTE_NAME_SYSTEMS,
+    fontOf, fontSpecOf, fontLacksAccents,
+} from '../constants';
+import {
+    BotaoProjecao, Campo, Deslizante, Dica, Gaveta, Interruptor, MapaTeclas,
+    MedidorKnob, Secao, SeletorTema,
+} from '../../shared/ui/componentes';
+
+interface ControlPanelProps {
+    inputs: MidiDevice[];
+    selectedInputId: string | null;
+    onDeviceChange: (id: string) => void;
+    settings: AppSettings;
+    onSettingsChange: (newSettings: Partial<AppSettings>) => void;
+    isAkaiConnected: boolean;
+    knobValues: KnobValues;
+    onClose: () => void;
+    midiStatus: string;
+    isDemoRunning: boolean;
+    onToggleDemo: (on: boolean) => void;
+    isSoundOn: boolean;
+    onToggleSound: (on: boolean) => void;
+    onOpenProjection: () => void;
+    isProjectionOpen: boolean;
+    onResetSettings: () => void;
+    /** Modo de entrada global: true = teclado do computador, false = MIDI */
+    isKeyboardMode: boolean;
+}
+
+// ==========================================
+// Painel de configurações, na gaveta comum aos três jogos
+// (src/shared/ui). As seções seguem a mesma ordem do Tipográfico:
+// Projeção, Execução, Entrada, Aparência, Arranjo e Controlador.
+// ==========================================
+export const ControlPanel: React.FC<ControlPanelProps> = ({
+    inputs, selectedInputId, onDeviceChange, settings, onSettingsChange,
+    isAkaiConnected, knobValues, onClose, midiStatus,
+    isDemoRunning, onToggleDemo, isSoundOn, onToggleSound,
+    onOpenProjection, isProjectionOpen, onResetSettings, isKeyboardMode,
+}) => {
+    const rotulos = NOTE_NAME_SYSTEMS[settings.noteSystem].natural;
+
+    // Marca na lista as fontes de public/fontes que não estão instaladas nem
+    // disponíveis na pasta.
+    const [ausentes, setAusentes] = useState<Set<string>>(new Set());
+    useEffect(() => {
+        let vivo = true;
+        const verificar = async () => {
+            const faltando = new Set<string>();
+            for (const f of FONT_OPTIONS.filter(o => o.arquivo)) {
+                const spec = fontSpecOf(f.key);
+                try { await (document as any).fonts?.load(spec); } catch { /* ignora */ }
+                const c = document.createElement('canvas').getContext('2d');
+                if (!c) continue;
+                const teste = 'MiWq Dó Ré Sol 0123';
+                const achou = ['monospace', 'serif', 'sans-serif'].some(b => {
+                    c.font = `100px ${b}`;
+                    const w0 = c.measureText(teste).width;
+                    c.font = `100px ${f.family}, ${b}`;
+                    return Math.abs(c.measureText(teste).width - w0) > 0.5;
+                });
+                if (!achou) faltando.add(f.key);
+            }
+            if (vivo) setAusentes(faltando);
+        };
+        verificar();
+        return () => { vivo = false; };
+    }, []);
+
+    return (
+        <Gaveta jogo="Piano Gelatina" onClose={onClose}>
+            <Secao titulo="Projeção">
+                <BotaoProjecao aberta={isProjectionOpen} onClick={onOpenProjection} />
+            </Secao>
+
+            <Secao titulo="Execução">
+                <Interruptor
+                    rotulo="Demonstração"
+                    dica="Toca sozinho uma sequência, para testar sem teclado."
+                    ligado={isDemoRunning}
+                    onChange={onToggleDemo}
+                />
+                <Interruptor
+                    rotulo="Som"
+                    dica="Emite um tom simples a cada nota tocada."
+                    ligado={isSoundOn}
+                    onChange={onToggleSound}
+                />
+            </Secao>
+
+            {/* O modo (MIDI ou Teclado) é escolhido na barra do topo e vale
+                para os três jogos do Piano Interativo. */}
+            {isKeyboardMode ? (
+                <Secao titulo="Entrada · teclado do computador">
+                    <Dica>
+                        Modo Teclado ativo: o MIDI é ignorado. Para usar o teclado MIDI, escolha
+                        MIDI na barra do topo. Segure a tecla para manter a nota.
+                    </Dica>
+                    <MapaTeclas />
+                    <Dica>O sustenido pinta a palavra da nota natural com a cor escolhida abaixo.</Dica>
+                </Secao>
+            ) : (
+                <Secao titulo="Entrada · MIDI">
+                    <div className="ui-indicador">
+                        <span className={inputs.length ? 'ui-status-ponto ok' : 'ui-status-ponto aviso'} />
+                        <span>{midiStatus}</span>
+                    </div>
+                    {inputs.length > 0 && (
+                        <Campo rotulo="Aparelho conectado" htmlFor="gel-aparelho">
+                            <select
+                                id="gel-aparelho"
+                                className="ui-select"
+                                value={selectedInputId || ''}
+                                onChange={e => onDeviceChange(e.target.value)}
+                            >
+                                {inputs.map(i => <option key={i.id} value={i.id}>{i.name}</option>)}
+                            </select>
+                        </Campo>
+                    )}
+                    <Dica>Sem teclado MIDI? Escolha Teclado na barra do topo para tocar pelo computador.</Dica>
+                </Secao>
+            )}
+
+            <Secao titulo="Aparência">
+                <SeletorTema valor={settings.theme} onChange={t => onSettingsChange({ theme: t })} />
+
+                <Campo rotulo="Sistema de notas" htmlFor="gel-sistema">
+                    <select
+                        id="gel-sistema"
+                        className="ui-select"
+                        value={settings.noteSystem}
+                        onChange={e => onSettingsChange({ noteSystem: e.target.value as NoteSystem })}
+                    >
+                        <option value="latin">Latino (Dó, Ré, Mi...)</option>
+                        <option value="anglican">Anglicano (C, D, E...)</option>
+                    </select>
+                </Campo>
+
+                <Campo rotulo="Fonte" htmlFor="gel-fonte">
+                    <select
+                        id="gel-fonte"
+                        className="ui-select"
+                        value={settings.fontKey}
+                        onChange={e => onSettingsChange({ fontKey: e.target.value })}
+                    >
+                        {FONT_OPTIONS.map(f => (
+                            <option key={f.key} value={f.key}>
+                                {f.name}
+                                {f.accents === false ? ' · sem acentos' : ''}
+                                {ausentes.has(f.key) ? ' · não encontrada' : ''}
+                            </option>
+                        ))}
+                    </select>
+                </Campo>
+                {fontOf(settings.fontKey).effectHint && <Dica>{fontOf(settings.fontKey).effectHint}</Dica>}
+                {ausentes.size > 0 && (
+                    <Dica>
+                        As marcadas como "não encontrada" não carregaram. Confira se os arquivos
+                        estão em <code>public/fontes</code>.
+                    </Dica>
+                )}
+                {fontLacksAccents(settings.fontKey) && settings.noteSystem === 'latin' && (
+                    <Dica>
+                        Esta fonte não tem acentos: em Dó, Ré, Fá e Lá a letra acentuada sai de
+                        uma fonte reserva. Para um visual uniforme, use o sistema anglicano
+                        (C, D, E...) ou outra fonte.
+                    </Dica>
+                )}
+
+                <div>
+                    <span className="ui-rotulo">Cor de cada nota</span>
+                    <div className="ui-grade-cores">
+                        {settings.noteColors.map((cor, i) => (
+                            <label key={i} className="ui-cor-item">
+                                <input
+                                    type="color"
+                                    className="ui-cor"
+                                    value={cor}
+                                    onChange={e => {
+                                        const novas = settings.noteColors.slice();
+                                        novas[i] = e.target.value;
+                                        onSettingsChange({ noteColors: novas });
+                                    }}
+                                    aria-label={`Cor da nota ${rotulos[i]}`}
+                                />
+                                {rotulos[i]}
+                            </label>
+                        ))}
+                        <label className="ui-cor-item">
+                            <input
+                                type="color"
+                                className="ui-cor"
+                                value={settings.sharpColor}
+                                onChange={e => onSettingsChange({ sharpColor: e.target.value })}
+                                aria-label="Cor do sustenido"
+                            />
+                            sust.
+                        </label>
+                    </div>
+                </div>
+            </Secao>
+
+            <Secao titulo="Arranjo na tela">
+                <Deslizante
+                    id="gel-densidade" rotulo="Densidade" valor={settings.noteDensity}
+                    min={0.3} max={1} passo={0.01}
+                    formato={v => `${Math.round(v * 100)}%`}
+                    onChange={v => onSettingsChange({ noteDensity: v })}
+                />
+                <Deslizante
+                    id="gel-espaco" rotulo="Espaçamento" valor={settings.noteSpacing}
+                    min={0} max={0.06} passo={0.002}
+                    formato={v => `${(v * 100).toFixed(1).replace('.', ',')}% da tela`}
+                    onChange={v => onSettingsChange({ noteSpacing: v })}
+                />
+                <Deslizante
+                    id="gel-desalinho" rotulo="Desalinhamento" valor={settings.noteRandomness}
+                    min={0} max={1} passo={0.02}
+                    formato={v => `${Math.round(v * 100)}%`}
+                    onChange={v => onSettingsChange({ noteRandomness: v })}
+                />
+                <Deslizante
+                    id="gel-cresc" rotulo="Crescimento da nota" valor={settings.growAmount}
+                    min={1.2} max={3} passo={0.05}
+                    formato={v => `${v.toFixed(2).replace('.', ',')}×`}
+                    onChange={v => onSettingsChange({ growAmount: v })}
+                />
+                <Dica>
+                    A nota tocada cresce no próprio lugar com um pulo. As relacionadas a ela encolhem um pouco e as
+                    demais ficam como estão.
+                </Dica>
+                <button className="ui-btn-secundario" onClick={onResetSettings}>Voltar ao padrão</button>
+            </Secao>
+
+            {isAkaiConnected && !isKeyboardMode && (
+                <Secao titulo="Controlador MPK Mini">
+                    {Object.entries(AKAI_MPK_MINI_KNOBS).map(([nome, cc]) => (
+                        <MedidorKnob key={nome} nome={nome} valor={knobValues[cc]} funcao={KNOB_MAPPINGS[nome]} />
+                    ))}
+                </Secao>
+            )}
+        </Gaveta>
+    );
+};

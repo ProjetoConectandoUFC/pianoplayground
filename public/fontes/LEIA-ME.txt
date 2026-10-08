@@ -1,0 +1,32 @@
+Fontes do Piano Gelatina que não estão no Google Fonts (ou que precisam
+funcionar sem internet).
+
+Do designer Khurasan (khurasanstudio.com), "100% free for personal use &
+commercial use" (veja LICENCAS.txt):
+
+  MatchaCih.woff2    Matcha Cih    (tem acentos)
+  BlueWinter.woff2   Blue Winter   (tem acentos)
+  Howdybun.woff2     Howdybun      (sem acentos)
+  AnakGedong.woff2   Anak Gedong   (sem acentos)
+
+Fontes variáveis com efeito próprio, licença SIL OFL 1.1:
+
+  Kablammo.woff2      Kablammo       eixo MORF (OFL-Kablammo.txt)
+  ShantellSans.woff2  Shantell Sans  eixos BNCE, INFM e peso (OFL-ShantellSans.txt)
+
+Fontes do Google Fonts embutidas como arquivo, licença SIL OFL 1.1
+(subconjunto latino, com acentos):
+
+  Isometra.woff2        Isometra         Ben Dunkle (OFL-Isometra.txt)
+  Righteous.woff2       Righteous        Astigmatic (OFL-Righteous.txt)
+  Caprasimo.woff2       Caprasimo        The DocRepair Project (OFL-Caprasimo.txt)
+  BerkshireSwash.woff2  Berkshire Swash  Astigmatic (OFL-BerkshireSwash.txt)
+
+As duas sem acentos não têm ó, é, á. No sistema latino (Dó, Ré, Fá, Lá)
+essas letras saem de uma fonte reserva; no sistema anglicano (C, D, E...)
+ficam perfeitas.
+
+Para acrescentar outra fonte: coloque o .woff2 aqui, declare um @font-face
+no index.html (mesmo padrão das de cima) e inclua a fonte em FONT_OPTIONS,
+em src/gelatina/constants.ts. Se a fonte já estiver instalada na máquina,
+ela é usada automaticamente.

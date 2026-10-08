@@ -1,0 +1,23 @@
+Licenças das fontes em public/fontes
+
+Blue Winter, Howdybun, Anak Gedong e Matcha Cih
+Autor: Khurasan (Syafrizal), khurasanstudio.com / behance.net/khurasan
+Texto que acompanha os arquivos originais ("More Info.txt"):
+
+  "This product 100% free for personal use & commercial use"
+
+Contato do autor: hi@khurasanstudio.com
+Doações: paypal.me/jalkhurasan
+
+Kablammo e Shantell Sans
+Licença SIL Open Font License 1.1 (textos completos em OFL-Kablammo.txt e
+OFL-ShantellSans.txt). Kablammo: Vectro Type Foundry. Shantell Sans: Shantell
+Martin e Arrow Type. Arquivos do subconjunto latino distribuído pelo Fontsource.
+
+Isometra, Righteous, Caprasimo e Berkshire Swash
+Licença SIL Open Font License 1.1 (textos completos nos arquivos OFL-*.txt
+correspondentes). Isometra: Ben Dunkle (The Isometra Project Authors).
+Righteous e Berkshire Swash: Brian J. Bonislawsky, Astigmatic. Caprasimo: The
+DocRepair Project e Phaedra Charles. Isometra convertida do repositório
+google/fonts; as demais são os arquivos do subconjunto latino distribuídos
+pelo Fontsource.

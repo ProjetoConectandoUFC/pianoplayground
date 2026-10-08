@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Piano Interativo: Genius, Tipográfico e Gelatina</title>
+
+    <!-- As fontes do Google (Tipográfico e Gelatina) agora vêm embutidas pelo
+         src/fonts.ts (pacotes @fontsource), e o app funciona sem internet. -->
+
+    <!-- Fontes do projeto Gelatina fora do Google Fonts (Khurasan, livres para uso pessoal e
+         comercial). Os arquivos .woff2 ficam em public/fontes; o caminho é relativo para
+         funcionar também no Electron empacotado e na janela de projeção. -->
+    <style>
+      @font-face{font-family:"Matcha Cih";src:local("Matcha Cih"),local("MatchaCih"),
+        url("fontes/MatchaCih.woff2") format("woff2");font-display:swap;}
+      @font-face{font-family:"Blue Winter";src:local("Blue Winter"),local("BlueWinter"),
+        url("fontes/BlueWinter.woff2") format("woff2");font-display:swap;}
+      @font-face{font-family:"Howdybun";src:local("Howdybun"),
+        url("fontes/Howdybun.woff2") format("woff2");font-display:swap;}
+      @font-face{font-family:"Anak Gedong";src:local("Anak Gedong"),local("AnakGedong"),
+        url("fontes/AnakGedong.woff2") format("woff2");font-display:swap;}
+
+      /* Fontes variáveis com efeito próprio (SIL OFL 1.1). Os eixos são animados
+         pelo motor da gelatina: MORF na Kablammo; BNCE, INFM e peso na Shantell Sans. */
+      @font-face{font-family:"Kablammo";src:url("fontes/Kablammo.woff2") format("woff2");font-display:swap;}
+      @font-face{font-family:"Shantell Sans";src:url("fontes/ShantellSans.woff2") format("woff2");
+        font-weight:300 800;font-display:swap;}
+
+      /* Fontes do Google Fonts embutidas como arquivo (SIL OFL 1.1, subconjunto latino). */
+      @font-face{font-family:"Isometra";src:local("Isometra"),local("Isometra-Regular"),
+        url("fontes/Isometra.woff2") format("woff2");font-display:swap;}
+      @font-face{font-family:"Righteous";src:local("Righteous"),local("Righteous-Regular"),
+        url("fontes/Righteous.woff2") format("woff2");font-display:swap;}
+      @font-face{font-family:"Caprasimo";src:local("Caprasimo"),local("Caprasimo-Regular"),
+        url("fontes/Caprasimo.woff2") format("woff2");font-display:swap;}
+      @font-face{font-family:"Berkshire Swash";src:local("Berkshire Swash"),local("BerkshireSwash-Regular"),
+        url("fontes/BerkshireSwash.woff2") format("woff2");font-display:swap;}
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/index.tsx"></script>
+  </body>
+</html>

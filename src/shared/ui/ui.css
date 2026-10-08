@@ -1,0 +1,382 @@
+/* ==========================================================================
+   Interface comum do Piano Interativo (Genius, Tipográfico e Gelatina)
+   --------------------------------------------------------------------------
+   Uma moldura só para os três jogos: barra do topo, faixa das mãos, botão de
+   configurações, gaveta lateral e os mesmos controles. Cada jogo mantém o
+   próprio palco. As cores vêm de variáveis definidas aqui; o jogo em cena
+   avisa o tema (claro ou escuro) por data-ui-tema no <html>, e o App avisa o
+   jogo por data-ui-jogo (ver src/shared/ui/temaUi.ts).
+   ========================================================================== */
+
+:root {
+  --ui-header-h: 88px;
+  /* altura da faixa das mãos: a largura da tela dividida pela proporção da
+     ilustração (src/assets/moldura/faixa-maos.png, 19,1 por 1) */
+  --ui-faixa-h: calc(100vw / 19.1);
+  --ui-topo: calc(var(--ui-header-h) + var(--ui-faixa-h));
+  --ui-font: "Poppins", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --ui-mono: "DM Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  /* Tema escuro (padrão): azul-marinho e amarelo da marca */
+  --ui-ground: #20274f;
+  --ui-surface: #1a2046;
+  --ui-ink: #fcfaf1;
+  --ui-muted: #a9aed0;
+  --ui-line: rgba(252, 250, 241, 0.16);
+  --ui-field: rgba(252, 250, 241, 0.08);
+  --ui-edge: #2a66b3;
+  --ui-edge-hover: #5b8fd6;
+  --ui-accent: #fde300;
+  --ui-accent-fg: #20274f;
+  --ui-pill: rgba(26, 32, 70, 0.9);
+  --ui-pill-hover: rgba(42, 102, 179, 0.28);
+  --ui-scrim: rgba(10, 12, 30, 0.6);
+  --ui-ok: #43b3b4;
+  --ui-aviso: #f0848f;
+  --ui-sombra: 0 16px 40px rgba(0, 0, 0, 0.35);
+}
+
+/* Sem a faixa das mãos (ver MOSTRAR_FAIXA em FaixaMaos.tsx) */
+:root.ui-sem-faixa,
+:root.ui-sem-faixa[data-ui-tema] { --ui-faixa-h: 0px; }
+
+/* Tema claro: creme, tinta e azul da marca Conectando */
+:root[data-ui-tema="claro"] {
+  /* faixa das mãos do tema claro (faixa-maos-clara.png, 23,6 por 1) */
+  --ui-faixa-h: calc(100vw / 23.6);
+  --ui-ground: #f6f6c7;
+  --ui-surface: #fbfae8;
+  --ui-ink: #443c1a;
+  --ui-muted: #6b6340;
+  --ui-line: rgba(68, 60, 26, 0.2);
+  --ui-field: rgba(68, 60, 26, 0.08);
+  --ui-edge: #1d58a4;
+  --ui-edge-hover: #2e6fc2;
+  --ui-accent: #1d58a4;
+  --ui-accent-fg: #ffffff;
+  --ui-pill: rgba(246, 246, 199, 0.94);
+  --ui-pill-hover: rgba(29, 88, 164, 0.1);
+  --ui-scrim: rgba(68, 60, 26, 0.42);
+  --ui-ok: #0f7f80;
+  --ui-aviso: #b4232f;
+  --ui-sombra: 0 16px 40px rgba(68, 60, 26, 0.22);
+}
+
+/* Genius do Piano no tema claro: o mesmo creme do Gelatina, com tinta
+   azul-marinho e título laranja (o laranja fica em genius.css) */
+:root[data-ui-tema="claro"][data-ui-jogo="genius"] {
+  --ui-ground: #f6f6c7;
+  --ui-surface: #fbfae8;
+  --ui-ink: #0e2366;
+  --ui-muted: #4a5689;
+  --ui-line: rgba(14, 35, 102, 0.2);
+  --ui-field: rgba(14, 35, 102, 0.08);
+  --ui-edge: #0e2366;
+  --ui-edge-hover: #2a3f8f;
+  --ui-accent: #0e2366;
+  --ui-accent-fg: #f6f6c7;
+  --ui-pill: rgba(246, 246, 199, 0.9);
+  --ui-pill-hover: rgba(14, 35, 102, 0.08);
+  --ui-scrim: rgba(14, 35, 102, 0.4);
+  --ui-ok: #0f7f80;
+  --ui-aviso: #b4232f;
+  --ui-sombra: 0 16px 40px rgba(14, 35, 102, 0.22);
+}
+
+/* Seletor segmentado (MIDI | Teclado, Claro | Escuro) */
+.ui-segmentado {
+  display: inline-flex;
+  padding: 4px;
+  border-radius: 999px;
+  border: 2px solid var(--ui-edge);
+  background: var(--ui-pill);
+}
+.ui-segmentado-opcao {
+  padding: 8px 18px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--ui-muted);
+  font-family: var(--ui-font);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+.ui-segmentado-opcao:hover { color: var(--ui-ink); }
+.ui-segmentado-opcao.on { background: var(--ui-accent); color: var(--ui-accent-fg); }
+
+/* Área do palco de cada jogo na janela principal: começa abaixo da barra e
+   da faixa. A janela de projeção não usa esta classe e continua tela cheia. */
+.ui-palco {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  top: var(--ui-topo);
+}
+
+/* ---------- Botão de configurações (sempre à direita, com o atalho A ao lado) ---------- */
+.ui-config {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.ui-config.fixo {
+  position: fixed;
+  right: 24px;
+  top: calc((var(--ui-header-h) - 52px) / 2);
+  z-index: 20;
+}
+.ui-btn-config {
+  width: 52px;
+  height: 52px;
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border-radius: 14px;
+  border: 2px solid var(--ui-edge);
+  background: var(--ui-pill);
+  color: var(--ui-ink);
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+.ui-btn-config:hover { background: var(--ui-pill-hover); border-color: var(--ui-edge-hover); }
+.ui-btn-config svg { width: 24px; height: 24px; pointer-events: none; }
+.ui-atalho {
+  font-family: var(--ui-mono);
+  font-size: 12px;
+  color: var(--ui-muted);
+  border: 1px solid var(--ui-line);
+  border-radius: 6px;
+  padding: 2px 7px;
+  line-height: 1.4;
+}
+
+/* ---------- Gaveta de configurações (abre pela direita, junto do botão) ---------- */
+.ui-gaveta-fundo {
+  position: fixed;
+  inset: 0;
+  z-index: 20000;
+  border: 0;
+  margin: 0;
+  padding: 0;
+  background: var(--ui-scrim);
+  cursor: default;
+  animation: ui-surge 0.2s ease-out;
+}
+.ui-gaveta {
+  position: fixed;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 400px;
+  max-width: 100vw;
+  z-index: 20001;
+  box-sizing: border-box;
+  padding: 24px 24px 32px;
+  overflow-y: auto;
+  background: var(--ui-surface);
+  color: var(--ui-ink);
+  border-left: 2px solid var(--ui-edge);
+  box-shadow: -12px 0 40px rgba(0, 0, 0, 0.22);
+  font-family: var(--ui-font);
+  -webkit-font-smoothing: antialiased;
+  animation: ui-desliza 0.24s ease-out;
+}
+.ui-gaveta *, .ui-gaveta *::before, .ui-gaveta *::after { box-sizing: border-box; }
+@keyframes ui-surge { from { opacity: 0; } to { opacity: 1; } }
+@keyframes ui-desliza { from { transform: translateX(100%); } to { transform: translateX(0); } }
+
+.ui-gaveta-cabeca {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding-bottom: 18px;
+}
+.ui-gaveta-titulo { margin: 0; font-size: 20px; font-weight: 600; line-height: 1.3; }
+.ui-gaveta-sub { margin: 4px 0 0; font-size: 13px; color: var(--ui-muted); }
+.ui-btn-fechar {
+  width: 44px;
+  height: 44px;
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  border-radius: 12px;
+  background: var(--ui-field);
+  color: var(--ui-ink);
+  cursor: pointer;
+}
+.ui-btn-fechar:hover { background: var(--ui-pill-hover); }
+.ui-btn-fechar svg { width: 20px; height: 20px; pointer-events: none; }
+
+.ui-secao {
+  padding: 20px 0;
+  border-top: 1px solid var(--ui-line);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.ui-secao-titulo {
+  margin: 0;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ui-muted);
+}
+.ui-subtitulo {
+  margin: 0 0 8px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ui-muted);
+}
+.ui-rotulo { display: block; margin: 0 0 8px; font-size: 14px; font-weight: 500; color: var(--ui-ink); }
+.ui-dica { margin: 0; font-size: 12px; line-height: 1.5; color: var(--ui-muted); }
+.ui-dica code, .ui-mono { font-family: var(--ui-mono); }
+.ui-valor { font-family: var(--ui-mono); font-size: 12px; color: var(--ui-muted); }
+.ui-linha { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
+.ui-linha .ui-rotulo { margin: 0; }
+
+.ui-select {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--ui-line);
+  background: var(--ui-surface);
+  color: var(--ui-ink);
+  font-family: var(--ui-font);
+  font-size: 14px;
+}
+.ui-range { width: 100%; accent-color: var(--ui-accent); cursor: pointer; }
+.ui-cor {
+  width: 100%;
+  height: 34px;
+  padding: 2px;
+  border-radius: 8px;
+  border: 1px solid var(--ui-line);
+  background: var(--ui-field);
+  cursor: pointer;
+}
+.ui-cor.curta { width: 64px; }
+.ui-cor::-webkit-color-swatch-wrapper { padding: 2px; }
+.ui-cor::-webkit-color-swatch { border: none; border-radius: 5px; }
+
+.ui-btn-principal {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 12px 16px;
+  border: 0;
+  border-radius: 12px;
+  background: var(--ui-accent);
+  color: var(--ui-accent-fg);
+  font-family: var(--ui-font);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+}
+.ui-btn-principal:hover { opacity: 0.9; }
+.ui-btn-principal svg { width: 18px; height: 18px; }
+.ui-btn-secundario {
+  width: 100%;
+  padding: 11px 16px;
+  border: 0;
+  border-radius: 12px;
+  background: var(--ui-field);
+  color: var(--ui-ink);
+  font-family: var(--ui-font);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+}
+.ui-btn-secundario:hover:not(:disabled) { background: var(--ui-pill-hover); }
+.ui-btn-secundario:disabled { opacity: 0.45; cursor: not-allowed; }
+
+/* Interruptor liga/desliga */
+.ui-interruptor-linha { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+label.ui-interruptor-linha { cursor: pointer; }
+.ui-interruptor-texto { display: flex; flex-direction: column; gap: 2px; }
+.ui-interruptor-rotulo { font-size: 14px; font-weight: 500; }
+.ui-interruptor {
+  position: relative;
+  width: 46px;
+  height: 26px;
+  flex: none;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: var(--ui-field);
+  box-shadow: inset 0 0 0 1px var(--ui-line);
+  cursor: pointer;
+  transition: background 0.16s ease;
+}
+.ui-interruptor::after {
+  content: "";
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--ui-muted);
+  transition: transform 0.16s ease, background 0.16s ease;
+}
+.ui-interruptor[aria-checked="true"],
+input.ui-interruptor:checked { background: var(--ui-accent); box-shadow: none; }
+.ui-interruptor[aria-checked="true"]::after,
+input.ui-interruptor:checked::after { transform: translateX(20px); background: var(--ui-accent-fg); }
+/* A mesma peça feita a partir de um checkbox (usada no Genius) */
+input.ui-interruptor { -webkit-appearance: none; appearance: none; margin: 0; }
+
+/* Mapa de teclas do teclado do computador */
+.ui-mapa { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 6px; }
+.ui-tecla {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 6px 0;
+  border-radius: 8px;
+  background: var(--ui-field);
+  color: var(--ui-ink);
+}
+.ui-tecla.preta { background: var(--ui-ink); color: var(--ui-surface); }
+.ui-tecla-letra { font-family: var(--ui-mono); font-size: 14px; font-weight: 500; }
+.ui-tecla-nota { font-size: 10px; opacity: 0.8; }
+
+/* Medidor dos knobs do controlador */
+.ui-knob-linha { display: flex; justify-content: space-between; gap: 12px; font-size: 12px; margin-bottom: 4px; }
+.ui-knob-trilho { height: 6px; border-radius: 999px; background: var(--ui-field); overflow: hidden; }
+.ui-knob-valor { height: 6px; border-radius: 999px; background: var(--ui-accent); }
+.ui-knob-livre { color: var(--ui-muted); }
+
+.ui-grade-cores { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+.ui-cor-item { display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 10px; color: var(--ui-muted); }
+.ui-cor-linha { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+
+.ui-indicador { display: flex; align-items: center; gap: 8px; font-size: 13px; }
+
+/* Foco visível em todos os controles da moldura */
+.ui-barra button:focus-visible,
+.ui-gaveta button:focus-visible,
+.ui-gaveta select:focus-visible,
+.ui-gaveta input:focus-visible,
+.ui-btn-config:focus-visible {
+  outline: 3px solid var(--ui-ok);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ui-gaveta, .ui-gaveta-fundo, .ui-menu { animation: none; }
+}

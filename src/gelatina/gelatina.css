@@ -1,0 +1,20 @@
+/* Estrutura do Piano Gelatina (vinda do index.html do projeto original).
+   Escrita à mão, sem depender do Tailwind, para a projeção continuar correta
+   mesmo sem internet. As classes .tela-notas ficam sem escopo porque também
+   são usadas dentro da janela de projeção (portal).
+   A barra do topo, o botão de configurações e a gaveta vêm da moldura comum
+   (src/shared/ui/ui.css); na janela principal o palco fica em .ui-palco,
+   abaixo da barra e da faixa. */
+.gelatina-root {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  font-family: var(--ui-font);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+.tela-notas { position: absolute; inset: 0; overflow: hidden; }
+.tela-notas-palco {
+  position: absolute; inset: 0; overflow: hidden; z-index: 0; /* letras ficam num plano só */
+  pointer-events: none; user-select: none; -webkit-user-select: none;
+}

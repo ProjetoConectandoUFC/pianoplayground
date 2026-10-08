@@ -1,0 +1,16 @@
+/* Estilos globais. O Tailwind atende o Piano Tipográfico; a moldura comum
+   fica em src/shared/ui/ui.css e cada jogo tem o seu CSS. */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background: #0b0b14;
+}
+
+#root {
+  min-height: 100vh;
+}
