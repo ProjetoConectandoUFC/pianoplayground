@@ -50,9 +50,9 @@ O Genius foi redesenhado para conversar com o Piano Gelatina, sem mexer na estru
 (mesmas 25 teclas, mapa e lógica do jogo):
 
 - Fundo azul-marinho `#20274F` com padrão de ondas e os laços da marca (`src/assets/genius/laco-*.png`, com a transparência de 20% já no arquivo),
-  título "Genius do Piano" em amarelo `#FDE300` (fonte Poppins, embutida via `@fontsource/poppins`).
+  título "Genius do Piano" em amarelo `#FFD400`, um pouco mais intenso que o primeiro `#FDE300` (fonte Poppins, embutida via `@fontsource/poppins`).
 - Cabeçalho na moldura comum dos três jogos (veja "Interface comum dos três jogos").
-- Feedback das teclas: **amarelo `#F2E299`** enquanto a melodia é demonstrada (memorização) e
+- Feedback das teclas: **amarelo `#FBD84E`** (mais vivo que o `#F2E299` do protótipo, menos que o título) enquanto a melodia é demonstrada (memorização) e
   **turquesa `#01A0A0`** com estrelas e triângulos saindo pelos lados quando o jogador acerta
   (efeito em `piano.js`, camada `.key-fx-layer`).
 - Resultados, contagem e confete usam a paleta das notas do Gelatina.
@@ -65,30 +65,54 @@ O Genius foi redesenhado para conversar com o Piano Gelatina, sem mexer na estru
 Genius, Tipográfico e Gelatina dividem a mesma moldura (`src/shared/ui/`), sem mudar o
 funcionamento nem a jogabilidade de nenhum deles. Cada jogo mantém o próprio palco.
 
-- **Barra do topo** (`src/App.tsx`, `src/shell.css`): à esquerda a marca Conectando (azul no
-  tema claro, creme no escuro); no centro o seletor de jogo (com a cor de cada um) e
-  MIDI | Teclado; à direita o status do teclado e o botão de configurações do jogo, com o
-  atalho A ao lado. O status vem de
-  `statusEntrada.ts`, publicado por cada jogo; ele substitui a pílula solta do Genius, o aviso
-  amarelo em inglês do Tipográfico e o texto do painel do Gelatina.
-- **Faixa das mãos** (`FaixaMaos.tsx`), logo abaixo da barra, de uma borda à outra da tela
+- **Barra do topo** (`src/App.tsx`, `src/shell.css`), enxuta e mais baixa (68px): à esquerda
+  a marca Conectando (azul no tema claro, creme no escuro); à direita o status da entrada e o
+  botão de configurações do jogo. O status é mínimo: um ponto verde quando a entrada está
+  pronta e vermelho quando não está, com o nome do modo (MIDI ou Teclado); o detalhe (aparelho,
+  erro) aparece ao passar o mouse. Ele vem de `statusEntrada.ts`, publicado por cada jogo.
+  A troca de jogo e o MIDI | Teclado foram para a gaveta de configurações.
+- **Faixa das mãos** (`FaixaMaos.tsx`): só no Genius. No Tipográfico e no Gelatina ela sai
+  para os pianos ficarem livres na tela (regras em `ui.css` e `shell.css`). Fica logo abaixo da barra, de uma borda à outra da tela
   (a altura acompanha a largura, na proporção da ilustração). As pontas dos braços foram cortadas
   retas para encostar nas bordas e parecer que continuam para fora da tela. Há uma faixa por tema:
-  azul e rosa no escuro, azul-marinho e azul no claro. Para tirar, troque
+  azul e rosa no escuro, azul-marinho e azul no claro (`src/assets/moldura/`). A proporção de
+  cada imagem é medida no próprio arquivo, então o desenho nunca é esticado. Para tirar, troque
   `MOSTRAR_FAIXA` para `false`: os palcos sobem e ocupam o espaço.
-- **Gaveta de configurações** (`componentes.tsx`): abre pela direita nos três jogos, com as
-  seções na mesma ordem (Projeção, Execução ou Partida, Entrada, Aparência, Arranjo e
-  Controlador), tudo em português. A tecla A abre e fecha a gaveta nos três jogos e o ESC fecha.
+- **Gaveta de configurações** (`componentes.tsx`): abre pela direita nos três jogos. A primeira
+  seção, "Jogo e entrada" (`SecaoJogo`), é igual nos três: a lista dos jogos e o MIDI | Teclado.
+  Depois vêm as seções de cada jogo (Projeção, Execução ou Partida, Entrada, Aparência, Arranjo
+  e Controlador), tudo em português. A tecla A abre e fecha a gaveta nos três jogos e o ESC
+  fecha; no Tipográfico e no Gelatina, o A também funciona com a janela de projeção em foco
+  (a gaveta abre na janela principal, que vem para a frente). O jogo em cena fica em
+  `src/shared/ui/jogoAtual.ts`.
   No Genius, a lista de melodias (modo desenvolvedor) abre pelo botão "Escolher melodia" da
   seção Partida, antes da demonstração começar.
 - **Temas** (`ui.css`, `temaUi.ts`): claro (creme, tinta e azul) e escuro (azul-marinho e
-  amarelo) em todos os jogos. O Genius claro usa o creme `#F6F6C7` com ondas, laços amarelos
-  `#F2E299` (`src/assets/genius/laco-*-amarelo.png`), tinta azul-marinho `#0E2366`, título laranja
-  `#C94905`, piano sem contorno e a resposta do jogador em laranja `#E9573B` (o Fá do Gelatina)
-  no lugar do turquesa. A contagem, os resultados, a lista de melodias e o observador seguem as
-  mesmas cores. O Gelatina escuro passou do quase preto para o
-  azul-marinho. No Tipográfico, o tema também escolhe as cores de fundo e das notas inativas,
+  amarelo) no Tipográfico e no Gelatina. O Genius tem só o tema escuro. O Gelatina escuro
+  passou do quase preto para o azul-marinho. No Tipográfico, o tema também escolhe as cores de fundo e das notas inativas,
   que continuam editáveis.
+- **Fontes mutáveis** (Gelatina): a lista de fontes tem duas categorias, "Fontes" e
+  "Fontes mutáveis". As mutáveis são variáveis com efeito próprio (os eixos mudam ao tocar, no
+  lugar de esticar a letra): Handjet (pontos que passam de quadrados a redondos), Kablammo,
+  Shantell Sans e Tilt Warp (gira em 3D). Cheee, Camelion e Hela vieram como fontes de teste
+  estáticas (pastas de demo/trial em `public/fontes`): o efeito `estilos` troca o estilo da
+  letra conforme a força do toque (Cheee incha, Hela engorda peso a peso, Camelion engorda e
+  balança para o itálico). Há também o efeito automático para fontes variáveis
+  (`vite-eixos-fontes.ts` lê os eixos no build), pronto para a Graduate se o arquivo
+  `GraduateGX.woff2` for colocado na pasta. Licenças em `public/fontes/LICENCAS.txt`: Cheee e
+  Camelion de demo só podem ser usadas em testes; a Hela trial, só sem fins comerciais.
+- **Letras do Gelatina no plano mais alto**: na janela principal elas passam por cima da barra,
+  da marca e do status (sem bloquear os cliques) em vez de serem cortadas pela borda do palco; o
+  fundo do tema vai para o `<body>`. O tamanho inicial ficou menor (densidade padrão 0,8, aplicada
+  uma vez também a quem já tinha preferências salvas) e o motor deixa uma folga em volta de cada
+  palavra (maior nas fontes mutáveis), para nenhuma sair da tela. No efeito `estilos`, a palavra é
+  medida pelo estilo mais largo.
+- **Sorteios no Gelatina**: dois botões na barra, à esquerda do de configurações. Um sorteia
+  uma fonte da lista (nunca a atual) e o outro uma paleta nova de sete cores bem separadas.
+- **Teste: piano em perspectiva** (Genius): interruptor "Piano em perspectiva" na seção
+  Aparência da gaveta, ligado por padrão e lembrado entre execuções. O piano deita num chão
+  com grade azul que some ao longe, sem linha de horizonte; teclas, cores e partículas são
+  as mesmas. Desligado, volta ao piano chapado. CSS no fim de `genius.css`.
 - **Tipografia da interface**: Poppins em toda a moldura, DM Mono para valores e teclas.
 - **Imagens**: todas em `src/assets` (marca, moldura e genius), catalogadas em
   `src/assets/LEIA-ME.md`. São importadas pelo código e embutidas no build, então funcionam
@@ -100,7 +124,7 @@ funcionamento nem a jogabilidade de nenhum deles. Cada jogo mantém o próprio p
 
 ## Modo de entrada: MIDI ou teclado do computador
 
-Na barra flutuante do topo há um seletor **MIDI | Teclado**, que vale para os dois apps
+Na seção "Jogo e entrada" da gaveta de configurações há um seletor **MIDI | Teclado**, que vale para os três jogos
 (a escolha fica salva entre execuções). O Piano Gelatina segue o mesmo modo.
 
 - **MIDI**: comportamento original, notas vindas do teclado MIDI via Web MIDI.
@@ -122,7 +146,8 @@ Detalhes:
 - Usa a posição física da tecla (`KeyboardEvent.code`), então funciona com Caps Lock.
   Segurar a tecla gera uma única nota; combinações com Ctrl/Alt/Shift são ignoradas.
 - A tecla **A** fica fora do mapeamento e abre/fecha a gaveta de configurações nos três jogos,
-  que começa fechada (também abre pelo botão da direita na barra; ESC fecha). No Genius, a lista
+  que começa fechada (também abre pelo botão da direita na barra; ESC fecha). No Tipográfico e
+  no Gelatina, o A vale também com a janela de projeção em foco. No Genius, a lista
   de melodias passou para o botão "Escolher melodia" dentro da gaveta; com ela aberta, A ou ESC
   fecha a lista.
 - No Genius, o botão "Iniciar partida" fica liberado sem dispositivo MIDI e as letras aparecem

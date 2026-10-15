@@ -34,6 +34,8 @@ export interface AppSettings {
     growAmount: number;
     /** Marca as preferências já ajustadas ao motor em texto (crescimento padrão 1,45) */
     motorTexto?: boolean;
+    /** Marca que o tamanho inicial menor (densidade 0,8) já foi aplicado */
+    tamanhoV2?: boolean;
 }
 
 export interface KnobValues {

@@ -18,7 +18,9 @@
 //
 // Novidades do desenho em texto:
 //  - Fontes variáveis podem mudar de eixo a cada quadro
-//    (font-variation-settings). Kablammo e Shantell Sans usam isso como
+//    (font-variation-settings). As "fontes mutáveis" (Kablammo, Shantell Sans,
+//    Tilt Warp, Handjet e as de efeito automático, como Hela, Graduate, Cheee e
+//    Camelion) usam isso como
 //    efeito próprio, no lugar de esticar e entortar a letra.
 //  - Um canvas fora da tela continua sendo usado só para MEDIR as letras
 //    (largura e altura da tinta); ele nunca desenha nada visível.
@@ -27,7 +29,10 @@
 export type RGB = [number, number, number];
 
 /** Efeitos próprios de algumas fontes variáveis */
-export type FontEffect = 'kablammo' | 'shantell';
+export type FontEffect = 'kablammo' | 'shantell' | 'tiltwarp' | 'handjet' | 'auto' | 'estilos';
+
+/** Eixo de uma fonte variável (efeito 'auto') */
+export interface EixoVariavel { tag: string; min: number; padrao: number; max: number }
 
 export interface GelatinaOptions {
     /** Sete rótulos, na ordem da escala */
@@ -50,6 +55,10 @@ export interface GelatinaOptions {
     weight: number;
     /** Efeito próprio da fonte (fontes variáveis), ou nenhum */
     effect?: FontEffect | null;
+    /** Eixos da fonte, para o efeito 'auto' (lidos do arquivo no build) */
+    axes?: EixoVariavel[];
+    /** Efeito 'estilos': famílias estáticas em ordem (repouso → mais forte) e alternas */
+    estilos?: { familias: string[]; alternas?: string[] };
     /** Sistema de nomes. No anglicano (uma letra por nota) o arranjo e a
      *  deformação são próprios; o latino segue o comportamento de sempre. */
     noteSystem?: 'latin' | 'anglican';
@@ -126,6 +135,8 @@ interface Letra {
     // nas fontes comuns e move os eixos nas fontes com efeito próprio.
     ax: number; axv: number; axT: number;
     el: HTMLSpanElement;
+    /** Família em uso (efeito 'estilos'), para só trocar quando muda */
+    fam?: string;
 }
 
 interface Glifo {
@@ -583,7 +594,60 @@ export function createGelatina(host: HTMLElement, opts: GelatinaOptions, relatio
             const wght = 400 + 400 * clamp(l.ax, 0, 1);
             return `"BNCE" ${bnce.toFixed(1)}, "INFM" ${infm.toFixed(1)}, "wght" ${wght.toFixed(0)}`;
         }
+        // As de baixo voltam ao desenho original com a tecla solta (a = 0)
+        const a = clamp(l.ax, 0, 1);
+        if (o.effect === 'tiltwarp') {
+            // XROT e YROT: a letra gira em 3D, cada uma num tempo
+            const xrot = clamp(40 * e * Math.sin(clock * 6 + k * 0.9 + i * 0.5), -45, 45);
+            const yrot = clamp(40 * e * Math.cos(clock * 5 + k * 1.1), -45, 45);
+            return `"XROT" ${xrot.toFixed(1)}, "YROT" ${yrot.toFixed(1)}`;
+        }
+        if (o.effect === 'handjet') {
+            // Menos etapas: o formato dos pontos só passa do 2 ao 3 (quadrado para
+            // redondo, vizinhos que se transformam suavemente). Do 3,5 ao 5 os pontos
+            // viram traços finos, por isso o efeito para antes. Sem vai e vem e sem
+            // trocar a grade; o peso acompanha o toque.
+            const elsh = 2 + 1 * a;
+            const wght = 400 + 300 * a;
+            return `"ELSH" ${elsh.toFixed(2)}, "wght" ${wght.toFixed(0)}`;
+        }
+        if (o.effect === 'auto' && o.axes && o.axes.length) {
+            // Efeito automático para qualquer fonte variável: cada eixo sai do valor
+            // padrão rumo ao lado com mais espaço, num ritmo lento e próprio, e volta
+            // ao padrão quando a tecla é solta. Peso só engorda; tamanho óptico fica.
+            return o.axes.map((ax, j) => {
+                const acima = ax.max - ax.padrao;
+                const abaixo = ax.padrao - ax.min;
+                const span = acima >= abaixo ? acima : -abaixo;
+                const onda = 0.5 + 0.5 * Math.sin(clock * (1.4 + 0.35 * j) + k * 1.1 + i * 0.5 + j * 1.7);
+                let v: number;
+                if (ax.tag === 'opsz') v = ax.padrao;
+                else if (ax.tag === 'wght') v = ax.padrao + span * 0.85 * a;
+                else v = ax.padrao + span * a * (0.35 + 0.65 * onda);
+                v = clamp(v, Math.min(ax.min, ax.max), Math.max(ax.min, ax.max));
+                return `"${ax.tag}" ${v.toFixed(2)}`;
+            }).join(', ');
+        }
         return '';
+    }
+
+    // ---------- estilos das fontes estáticas (efeito 'estilos') ----------
+    // A força do toque escolhe o estilo: repouso no primeiro, toque forte no último.
+    // Segurando, a letra oscila um passo para cá e para lá, e as alternas (itálicos)
+    // entram e saem, cada letra no seu tempo.
+    function familiaPara(s: Nota, i: number, k: number, l: Letra): string {
+        const est = o.estilos;
+        if (!est || !est.familias.length) return o.family;
+        const n = est.familias.length;
+        const a = clamp(l.ax, 0, 1);
+        let idx = Math.round(a * (n - 1));
+        if (a > 0.5) idx += Math.round(0.55 * Math.sin(clock * 4 + k * 1.1 + i * 0.8));
+        idx = Math.max(0, Math.min(n - 1, idx));
+        let fam = est.familias[idx];
+        if (est.alternas && a > 0.4 && Math.sin(clock * 3.2 + k * 1.3 + i * 0.5) > 0) {
+            fam = est.alternas[Math.min(idx, est.alternas.length - 1)] ?? fam;
+        }
+        return `"${fam}", ${o.family}`;
     }
 
     // ---------- quadro ----------
@@ -648,7 +712,10 @@ export function createGelatina(host: HTMLElement, opts: GelatinaOptions, relatio
 
             // confinamento: nada escapa da margem
             const ca = Math.abs(Math.cos(s.cur.rot)), sa = Math.abs(Math.sin(s.cur.rot));
-            const hw0 = inkW * popX / 2, hh0 = inkH * popY / 2;
+            // folga: a letra deformada (ou trocada de estilo/eixo) pode passar um pouco
+            // da caixa medida; a folga garante que nada saia da tela
+            const folga = o.effect ? 1.16 : 1.08;
+            const hw0 = inkW * popX / 2 * folga, hh0 = inkH * popY / 2 * folga;
             const bw0 = hw0 * ca + hh0 * sa + sd, bh0 = hw0 * sa + hh0 * ca + sd;
             const room = Math.min(
                 1,
@@ -682,7 +749,10 @@ export function createGelatina(host: HTMLElement, opts: GelatinaOptions, relatio
                     `translate(${(gl.cx + gl.skx).toFixed(2)}px, ${gl.byTop.toFixed(2)}px) rotate(${f3(gl.rotw)}rad) ` +
                     `matrix(1, 0, ${f3(-gl.skew)}, 1, 0, 0) scale(${f3(gl.sx)}, ${f3(gl.sy)}) ` +
                     `translate(${(l.left - l.w / 2).toFixed(2)}px, ${(-baseline).toFixed(2)}px)`;
-                if (o.effect) el.style.fontVariationSettings = axesFor(s, i, n, l);
+                if (o.effect === 'estilos') {
+                    const fam = familiaPara(s, i, n, l);
+                    if (fam !== l.fam) { l.fam = fam; el.style.fontFamily = fam; }
+                } else if (o.effect) el.style.fontVariationSettings = axesFor(s, i, n, l);
             });
         });
 
@@ -703,6 +773,7 @@ export function createGelatina(host: HTMLElement, opts: GelatinaOptions, relatio
             buildLinks();
             refreshColors();
             const mudouTexto = antes.fontSpec !== o.fontSpec || antes.family !== o.family
+                || (antes.axes ?? []).map(x => x.tag).join() !== (o.axes ?? []).map(x => x.tag).join()
                 || antes.labels.join('|') !== o.labels.join('|') || antes.effect !== o.effect
                 || antes.noteSystem !== o.noteSystem;
             const mudouArranjo = mudouTexto

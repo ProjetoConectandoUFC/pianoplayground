@@ -4,7 +4,10 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import { KEY_MAPPINGS } from '../keyboardInput';
+import { setInputMode } from '../inputMode';
+import { useInputMode } from '../useInputMode';
 import type { TemaUi } from './temaUi';
+import { JOGOS, escolherJogo, useJogoAtual } from './jogoAtual';
 
 // ---------- Ícones (traço, cor do texto) ----------
 
@@ -30,20 +33,104 @@ export const IconeJanela: React.FC = () => (
 
 // ---------- Botão de configurações ----------
 
-/** Fica no canto direito da barra, no mesmo lugar nos três jogos, com o atalho ao lado. */
-export const BotaoConfig: React.FC<{ onClick: () => void; atalho?: string }> = ({ onClick, atalho = 'A' }) => (
+/** Fica no canto direito da barra, no mesmo lugar nos três jogos. A tecla A também abre
+ *  (inclusive com a janela de projeção em foco). */
+export const BotaoConfig: React.FC<{ onClick: () => void }> = ({ onClick }) => (
     <div className="ui-config fixo">
-        <span className="ui-atalho" aria-hidden="true">{atalho}</span>
         <button
             className="ui-btn-config"
             onClick={(e) => { onClick(); e.currentTarget.blur(); }}
-            aria-label={`Configurações (tecla ${atalho})`}
-            title={`Configurações (${atalho})`}
+            aria-label="Configurações (tecla A)"
+            title="Configurações (A)"
         >
             <IconeAjustes />
         </button>
     </div>
 );
+
+// ---------- Botões de sorteio (Piano Gelatina) ----------
+
+export const IconeFonteAleatoria: React.FC = () => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <path d="M3 18l4.5-12L12 18M4.6 14h5.8" />
+        <path d="M15 8h4l-2-2M19 8l-2 2M21 16h-4l2 2M17 16l2-2" />
+    </svg>
+);
+
+export const IconeCoresAleatorias: React.FC = () => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <path d="M12 3a9 9 0 1 0 0 18c1.3 0 2-1 2-2 0-1.4-1.2-1.6-1.2-2.8 0-1 .8-1.7 1.8-1.7H17a4 4 0 0 0 4-4C21 6.3 17 3 12 3z" />
+        <circle cx="7.5" cy="11" r="1.3" fill="currentColor" stroke="none" />
+        <circle cx="10" cy="7" r="1.3" fill="currentColor" stroke="none" />
+        <circle cx="15" cy="7" r="1.3" fill="currentColor" stroke="none" />
+    </svg>
+);
+
+/** Botões redondos da barra, à esquerda do botão de configurações */
+export const BotoesSorteio: React.FC<{ onFonte: () => void; onCores: () => void }> = ({ onFonte, onCores }) => (
+    <div className="ui-sorteio fixo">
+        <button className="ui-btn-config" onClick={(e) => { onFonte(); e.currentTarget.blur(); }}
+            aria-label="Sortear fonte" title="Sortear fonte">
+            <IconeFonteAleatoria />
+        </button>
+        <button className="ui-btn-config" onClick={(e) => { onCores(); e.currentTarget.blur(); }}
+            aria-label="Sortear cores" title="Sortear cores">
+            <IconeCoresAleatorias />
+        </button>
+    </div>
+);
+
+// ---------- Jogo e modo de entrada (primeira seção da gaveta, nos três jogos) ----------
+
+/** Troca de jogo e escolhe entre MIDI e teclado do computador. Antes ficava na barra do topo. */
+export const SecaoJogo: React.FC = () => {
+    const jogo = useJogoAtual();
+    const modo = useInputMode();
+    return (
+        <section className="ui-secao">
+            <h3 className="ui-secao-titulo">Jogo e entrada</h3>
+            <div className="ui-jogos" role="radiogroup" aria-label="Jogo">
+                {JOGOS.map((j) => (
+                    <button
+                        key={j.id}
+                        role="radio"
+                        aria-checked={j.id === jogo}
+                        className={j.id === jogo ? 'ui-jogo on' : 'ui-jogo'}
+                        onClick={(e) => { e.currentTarget.blur(); escolherJogo(j.id); }}
+                    >
+                        <span className="ui-ponto-jogo" data-jogo={j.id} />
+                        <span className="ui-jogo-texto">
+                            <span className="ui-jogo-rotulo">{j.rotulo}</span>
+                            <span className="ui-jogo-dica">{j.dica}</span>
+                        </span>
+                    </button>
+                ))}
+            </div>
+            <div>
+                <span className="ui-rotulo">Tocar com</span>
+                <div className="ui-segmentado" role="group" aria-label="Modo de entrada">
+                    <button
+                        className={modo === 'midi' ? 'ui-segmentado-opcao on' : 'ui-segmentado-opcao'}
+                        aria-pressed={modo === 'midi'}
+                        onClick={(e) => { e.currentTarget.blur(); setInputMode('midi'); }}
+                        title="Teclado MIDI (MPK Mini)"
+                    >
+                        MIDI
+                    </button>
+                    <button
+                        className={modo === 'keyboard' ? 'ui-segmentado-opcao on' : 'ui-segmentado-opcao'}
+                        aria-pressed={modo === 'keyboard'}
+                        onClick={(e) => { e.currentTarget.blur(); setInputMode('keyboard'); }}
+                        title="Teclado do computador (Q a U e Z a M)"
+                    >
+                        Teclado
+                    </button>
+                </div>
+            </div>
+            <p className="ui-dica">Vale para os três jogos.</p>
+        </section>
+    );
+};
 
 // ---------- Gaveta ----------
 
@@ -69,6 +156,7 @@ export const Gaveta: React.FC<GavetaProps> = ({ jogo, onClose, children }) => Re
                     <IconeFechar />
                 </button>
             </div>
+            <SecaoJogo />
             {children}
         </aside>
     </>,
@@ -156,7 +244,8 @@ export const BotaoProjecao: React.FC<{ aberta: boolean; onClick: () => void }> =
         </button>
         <Dica>
             A projeção mostra só o palco, sem a barra e sem a marca. Duplo clique nela
-            (ou F11 no app de computador) liga a tela cheia.
+            (ou F11 no app de computador) liga a tela cheia. Com a projeção em foco, a
+            tecla A abre e fecha estas configurações.
         </Dica>
     </>
 );

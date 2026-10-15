@@ -66,12 +66,12 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
             </Secao>
 
             {/* SEÇÃO 2: Entrada (teclado do computador ou MIDI). O modo é
-                escolhido na barra do topo e vale para os três jogos. */}
+                escolhido em "Jogo e entrada", no começo desta gaveta, e vale para os três jogos. */}
             {isKeyboardMode ? (
                 <Secao titulo="Entrada · teclado do computador">
                     <Dica>
                         Modo Teclado ativo: o MIDI é ignorado. Para usar um aparelho MIDI conectado,
-                        escolha MIDI na barra do topo.
+                        escolha MIDI em "Jogo e entrada", acima.
                     </Dica>
                     <MapaTeclas />
                 </Secao>
@@ -105,7 +105,7 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
                                 : 'Nenhum aparelho MIDI encontrado. Conecte um e recarregue, ou ligue a demonstração para ver o efeito.'}
                         </Dica>
                     )}
-                    <Dica>Sem teclado MIDI? Escolha Teclado na barra do topo para tocar pelo computador.</Dica>
+                    <Dica>Sem teclado MIDI? Escolha Teclado em "Jogo e entrada", acima, para tocar pelo computador.</Dica>
                 </Secao>
             )}
 

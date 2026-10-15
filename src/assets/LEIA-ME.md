@@ -17,23 +17,23 @@ Para acrescentar uma imagem nova, coloque-a na subpasta certa, importe-a no cód
 
 | Arquivo | O que é | Onde aparece |
 |---|---|---|
-| `logo-conectando-azul.png` | Logo Conectando em azul, para fundo claro | Barra do topo, tema claro dos três jogos · `src/App.tsx` |
+| `logo-conectando-azul.png` | Logo Conectando em azul, para fundo claro | Barra do topo, tema claro do Tipográfico e do Gelatina · `src/App.tsx` |
 | `logo-conectando-creme.png` | Logo Conectando em creme, para fundo escuro | Barra do topo, tema escuro dos três jogos · `src/App.tsx` |
 
 ## moldura/
 
 | Arquivo | O que é | Onde aparece |
 |---|---|---|
-| `faixa-maos.png` | Faixa das mãos azul e rosa, com as pontas dos braços cortadas retas para encostar nas bordas da tela | Logo abaixo da barra, tema escuro dos três jogos · `src/shared/ui/FaixaMaos.tsx` |
-| `faixa-maos-clara.png` | Faixa das mãos azul-marinho e azul, braços retos nas pontas | Logo abaixo da barra, tema claro dos três jogos · `src/shared/ui/FaixaMaos.tsx` |
+| `faixa-maos.png` | Faixa das mãos azul e rosa (1974 × 128) | Logo abaixo da barra, tema escuro dos três jogos · `src/shared/ui/FaixaMaos.tsx` |
+| `faixa-maos-clara.png` | Faixa das mãos azul-marinho e azul (1912 × 128) | Logo abaixo da barra, tema claro dos três jogos · `src/shared/ui/FaixaMaos.tsx` |
 
 ## genius/
 
 | Arquivo | O que é | Onde aparece |
 |---|---|---|
 | `laco-esquerda.png` | Laço da marca, canto superior esquerdo, branco com 20% de opacidade no arquivo | Fundo do Genius no tema escuro · `src/genius/GeniusView.tsx` |
-| `laco-esquerda-amarelo.png` | O mesmo laço em amarelo `#F2E299`, chapado | Fundo do Genius no tema claro · `src/genius/GeniusView.tsx` |
+| `laco-esquerda-amarelo.png` | O mesmo laço em amarelo `#F2E299`, chapado | Não usada no app desde que o Genius ficou só com o tema escuro; guardada como original |
 | `laco-direita.png` | Laço da marca, canto inferior direito, branco com 20% de opacidade no arquivo | Fundo do Genius no tema escuro · `src/genius/GeniusView.tsx` |
-| `laco-direita-amarelo.png` | O mesmo laço em amarelo `#F2E299`, chapado | Fundo do Genius no tema claro · `src/genius/GeniusView.tsx` |
+| `laco-direita-amarelo.png` | O mesmo laço em amarelo `#F2E299`, chapado | Não usada no app desde que o Genius ficou só com o tema escuro; guardada como original |
 | `laco-esquerda.svg` | Versão vetorial do laço da esquerda | Não usada no app; guardada como original |
 | `laco-direita.svg` | Versão vetorial do laço da direita | Não usada no app; guardada como original |

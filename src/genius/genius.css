@@ -13,8 +13,8 @@
   --line-blue: #144686;
   --cream: #fcfaf1;
   --muted: #a9aed0;
-  --accent: #fde300;          /* amarelo do título */
-  --demo: #f2e299;            /* tecla: memorização (demonstração) */
+  --accent: #ffd400;          /* amarelo do título */
+  --demo: #fbd84e;            /* tecla: memorização (demonstração); mais vivo que o #F2E299 do protótipo, menos que o título */
   --player: #01a0a0;          /* tecla: reprodução do jogador */
   --good: #43b3b4;            /* turquesa do Dó no Gelatina */
   --bad: #f0848f;             /* rosa do Ré no Gelatina */
@@ -64,21 +64,15 @@
   user-select: none;
   -webkit-user-drag: none;
 }
-/* Tamanhos proporcionais à tela de referência (1920 × 1080). Os laços do
-   tema escuro são brancos com 20% de opacidade; os do claro, amarelos e
-   chapados. Cada tema mostra só o seu par. */
+/* Tamanhos proporcionais à tela de referência (1920 × 1080). Os laços são
+   brancos com 20% de opacidade já no arquivo. */
 .genius-laco-esq { left: 0; top: 0; width: 38.4vw; }
 .genius-laco-dir { right: 0; bottom: 0; width: 19.6vw; }
-.genius-laco.claro { display: none; }
-.genius-root[data-tema="claro"] .genius-laco.escuro { display: none; }
-.genius-root[data-tema="claro"] .genius-laco.claro { display: block; }
-/* no claro, o laço da direita sai um pouco pela borda de baixo, como na referência */
-.genius-root[data-tema="claro"] .genius-laco-dir { bottom: -4vw; }
 
 /* ─── Cabeçalho ───
-   Só o botão de configurações e o atalho A, à direita (a marca fica à esquerda, na barra). A barra do App (seletor de jogo,
-   modo de entrada, status e marca) e a faixa das mãos ficam por cima; a
-   margem de baixo reserva o espaço da faixa. */
+   Só o botão de configurações, à direita (a marca e o status ficam na barra
+   do App). A barra e a faixa das mãos ficam por cima; a margem de baixo
+   reserva o espaço da faixa. */
 .topbar {
   position: relative;
   flex: none;
@@ -150,7 +144,7 @@
 }
 .stage-indicator.hidden { display: none; }
 .stage-indicator.lv1 { color: var(--good); border-color: rgba(67, 179, 180, 0.6); }
-.stage-indicator.lv2 { color: var(--accent); border-color: rgba(253, 227, 0, 0.55); }
+.stage-indicator.lv2 { color: var(--accent); border-color: rgba(255, 212, 0, 0.55); }
 .stage-indicator.lv3 { color: var(--pink); border-color: rgba(240, 164, 158, 0.6); }
 
 .start-btn {
@@ -168,7 +162,7 @@
 .start-btn:disabled { opacity: 0.35; cursor: not-allowed; }
 .start-btn:not(:disabled):hover {
   transform: translateY(-1px);
-  box-shadow: 0 8px 24px rgba(253, 227, 0, 0.25);
+  box-shadow: 0 8px 24px rgba(255, 212, 0, 0.25);
 }
 .start-btn:not(:disabled):active { transform: translateY(1px); }
 
@@ -231,7 +225,7 @@
 .key.pressed.white,
 .key.pressed.black {
   background-color: var(--demo);
-  border-color: #c9b765;
+  border-color: #d4ae1c;
 }
 .key.pressed.white {
   transform: translateY(3px) scaleY(0.99);
@@ -332,7 +326,7 @@
   font-weight: 700;
   line-height: 1;
   color: var(--accent);
-  text-shadow: 0 0 60px rgba(253, 227, 0, 0.35);
+  text-shadow: 0 0 60px rgba(255, 212, 0, 0.35);
   animation: countdownPop 700ms ease-out forwards;
   font-variant-numeric: tabular-nums;
 }
@@ -351,7 +345,7 @@
   --line-blue: #2a66b3;
   --cream: #fcfaf1;
   --muted: #a9aed0;
-  --accent: #fde300;
+  --accent: #ffd400;
   position: fixed;
   inset: 0;
   box-sizing: border-box;
@@ -415,8 +409,8 @@
   transition: background 120ms ease, border-color 120ms ease, transform 120ms ease;
 }
 .picker-item:hover {
-  background: rgba(253, 227, 0, 0.08);
-  border-color: rgba(253, 227, 0, 0.45);
+  background: rgba(255, 212, 0, 0.08);
+  border-color: rgba(255, 212, 0, 0.45);
   transform: translateX(3px);
 }
 .picker-item .picker-meta {
@@ -538,21 +532,21 @@
   animation: fadeIn 220ms ease, winPulse 2.4s ease-in-out 220ms infinite;
 }
 .overlay.champion {
-  background: radial-gradient(circle at 50% 50%, rgba(253, 227, 0, 0.3), rgba(22, 27, 61, 0.94) 70%);
+  background: radial-gradient(circle at 50% 50%, rgba(255, 212, 0, 0.3), rgba(22, 27, 61, 0.94) 70%);
   animation: fadeIn 220ms ease, championPulse 1.8s ease-in-out 220ms infinite;
 }
 .overlay.win.champion .overlay-card {
-  border-color: rgba(253, 227, 0, 0.75);
-  box-shadow: 0 0 90px rgba(253, 227, 0, 0.3), 0 30px 80px rgba(0, 0, 0, 0.45);
+  border-color: rgba(255, 212, 0, 0.75);
+  box-shadow: 0 0 90px rgba(255, 212, 0, 0.3), 0 30px 80px rgba(0, 0, 0, 0.45);
 }
 .overlay.champion .overlay-title {
   color: var(--accent);
-  text-shadow: 0 0 28px rgba(253, 227, 0, 0.5);
+  text-shadow: 0 0 28px rgba(255, 212, 0, 0.5);
   animation: championTitlePulse 1.8s ease-in-out 700ms infinite;
 }
 @keyframes championTitlePulse {
-  0%, 100% { transform: scale(1); text-shadow: 0 0 28px rgba(253, 227, 0, 0.5); }
-  50%      { transform: scale(1.045); text-shadow: 0 0 48px rgba(253, 227, 0, 0.85), 0 0 20px rgba(255, 255, 255, 0.35); }
+  0%, 100% { transform: scale(1); text-shadow: 0 0 28px rgba(255, 212, 0, 0.5); }
+  50%      { transform: scale(1.045); text-shadow: 0 0 48px rgba(255, 212, 0, 0.85), 0 0 20px rgba(255, 255, 255, 0.35); }
 }
 .tier-badge {
   display: inline-block;
@@ -567,11 +561,11 @@
 }
 .tier-badge.t0 { background: rgba(240, 132, 143, 0.16); color: var(--bad); border: 2px solid rgba(240, 132, 143, 0.5); }
 .tier-badge.t1 { background: rgba(67, 179, 180, 0.16); color: var(--good); border: 2px solid rgba(67, 179, 180, 0.55); }
-.tier-badge.t2 { background: rgba(242, 226, 153, 0.14); color: var(--demo); border: 2px solid rgba(242, 226, 153, 0.55); }
+.tier-badge.t2 { background: rgba(251, 216, 78, 0.14); color: var(--demo); border: 2px solid rgba(251, 216, 78, 0.55); }
 .tier-badge.t3 { background: var(--accent); color: var(--navy); border: 2px solid var(--accent); }
 @keyframes championPulse {
-  0%, 100% { background: radial-gradient(circle at 50% 50%, rgba(253, 227, 0, 0.26), rgba(22, 27, 61, 0.94) 70%); }
-  50%      { background: radial-gradient(circle at 50% 50%, rgba(253, 227, 0, 0.4), rgba(22, 27, 61, 0.94) 60%); }
+  0%, 100% { background: radial-gradient(circle at 50% 50%, rgba(255, 212, 0, 0.26), rgba(22, 27, 61, 0.94) 70%); }
+  50%      { background: radial-gradient(circle at 50% 50%, rgba(255, 212, 0, 0.4), rgba(22, 27, 61, 0.94) 60%); }
 }
 .overlay.lose {
   background: radial-gradient(circle at 50% 50%, rgba(240, 132, 143, 0.24), rgba(22, 27, 61, 0.95) 70%);
@@ -662,124 +656,71 @@
   .key, .key.pressed, .key.player-pressed { transition-duration: 1ms; }
 }
 
-/* ─── Tema claro ───
-   Creme (o mesmo do Gelatina claro) com ondas num tom mais escuro, laços
-   amarelos, tinta azul-marinho e título laranja. A resposta do jogador fica
-   laranja (#E9573B, o Fá do Gelatina) no lugar do turquesa. A tela de jogo e
-   as janelas por cima dela (contagem, resultado, lista de melodias e
-   observador) seguem as mesmas cores.
-   Paleta: creme #F6F6C7 · creme claro #FBFAE8 · azul-marinho #0E2366 ·
-   laranja #C94905 · azul #0175C5 · amarelo dos laços #F2E299. */
-.genius-root[data-tema="claro"] {
-  --navy: #f6f6c7;        /* fundo */
-  --navy-2: #fbfae8;      /* cartões */
-  --line-blue: #0e2366;   /* contornos */
-  --cream: #0e2366;       /* texto */
-  --muted: #4a5689;
-  --accent: #c94905;      /* título, pontuação e estrelas */
-  --player: #e9573b;      /* tecla do jogador */
-  --good: #0f7f80;
-  --bad: #b4232f;
-  --pink: #b4232f;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='184' height='140' viewBox='0 0 184 140'%3E%3Cg fill='none' stroke='%23d9d9a6' stroke-opacity='.55' stroke-width='4' stroke-linecap='round'%3E%3Cpath d='M-2 17.5q25-12 48 0t46 0t46 0t46 0'/%3E%3Cpath d='M-2 52.5q25-12 48 0t46 0t46 0t46 0'/%3E%3Cpath d='M-2 87.5q25-12 48 0t46 0t46 0t46 0'/%3E%3Cpath d='M-2 122.5q25-12 48 0t46 0t46 0t46 0'/%3E%3C/g%3E%3C/svg%3E");
+/* ─── Teste: piano em perspectiva ───
+   Ligado pelo interruptor "Piano em perspectiva" da gaveta (data-perspectiva
+   no .genius-root). O piano deita num chão em perspectiva, que some ao
+   longe (sem linha de horizonte desenhada); a estrutura das teclas, as cores e as partículas são as mesmas,
+   só o plano do piano é girado. Desligado, tudo volta ao piano chapado. */
+.genius-chao { display: none; }
+
+.genius-root[data-perspectiva="sim"] {
+  /* Até onde vai o chão, medido do pé da tela */
+  --chao-h: 46vh;
 }
 
-/* Palco: botão Iniciar em azul-marinho (o laranja fica para o título) */
-.genius-root[data-tema="claro"] .start-btn { background: #0e2366; color: #f6f6c7; }
-.genius-root[data-tema="claro"] .start-btn:not(:disabled):hover { box-shadow: 0 8px 24px rgba(14, 35, 102, 0.25); }
-.genius-root[data-tema="claro"] .melody-name { color: #0e2366; }
-.genius-root[data-tema="claro"] .stage-indicator.lv1 { border-color: rgba(15, 127, 128, 0.55); }
-.genius-root[data-tema="claro"] .stage-indicator.lv2 { border-color: rgba(201, 73, 5, 0.5); }
-.genius-root[data-tema="claro"] .stage-indicator.lv3 { border-color: rgba(180, 35, 47, 0.5); }
-.genius-root[data-tema="claro"] .message.pulse { animation-name: messagePulseClaro; }
-@keyframes messagePulseClaro {
-  0%   { transform: scale(0.92); opacity: 0.5; color: #e9573b; }
-  60%  { transform: scale(1.06); opacity: 1; color: #b8402a; }
-  100% { transform: scale(1); opacity: 1; }
+/* Chão: grade azul da moldura, que some ao longe */
+.genius-root[data-perspectiva="sim"] .genius-chao {
+  display: block;
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: var(--chao-h);
+  perspective: 520px;
+  perspective-origin: 50% 0%;
+  overflow: hidden;
+  pointer-events: none;
 }
+.genius-chao-plano {
+  position: absolute;
+  left: -60%;
+  right: -60%;
+  top: 0;
+  height: 300%;
+  transform-origin: 50% 0%;
+  transform: rotateX(72deg);
+  background-image:
+    linear-gradient(90deg, rgba(42, 102, 179, 0.32) 2px, transparent 2px),
+    linear-gradient(0deg, rgba(42, 102, 179, 0.32) 2px, transparent 2px);
+  background-size: 120px 120px;
+  background-position: center top;
+  -webkit-mask-image: linear-gradient(180deg, transparent 0%, #000 22%, #000 100%);
+  mask-image: linear-gradient(180deg, transparent 0%, #000 22%, #000 100%);
+}
+/* O piano deita: gira para trás pela borda de baixo, com o ponto de fuga
+   lá em cima. Fica maior porque o giro o encurta. */
+.genius-root[data-perspectiva="sim"] .piano-wrap {
+  padding: 0 0 3vh;
+  perspective: 1000px;
+  perspective-origin: 50% 0%;
+}
+.genius-root[data-perspectiva="sim"] .piano {
+  width: clamp(min(98vw, 900px), 92vw, 1760px);
+  height: clamp(240px, 44vh, 520px);
+  transform-origin: 50% 100%;
+  transform: rotateX(46deg);
+  border-radius: 6px;
+  box-shadow:
+    0 2px 0 rgba(255, 255, 255, 0.06) inset,
+    0 40px 60px rgba(0, 0, 0, 0.45);
+  transition: transform 0.6s cubic-bezier(0.2, 0.7, 0.2, 1), width 0.6s ease, height 0.6s ease;
+}
+/* As letras do teclado ficam um pouco maiores para compensar o encurtamento */
+.genius-root[data-perspectiva="sim"] .key.white .key-label { font-size: 20px; bottom: 16px; }
+.genius-root[data-perspectiva="sim"] .key.black .key-label { font-size: 15px; bottom: 12px; }
+/* O título e as mensagens sobem um pouco, para o piano deitado caber */
+.genius-root[data-perspectiva="sim"] .stage { justify-content: flex-start; padding-top: 4vh; }
 
-/* Piano sem contorno; a resposta do jogador em laranja */
-.genius-root[data-tema="claro"] .piano {
-  box-shadow: 0 30px 80px rgba(14, 35, 102, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+@media (prefers-reduced-motion: reduce) {
+  .genius-root[data-perspectiva="sim"] .piano { transition: none; }
 }
-.genius-root[data-tema="claro"] .key.player-pressed.white,
-.genius-root[data-tema="claro"] .key.player-pressed.black { border-color: #b8402a; }
-.genius-root[data-tema="claro"] .key.player-pressed .key-label { color: #ffffff; }
-
-/* Contagem 3, 2, 1 */
-.genius-root[data-tema="claro"] .countdown { background: rgba(246, 246, 199, 0.6); }
-.genius-root[data-tema="claro"] .countdown-num { text-shadow: 0 0 50px rgba(201, 73, 5, 0.25); }
-
-/* Resultado (vitória, campeão e derrota) */
-.genius-root[data-tema="claro"] .overlay { background: rgba(246, 246, 199, 0.92); }
-.genius-root[data-tema="claro"] .overlay.win {
-  background: radial-gradient(circle at 50% 50%, rgba(1, 117, 197, 0.16), rgba(246, 246, 199, 0.95) 70%);
-  animation: fadeIn 220ms ease, winPulseClaro 2.4s ease-in-out 220ms infinite;
-}
-.genius-root[data-tema="claro"] .overlay.champion {
-  background: radial-gradient(circle at 50% 50%, rgba(242, 226, 153, 0.7), rgba(246, 246, 199, 0.95) 70%);
-  animation: fadeIn 220ms ease, championPulseClaro 1.8s ease-in-out 220ms infinite;
-}
-.genius-root[data-tema="claro"] .overlay.lose {
-  background: radial-gradient(circle at 50% 50%, rgba(180, 35, 47, 0.14), rgba(246, 246, 199, 0.95) 70%);
-}
-@keyframes winPulseClaro {
-  0%, 100% { background: radial-gradient(circle at 50% 50%, rgba(1, 117, 197, 0.16), rgba(246, 246, 199, 0.95) 70%); }
-  50%      { background: radial-gradient(circle at 50% 50%, rgba(1, 117, 197, 0.28), rgba(246, 246, 199, 0.95) 65%); }
-}
-@keyframes championPulseClaro {
-  0%, 100% { background: radial-gradient(circle at 50% 50%, rgba(242, 226, 153, 0.7), rgba(246, 246, 199, 0.95) 70%); }
-  50%      { background: radial-gradient(circle at 50% 50%, rgba(201, 73, 5, 0.22), rgba(246, 246, 199, 0.95) 60%); }
-}
-.genius-root[data-tema="claro"] .overlay-card { box-shadow: 0 30px 80px rgba(14, 35, 102, 0.18); }
-.genius-root[data-tema="claro"] .overlay.win .overlay-card {
-  border-color: #0175c5;
-  box-shadow: 0 0 60px rgba(1, 117, 197, 0.2), 0 30px 80px rgba(14, 35, 102, 0.18);
-}
-.genius-root[data-tema="claro"] .overlay.win.champion .overlay-card {
-  border-color: #c94905;
-  box-shadow: 0 0 70px rgba(201, 73, 5, 0.22), 0 30px 80px rgba(14, 35, 102, 0.18);
-}
-.genius-root[data-tema="claro"] .overlay.lose .overlay-card {
-  border-color: rgba(180, 35, 47, 0.6);
-  box-shadow: 0 0 50px rgba(180, 35, 47, 0.15), 0 30px 80px rgba(14, 35, 102, 0.18);
-}
-.genius-root[data-tema="claro"] .overlay-title.win { color: #0175c5; }
-.genius-root[data-tema="claro"] .overlay.champion .overlay-title { color: #c94905; text-shadow: none; animation-name: championTitlePulseClaro; }
-@keyframes championTitlePulseClaro {
-  0%, 100% { transform: scale(1); }
-  50%      { transform: scale(1.045); }
-}
-.genius-root[data-tema="claro"] .tier-badge.t0 { background: rgba(180, 35, 47, 0.08); color: #b4232f; border-color: rgba(180, 35, 47, 0.45); }
-.genius-root[data-tema="claro"] .tier-badge.t1 { background: rgba(15, 127, 128, 0.08); color: #0f7f80; border-color: rgba(15, 127, 128, 0.45); }
-.genius-root[data-tema="claro"] .tier-badge.t2 { background: #f2e299; color: #0e2366; border-color: #d9c46a; }
-.genius-root[data-tema="claro"] .tier-badge.t3 { background: #c94905; color: #fbfae8; border-color: #c94905; }
-
-/* Observador (console do desenvolvedor) */
-.genius-root[data-tema="claro"] .debug-panel {
-  background: rgba(251, 250, 232, 0.97);
-  border-color: rgba(14, 35, 102, 0.2);
-  box-shadow: 0 12px 40px rgba(14, 35, 102, 0.2);
-}
-.genius-root[data-tema="claro"] .debug-header { border-bottom-color: rgba(14, 35, 102, 0.12); }
-.genius-root[data-tema="claro"] .debug-btn { background: rgba(14, 35, 102, 0.06); border-color: rgba(14, 35, 102, 0.15); color: #0e2366; }
-.genius-root[data-tema="claro"] .debug-line.info    { color: #33415c; }
-.genius-root[data-tema="claro"] .debug-line.state   { color: #0e2366; }
-.genius-root[data-tema="claro"] .debug-line.midi    { color: #8a5a00; }
-.genius-root[data-tema="claro"] .debug-line.midi-off{ color: rgba(138, 90, 0, 0.6); }
-
-/* Lista de melodias: fica no <body> (fora do .genius-root), por isso o tema
-   claro dela é escolhido pelos atributos do <html> que a moldura usa. */
-:root[data-ui-tema="claro"][data-ui-jogo="genius"] .melody-picker {
-  --navy-2: #fbfae8;
-  --line-blue: #0e2366;
-  --cream: #0e2366;
-  --muted: #4a5689;
-  --accent: #c94905;
-  background: rgba(246, 246, 199, 0.88);
-}
-:root[data-ui-tema="claro"][data-ui-jogo="genius"] .melody-picker-card { box-shadow: 0 30px 80px rgba(14, 35, 102, 0.2); }
-:root[data-ui-tema="claro"][data-ui-jogo="genius"] .picker-item { background: rgba(14, 35, 102, 0.04); border-color: rgba(14, 35, 102, 0.15); }
-:root[data-ui-tema="claro"][data-ui-jogo="genius"] .picker-item:hover { background: rgba(201, 73, 5, 0.08); border-color: rgba(201, 73, 5, 0.5); }
-:root[data-ui-tema="claro"][data-ui-jogo="genius"] .picker-footer { border-top-color: rgba(14, 35, 102, 0.12); }
-:root[data-ui-tema="claro"][data-ui-jogo="genius"] .melody-picker .debug-btn { background: rgba(14, 35, 102, 0.06); border-color: rgba(14, 35, 102, 0.15); color: #0e2366; }

@@ -21,8 +21,37 @@
       @font-face{font-family:"Anak Gedong";src:local("Anak Gedong"),local("AnakGedong"),
         url("fontes/AnakGedong.woff2") format("woff2");font-display:swap;}
 
-      /* Fontes variáveis com efeito próprio (SIL OFL 1.1). Os eixos são animados
-         pelo motor da gelatina: MORF na Kablammo; BNCE, INFM e peso na Shantell Sans. */
+      /* Fontes variáveis com efeito próprio ("Fontes mutáveis" na lista do Gelatina).
+         Os eixos são animados pelo motor da gelatina: MORF na Kablammo; BNCE, INFM e
+         peso na Shantell Sans; XROT e YROT na Tilt Warp; ELSH, ELGR e peso na Handjet (todas
+         SIL OFL 1.1). A Graduate usa o efeito automático: os eixos são lidos do arquivo no
+         build e ela só aparece no painel se o arquivo estiver em public/fontes. */
+      @font-face{font-family:"Tilt Warp";src:url("fontes/TiltWarp.woff2") format("woff2");font-display:swap;}
+      @font-face{font-family:"Handjet";src:url("fontes/Handjet.woff2") format("woff2");font-weight:100 900;font-display:swap;}
+      /* Cheee e Camelion (OH no Type, demo) e Hela (Renegade, trial): fontes estáticas, um
+         estilo por família. O motor da gelatina troca de estilo ao tocar (efeito 'estilos').
+         Os arquivos ficam nas pastas de teste que vieram dos autores, dentro de public/fontes. */
+      @font-face{font-family:"Cheee Sticky";src:url("fontes/OH no Type Company Trials b747c74f-f760-4268-99d1-811535e961c3/Cheee/CheeeDemo-Sticky.otf") format("opentype");font-display:block;}
+      @font-face{font-family:"Cheee Wowie";src:url("fontes/OH no Type Company Trials b747c74f-f760-4268-99d1-811535e961c3/Cheee/CheeeDemo-Wowie.otf") format("opentype");font-display:block;}
+      @font-face{font-family:"Cheee Tbone";src:url("fontes/OH no Type Company Trials b747c74f-f760-4268-99d1-811535e961c3/Cheee/CheeeDemo-Tbone.otf") format("opentype");font-display:block;}
+      @font-face{font-family:"Cheee Jimbo";src:url("fontes/OH no Type Company Trials b747c74f-f760-4268-99d1-811535e961c3/Cheee/CheeeDemo-Jimbo.otf") format("opentype");font-display:block;}
+      @font-face{font-family:"Cheee Choy";src:url("fontes/OH no Type Company Trials b747c74f-f760-4268-99d1-811535e961c3/Cheee/CheeeDemo-Choy.otf") format("opentype");font-display:block;}
+      @font-face{font-family:"Cheee Oyen";src:url("fontes/OH no Type Company Trials b747c74f-f760-4268-99d1-811535e961c3/Cheee/CheeeDemo-Oyen.otf") format("opentype");font-display:block;}
+      @font-face{font-family:"Camelion Regular";src:url("fontes/OH no Type Company Trials b747c74f-f760-4268-99d1-811535e961c3/Camelion/CamelionDemo-Regular.otf") format("opentype");font-display:block;}
+      @font-face{font-family:"Camelion Medium";src:url("fontes/OH no Type Company Trials b747c74f-f760-4268-99d1-811535e961c3/Camelion/CamelionDemo-Medium.otf") format("opentype");font-display:block;}
+      @font-face{font-family:"Camelion Bold";src:url("fontes/OH no Type Company Trials b747c74f-f760-4268-99d1-811535e961c3/Camelion/CamelionDemo-Bold.otf") format("opentype");font-display:block;}
+      @font-face{font-family:"Camelion ExtraBold";src:url("fontes/OH no Type Company Trials b747c74f-f760-4268-99d1-811535e961c3/Camelion/CamelionDemo-ExtraBold.otf") format("opentype");font-display:block;}
+      @font-face{font-family:"Camelion Italic";src:url("fontes/OH no Type Company Trials b747c74f-f760-4268-99d1-811535e961c3/Camelion/CamelionDemo-Italic.otf") format("opentype");font-display:block;}
+      @font-face{font-family:"Camelion MediumItalic";src:url("fontes/OH no Type Company Trials b747c74f-f760-4268-99d1-811535e961c3/Camelion/CamelionDemo-MediumItalic.otf") format("opentype");font-display:block;}
+      @font-face{font-family:"Camelion BoldItalic";src:url("fontes/OH no Type Company Trials b747c74f-f760-4268-99d1-811535e961c3/Camelion/CamelionDemo-BoldItalic.otf") format("opentype");font-display:block;}
+      @font-face{font-family:"Camelion ExtraBoldItalic";src:url("fontes/OH no Type Company Trials b747c74f-f760-4268-99d1-811535e961c3/Camelion/CamelionDemo-ExtraBoldItalic.otf") format("opentype");font-display:block;}
+      @font-face{font-family:"Hela 300";src:url("fontes/renegade_all_trials/RF_Hela TRIAL/RFHelaTRIAL-300.otf") format("opentype");font-display:block;}
+      @font-face{font-family:"Hela 350";src:url("fontes/renegade_all_trials/RF_Hela TRIAL/RFHelaTRIAL-350.otf") format("opentype");font-display:block;}
+      @font-face{font-family:"Hela 400";src:url("fontes/renegade_all_trials/RF_Hela TRIAL/RFHelaTRIAL-400.otf") format("opentype");font-display:block;}
+      @font-face{font-family:"Hela 500";src:url("fontes/renegade_all_trials/RF_Hela TRIAL/RFHelaTRIAL-500.otf") format("opentype");font-display:block;}
+      @font-face{font-family:"Hela 600";src:url("fontes/renegade_all_trials/RF_Hela TRIAL/RFHelaTRIAL-600.otf") format("opentype");font-display:block;}
+      @font-face{font-family:"Hela 700";src:url("fontes/renegade_all_trials/RF_Hela TRIAL/RFHelaTRIAL-700.otf") format("opentype");font-display:block;}
+      @font-face{font-family:"Graduate";src:url("fontes/GraduateGX.woff2") format("woff2");font-display:swap;}
       @font-face{font-family:"Kablammo";src:url("fontes/Kablammo.woff2") format("woff2");font-display:swap;}
       @font-face{font-family:"Shantell Sans";src:url("fontes/ShantellSans.woff2") format("woff2");
         font-weight:300 800;font-display:swap;}

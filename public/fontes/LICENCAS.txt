@@ -14,6 +14,27 @@ Licença SIL Open Font License 1.1 (textos completos em OFL-Kablammo.txt e
 OFL-ShantellSans.txt). Kablammo: Vectro Type Foundry. Shantell Sans: Shantell
 Martin e Arrow Type. Arquivos do subconjunto latino distribuído pelo Fontsource.
 
+Tilt Warp e Handjet
+Licença SIL Open Font License 1.1 (textos completos nos arquivos OFL-*.txt
+correspondentes). Tilt Warp: Andy Clymer. Handjet: Rosetta e David Březina.
+Arquivos variáveis do repositório google/fonts, reduzidos ao subconjunto latino
+e convertidos para woff2.
+
+Cheee e Camelion (demo, OH no Type Company)
+Licença de demonstração (OH-no-Type-Co-Demo-License.pdf, na pasta do download):
+"Demo fonts may be used for testing purposes only. This includes presentations,
+and experiments. Any professional or consumer facing projects require the
+purchase of a standard license." Para usar no app em evento ou exposição
+aberta ao público, é preciso comprar a licença.
+
+Hela (trial, Renegade Fonts / Jan Charvát)
+Licença de teste (How_use_trial_fonts.txt, na pasta do download): uso permitido
+apenas sem fins comerciais e sem ganhos ou benefícios com o trabalho. A licença
+completa fica em renegadefonts.com/texts/EULA.txt.
+
+Graduate (não incluída)
+Versão variável da Font Bureau, sem download público.
+
 Isometra, Righteous, Caprasimo e Berkshire Swash
 Licença SIL Open Font License 1.1 (textos completos nos arquivos OFL-*.txt
 correspondentes). Isometra: Ben Dunkle (The Isometra Project Authors).

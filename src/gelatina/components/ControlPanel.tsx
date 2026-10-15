@@ -2,12 +2,19 @@ import React, { useEffect, useState } from 'react';
 import { AppSettings, KnobValues, MidiDevice, NoteSystem } from '../types';
 import {
     AKAI_MPK_MINI_KNOBS, FONT_OPTIONS, KNOB_MAPPINGS, NOTE_NAME_SYSTEMS,
-    fontOf, fontSpecOf, fontLacksAccents,
+    fontOf, fontSpecOf, fontLacksAccents, FontOption,
 } from '../constants';
 import {
     BotaoProjecao, Campo, Deslizante, Dica, Gaveta, Interruptor, MapaTeclas,
     MedidorKnob, Secao, SeletorTema,
 } from '../../shared/ui/componentes';
+
+
+/** Categorias da lista de fontes: as fontes de sempre e as mutáveis */
+const GRUPOS_FONTES: { rotulo: string; filtro: (f: FontOption) => boolean }[] = [
+    { rotulo: 'Fontes', filtro: f => !f.effect },
+    { rotulo: 'Fontes mutáveis', filtro: f => !!f.effect },
+];
 
 interface ControlPanelProps {
     inputs: MidiDevice[];
@@ -91,13 +98,13 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
                 />
             </Secao>
 
-            {/* O modo (MIDI ou Teclado) é escolhido na barra do topo e vale
+            {/* O modo (MIDI ou Teclado) é escolhido em "Jogo e entrada", no começo da gaveta, e vale
                 para os três jogos do Piano Interativo. */}
             {isKeyboardMode ? (
                 <Secao titulo="Entrada · teclado do computador">
                     <Dica>
                         Modo Teclado ativo: o MIDI é ignorado. Para usar o teclado MIDI, escolha
-                        MIDI na barra do topo. Segure a tecla para manter a nota.
+                        MIDI em "Jogo e entrada", acima. Segure a tecla para manter a nota.
                     </Dica>
                     <MapaTeclas />
                     <Dica>O sustenido pinta a palavra da nota natural com a cor escolhida abaixo.</Dica>
@@ -120,7 +127,7 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
                             </select>
                         </Campo>
                     )}
-                    <Dica>Sem teclado MIDI? Escolha Teclado na barra do topo para tocar pelo computador.</Dica>
+                    <Dica>Sem teclado MIDI? Escolha Teclado em "Jogo e entrada", acima, para tocar pelo computador.</Dica>
                 </Secao>
             )}
 
@@ -146,12 +153,18 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
                         value={settings.fontKey}
                         onChange={e => onSettingsChange({ fontKey: e.target.value })}
                     >
-                        {FONT_OPTIONS.map(f => (
-                            <option key={f.key} value={f.key}>
-                                {f.name}
-                                {f.accents === false ? ' · sem acentos' : ''}
-                                {ausentes.has(f.key) ? ' · não encontrada' : ''}
-                            </option>
+                        {/* Duas categorias: as fontes de sempre e as mutáveis (variáveis
+                            com efeito próprio, cujos eixos mudam ao tocar) */}
+                        {GRUPOS_FONTES.map(g => (
+                            <optgroup key={g.rotulo} label={g.rotulo}>
+                                {FONT_OPTIONS.filter(g.filtro).sort((x, y) => x.name.localeCompare(y.name)).map(f => (
+                                    <option key={f.key} value={f.key}>
+                                        {f.name}
+                                        {f.accents === false ? ' · sem acentos' : ''}
+                                        {ausentes.has(f.key) ? ' · não encontrada' : ''}
+                                    </option>
+                                ))}
+                            </optgroup>
                         ))}
                     </select>
                 </Campo>

@@ -1,3 +1,4 @@
+import eixosLidos from 'virtual:eixos-fontes';
 import { AppSettings, ThemeName } from './types';
 
 // ==========================================
@@ -92,7 +93,14 @@ export interface FontOption {
     arquivo?: boolean;
     /** Fontes variáveis com efeito próprio: os eixos mudam ao tocar,
      *  no lugar de esticar e entortar a letra. */
-    effect?: 'kablammo' | 'shantell';
+    effect?: 'kablammo' | 'shantell' | 'tiltwarp' | 'handjet' | 'auto' | 'estilos';
+    /** Efeito 'estilos' (fontes estáticas com vários estilos): famílias em ordem,
+     *  do estilo em repouso ao mais forte; a letra troca de estilo conforme o toque.
+     *  alternas: estilos irmãos (ex.: itálicos) que entram e saem enquanto segura. */
+    estilos?: { familias: string[]; alternas?: string[] };
+    /** Efeito 'auto': nome do arquivo em public/fontes. Os eixos são lidos dele no build
+     *  e a fonte só aparece na lista se o arquivo estiver lá. */
+    arquivoNome?: string;
     /** Peso usado para medir a letra (fontes que engordam ao tocar) */
     measureWeight?: number;
     /** Uma linha explicando o efeito próprio, mostrada no painel */
@@ -102,7 +110,7 @@ export interface FontOption {
     accents?: boolean;
 }
 
-export const FONT_OPTIONS: FontOption[] = [
+const TODAS_AS_FONTES: FontOption[] = [
     { key: 'alfa',         name: 'Alfa Slab One',     family: '"Alfa Slab One"',    weight: 400 },
     { key: 'anakgedong',   name: 'Anak Gedong',       family: '"Anak Gedong"',      weight: 400, arquivo: true, accents: false },
     { key: 'bagel',        name: 'Bagel Fat One',     family: '"Bagel Fat One"',    weight: 400 },
@@ -113,6 +121,10 @@ export const FONT_OPTIONS: FontOption[] = [
     { key: 'bungee',       name: 'Bungee',            family: '"Bungee"',           weight: 400 },
     { key: 'caprasimo',    name: 'Caprasimo',         family: '"Caprasimo"',        weight: 400, arquivo: true },
     { key: 'cherry',       name: 'Cherry Bomb One',   family: '"Cherry Bomb One"',  weight: 400 },
+    {
+        key: 'handjet', name: 'Handjet', family: '"Handjet"', weight: 400, arquivo: true, effect: 'handjet',
+        effectHint: 'Efeito próprio: as letras são feitas de pontinhos que trocam de formato e engordam ao tocar (eixos ELSH, ELGR e peso).',
+    },
     { key: 'howdybun',     name: 'Howdybun',          family: '"Howdybun"',         weight: 400, arquivo: true, accents: false },
     { key: 'isometra',     name: 'Isometra',          family: '"Isometra"',         weight: 400, arquivo: true },
     {
@@ -131,8 +143,52 @@ export const FONT_OPTIONS: FontOption[] = [
         effectHint: 'Efeito próprio: ao tocar, as letras quicam, ficam com traço de mão e engordam (eixos BNCE, INFM e peso).',
     },
     { key: 'shrikhand',    name: 'Shrikhand',         family: '"Shrikhand"',        weight: 400 },
+    {
+        key: 'tiltwarp', name: 'Tilt Warp', family: '"Tilt Warp"', weight: 400, arquivo: true, effect: 'tiltwarp',
+        effectHint: 'Efeito próprio: ao tocar, as letras giram em 3D, balançando para os lados e para frente (eixos XROT e YROT).',
+    },
     { key: 'titan',        name: 'Titan One',         family: '"Titan One"',        weight: 400 },
+    // Fontes mutáveis com efeito automático: basta o arquivo estar em public/fontes
+    // com este nome (e o @font-face no index.html) para elas entrarem na lista.
+    { key: 'graduate', name: 'Graduate', family: '"Graduate"', weight: 400, arquivo: true, effect: 'auto', arquivoNome: 'GraduateGX.woff2' },
+    // Fontes mutáveis feitas de estilos estáticos (versões de teste/trial que estão
+    // em public/fontes, veja LICENCAS.txt). A letra troca de estilo ao tocar.
+    {
+        key: 'cheee', name: 'Cheee (demo)', family: '"Cheee Sticky"', weight: 400, arquivo: true, effect: 'estilos', accents: false,
+        estilos: { familias: ['Cheee Sticky', 'Cheee Wowie', 'Cheee Tbone', 'Cheee Jimbo', 'Cheee Choy', 'Cheee Oyen'] },
+        effectHint: 'Efeito próprio: ao tocar, as letras incham como massa de pão, passando por 6 estilos da Cheee. Versão de demonstração, sem acentos.',
+    },
+    {
+        key: 'hela', name: 'Hela (trial)', family: '"Hela 300"', weight: 400, arquivo: true, effect: 'estilos',
+        estilos: { familias: ['Hela 300', 'Hela 350', 'Hela 400', 'Hela 500', 'Hela 600', 'Hela 700'] },
+        effectHint: 'Efeito próprio: ao tocar, as letras engordam peso a peso (Hela 300 a 700), cada letra no seu tempo.',
+    },
+    {
+        key: 'camelion', name: 'Camelion (demo)', family: '"Camelion Regular"', weight: 400, arquivo: true, effect: 'estilos', accents: false,
+        estilos: { familias: ['Camelion Regular', 'Camelion Medium', 'Camelion Bold', 'Camelion ExtraBold'], alternas: ['Camelion Italic', 'Camelion MediumItalic', 'Camelion BoldItalic', 'Camelion ExtraBoldItalic'] },
+        effectHint: 'Efeito próprio: ao tocar, as letras engordam e, segurando a tecla, balançam entre o reto e o itálico. Versão de demonstração, sem acentos.',
+    },
 ];
+
+/** Eixos lidos dos arquivos de public/fontes no build (vite-eixos-fontes.ts) */
+export type EixoFonte = { tag: string; min: number; padrao: number; max: number };
+const EIXOS: Record<string, EixoFonte[]> = eixosLidos;
+
+/** Eixos da fonte com efeito automático (vazio para as demais) */
+export const eixosDaFonte = (key: string): EixoFonte[] => {
+    const f = TODAS_AS_FONTES.find(o => o.key === key);
+    return f?.effect === 'auto' && f.arquivoNome ? EIXOS[f.arquivoNome] ?? [] : [];
+};
+
+/** Lista mostrada no painel: as fontes de efeito automático só entram quando o
+ *  arquivo delas está em public/fontes; a dica lista os eixos encontrados. */
+export const FONT_OPTIONS: FontOption[] = TODAS_AS_FONTES
+    .filter(f => f.effect !== 'auto' || (f.arquivoNome && EIXOS[f.arquivoNome]?.length))
+    .map(f => f.effect !== 'auto' ? f : {
+        ...f,
+        effectHint: `Efeito automático: ao tocar, os eixos da fonte (${EIXOS[f.arquivoNome!].map(e => e.tag).join(', ')}) se transformam juntos.`,
+    });
+
 
 /** Monta a especificação que o canvas entende, ex: 400 100px "Modak".
  *  Fontes sem acentos ganham uma reserva gorda ("Lilita One", que saiu da
@@ -193,11 +249,12 @@ export const DEFAULT_SETTINGS: AppSettings = {
     noteSystem: 'latin',
     noteColors: NOTE_HIGHLIGHT_COLORS,
     sharpColor: BRAND.petroleo,
-    noteDensity: 1,
+    noteDensity: 0.8,
     noteSpacing: 0.02,
     noteRandomness: 0.8,
     growAmount: 1.45,
     motorTexto: true,
+    tamanhoV2: true,
 };
 
 /** Chave usada para lembrar as preferências entre sessões */

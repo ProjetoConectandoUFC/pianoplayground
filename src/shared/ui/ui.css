@@ -9,10 +9,15 @@
    ========================================================================== */
 
 :root {
-  --ui-header-h: 88px;
-  /* altura da faixa das mãos: a largura da tela dividida pela proporção da
-     ilustração (src/assets/moldura/faixa-maos.png, 19,1 por 1) */
-  --ui-faixa-h: calc(100vw / 19.1);
+  /* Barra do topo mais baixa: só a marca, o status e o botão de configurações */
+  --ui-header-h: 68px;
+  --ui-marca-h: 46px;
+  --ui-config-tam: 46px;
+  /* Altura da faixa das mãos: a largura ocupada pela faixa (a tela mais 2px de
+     cada lado, ver .ui-faixa em shell.css) dividida pela proporção da ilustração.
+     A proporção é medida no arquivo pelo FaixaMaos.tsx; o número ao lado é só o
+     valor inicial, o da imagem atual (faixa-maos.png, 1974 × 128). */
+  --ui-faixa-h: calc((100vw + 4px) / var(--ui-faixa-proporcao-escura, 15.421875));
   --ui-topo: calc(var(--ui-header-h) + var(--ui-faixa-h));
   --ui-font: "Poppins", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   --ui-mono: "DM Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
@@ -42,8 +47,8 @@
 
 /* Tema claro: creme, tinta e azul da marca Conectando */
 :root[data-ui-tema="claro"] {
-  /* faixa das mãos do tema claro (faixa-maos-clara.png, 23,6 por 1) */
-  --ui-faixa-h: calc(100vw / 23.6);
+  /* faixa das mãos do tema claro (valor inicial: faixa-maos-clara.png, 1912 × 128) */
+  --ui-faixa-h: calc((100vw + 4px) / var(--ui-faixa-proporcao-clara, 14.9375));
   --ui-ground: #f6f6c7;
   --ui-surface: #fbfae8;
   --ui-ink: #443c1a;
@@ -62,28 +67,15 @@
   --ui-sombra: 0 16px 40px rgba(68, 60, 26, 0.22);
 }
 
-/* Genius do Piano no tema claro: o mesmo creme do Gelatina, com tinta
-   azul-marinho e título laranja (o laranja fica em genius.css) */
-:root[data-ui-tema="claro"][data-ui-jogo="genius"] {
-  --ui-ground: #f6f6c7;
-  --ui-surface: #fbfae8;
-  --ui-ink: #0e2366;
-  --ui-muted: #4a5689;
-  --ui-line: rgba(14, 35, 102, 0.2);
-  --ui-field: rgba(14, 35, 102, 0.08);
-  --ui-edge: #0e2366;
-  --ui-edge-hover: #2a3f8f;
-  --ui-accent: #0e2366;
-  --ui-accent-fg: #f6f6c7;
-  --ui-pill: rgba(246, 246, 199, 0.9);
-  --ui-pill-hover: rgba(14, 35, 102, 0.08);
-  --ui-scrim: rgba(14, 35, 102, 0.4);
-  --ui-ok: #0f7f80;
-  --ui-aviso: #b4232f;
-  --ui-sombra: 0 16px 40px rgba(14, 35, 102, 0.22);
-}
+/* No Genius, o amarelo de destaque é o mesmo do título, um pouco mais intenso */
+:root[data-ui-jogo="genius"] { --ui-accent: #ffd400; }
 
-/* Seletor segmentado (MIDI | Teclado, Claro | Escuro) */
+/* A faixa das mãos fica só no Genius; nos pianos ela some e o palco sobe.
+   (Vem depois dos temas para valer também no claro.) */
+:root:not([data-ui-jogo="genius"]),
+:root[data-ui-tema]:not([data-ui-jogo="genius"]) { --ui-faixa-h: 0px; }
+
+/* Seletor segmentado (MIDI | Teclado na gaveta, Claro | Escuro) */
 .ui-segmentado {
   display: inline-flex;
   padding: 4px;
@@ -116,7 +108,7 @@
   top: var(--ui-topo);
 }
 
-/* ---------- Botão de configurações (sempre à direita, com o atalho A ao lado) ---------- */
+/* ---------- Botão de configurações (sempre à direita da barra; tecla A também abre) ---------- */
 .ui-config {
   display: flex;
   align-items: center;
@@ -125,12 +117,24 @@
 .ui-config.fixo {
   position: fixed;
   right: 24px;
-  top: calc((var(--ui-header-h) - 52px) / 2);
+  top: calc((var(--ui-header-h) - var(--ui-config-tam)) / 2);
+  z-index: 20;
+}
+.ui-sorteio {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+/* Os sorteios do Gelatina ficam logo à esquerda do botão de configurações */
+.ui-sorteio.fixo {
+  position: fixed;
+  right: calc(24px + var(--ui-config-tam) + 10px);
+  top: calc((var(--ui-header-h) - var(--ui-config-tam)) / 2);
   z-index: 20;
 }
 .ui-btn-config {
-  width: 52px;
-  height: 52px;
+  width: var(--ui-config-tam);
+  height: var(--ui-config-tam);
   flex: none;
   display: flex;
   align-items: center;
@@ -144,17 +148,7 @@
   transition: background 0.15s ease, border-color 0.15s ease;
 }
 .ui-btn-config:hover { background: var(--ui-pill-hover); border-color: var(--ui-edge-hover); }
-.ui-btn-config svg { width: 24px; height: 24px; pointer-events: none; }
-.ui-atalho {
-  font-family: var(--ui-mono);
-  font-size: 12px;
-  color: var(--ui-muted);
-  border: 1px solid var(--ui-line);
-  border-radius: 6px;
-  padding: 2px 7px;
-  line-height: 1.4;
-}
-
+.ui-btn-config svg { width: 22px; height: 22px; pointer-events: none; }
 /* ---------- Gaveta de configurações (abre pela direita, junto do botão) ---------- */
 .ui-gaveta-fundo {
   position: fixed;
@@ -340,6 +334,40 @@ input.ui-interruptor:checked::after { transform: translateX(20px); background: v
 /* A mesma peça feita a partir de um checkbox (usada no Genius) */
 input.ui-interruptor { -webkit-appearance: none; appearance: none; margin: 0; }
 
+/* Lista de jogos (seção "Jogo e entrada" da gaveta) */
+.ui-jogos { display: flex; flex-direction: column; gap: 6px; }
+.ui-jogo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 10px 14px;
+  border: 2px solid transparent;
+  border-radius: 12px;
+  background: var(--ui-field);
+  color: var(--ui-ink);
+  font-family: var(--ui-font);
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+.ui-jogo:hover { background: var(--ui-pill-hover); }
+.ui-jogo.on { border-color: var(--ui-edge); background: var(--ui-pill-hover); cursor: default; }
+.ui-jogo-texto { display: flex; flex-direction: column; gap: 1px; }
+.ui-jogo-rotulo { font-size: 14px; font-weight: 600; }
+.ui-jogo-dica { font-size: 12px; color: var(--ui-muted); }
+/* Bolinha com a cor de cada jogo */
+.ui-ponto-jogo {
+  width: 10px;
+  height: 10px;
+  flex: none;
+  border-radius: 50%;
+  box-shadow: 0 0 0 2px var(--ui-surface), 0 0 0 3px var(--ui-line);
+}
+.ui-ponto-jogo[data-jogo="genius"] { background: #ffd400; }
+.ui-ponto-jogo[data-jogo="typographic"] { background: #f0848f; }
+.ui-ponto-jogo[data-jogo="gelatina"] { background: #43b3b4; }
+
 /* Mapa de teclas do teclado do computador */
 .ui-mapa { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 6px; }
 .ui-tecla {
@@ -378,5 +406,5 @@ input.ui-interruptor { -webkit-appearance: none; appearance: none; margin: 0; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .ui-gaveta, .ui-gaveta-fundo, .ui-menu { animation: none; }
+  .ui-gaveta, .ui-gaveta-fundo { animation: none; }
 }

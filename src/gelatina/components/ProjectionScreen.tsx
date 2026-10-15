@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { AppSettings } from '../types';
-import { NOTE_NAME_SYSTEMS, NOTE_RELATIONS, THEMES, fontOf, fontSpecOf, fontStackOf } from '../constants';
+import { NOTE_NAME_SYSTEMS, NOTE_RELATIONS, THEMES, eixosDaFonte, fontOf, fontSpecOf, fontStackOf } from '../constants';
 import { createGelatina, Gelatina, GelatinaOptions } from '../services/gelatinaEngine';
 
 interface ProjectionScreenProps {
@@ -19,10 +19,16 @@ export const optionsFromSettings = (settings: AppSettings): GelatinaOptions => {
         ground: tema.ground,
         ink: tema.ink,
         wash: tema.wash,
-        fontSpec: fontSpecOf(settings.fontKey),
+        // efeito 'estilos': mede pelo estilo mais forte (o mais largo), para a palavra
+        // tocada caber na tela; em repouso ela só fica com um pouco mais de folga
+        fontSpec: fontOf(settings.fontKey).estilos
+            ? `${fontOf(settings.fontKey).weight} 100px "${fontOf(settings.fontKey).estilos!.familias.slice(-1)[0]}", ${fontStackOf(settings.fontKey)}`
+            : fontSpecOf(settings.fontKey),
         family: fontStackOf(settings.fontKey),
         weight: fontOf(settings.fontKey).weight,
         effect: fontOf(settings.fontKey).effect ?? null,
+        axes: eixosDaFonte(settings.fontKey),
+        estilos: fontOf(settings.fontKey).estilos,
         noteSystem: settings.noteSystem,
         density: settings.noteDensity,
         spacing: settings.noteSpacing,
@@ -65,7 +71,12 @@ export const ProjectionScreen: React.FC<ProjectionScreenProps> = ({ settings, on
         const opts = optionsFromSettings(settings);
         const aplicar = () => { if (vivo) engine.update(opts); };
         const doc = hostRef.current?.ownerDocument;
-        if (doc?.fonts?.load) doc.fonts.load(opts.fontSpec).then(aplicar).catch(aplicar);
+        // Carrega a fonte (e, no efeito 'estilos', todos os estilos) antes de aplicar,
+        // para a troca de estilo durante o toque não piscar
+        const extras = (opts.estilos?.familias ?? []).concat(opts.estilos?.alternas ?? [])
+            .map(f => `100px "${f}"`);
+        if (doc?.fonts?.load) Promise.all([opts.fontSpec, ...extras].map(sp => doc.fonts.load(sp)))
+            .then(aplicar).catch(aplicar);
         else aplicar();
         return () => { vivo = false; };
     }, [settings]);

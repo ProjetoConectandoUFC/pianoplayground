@@ -14,13 +14,29 @@ Fontes variáveis com efeito próprio, licença SIL OFL 1.1:
   Kablammo.woff2      Kablammo       eixo MORF (OFL-Kablammo.txt)
   ShantellSans.woff2  Shantell Sans  eixos BNCE, INFM e peso (OFL-ShantellSans.txt)
 
-Fontes do Google Fonts embutidas como arquivo, licença SIL OFL 1.1
-(subconjunto latino, com acentos):
+Mais fontes mutáveis, SIL OFL 1.1 (subconjunto latino, convertidas para woff2
+a partir dos arquivos do repositório google/fonts):
 
-  Isometra.woff2        Isometra         Ben Dunkle (OFL-Isometra.txt)
-  Righteous.woff2       Righteous        Astigmatic (OFL-Righteous.txt)
-  Caprasimo.woff2       Caprasimo        The DocRepair Project (OFL-Caprasimo.txt)
-  BerkshireSwash.woff2  Berkshire Swash  Astigmatic (OFL-BerkshireSwash.txt)
+  TiltWarp.woff2       Tilt Warp       Andy Clymer (OFL-TiltWarp.txt), eixos XROT e YROT
+  Handjet.woff2        Handjet         Rosetta e David Březina (OFL-Handjet.txt), eixos ELSH, ELGR e peso
+
+Fontes mutáveis feitas de estilos estáticos (versões de teste dos autores,
+nas pastas que vieram no download, sem renomear):
+
+  OH no Type Company Trials .../Cheee/     Cheee (demo)     6 estilos: Sticky, Wowie, Tbone,
+                                                           Jimbo, Choy e Oyen
+  OH no Type Company Trials .../Camelion/  Camelion (demo)  Regular a ExtraBold, com itálicos
+  renegade_all_trials/RF_Hela TRIAL/       Hela (trial)     pesos 300 a 700
+
+Não são fontes variáveis: o motor troca o estilo da letra conforme a força do
+toque (efeito 'estilos'). Cheee e Camelion de demonstração não têm acentos; ó,
+é e á saem da fonte reserva. Se as pastas forem renomeadas, atualize os
+@font-face no index.html. A pasta renegade_all_trials/__MACOSX é lixo do zip
+do Mac e pode ser apagada.
+
+Fonte mutável com efeito automático (não incluída): GraduateGX.woff2, da Font
+Bureau. Se o arquivo for colocado aqui com esse nome, os eixos são lidos dele no
+build e ela aparece sozinha na lista.
 
 As duas sem acentos não têm ó, é, á. No sistema latino (Dó, Ré, Fá, Lá)
 essas letras saem de uma fonte reserva; no sistema anglicano (C, D, E...)

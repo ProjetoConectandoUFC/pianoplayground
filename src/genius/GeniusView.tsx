@@ -1,13 +1,13 @@
 import React, { useEffect, useRef, useState } from 'react';
+import ReactDOM from 'react-dom';
 import { ensureGenius } from './renderer.js';
 import './genius.css';
 // Importados pelo Vite para funcionar também no Electron empacotado (file://).
 // (catálogo das imagens em src/assets/LEIA-ME.md)
 import lacoEsquerdaUrl from '../assets/genius/laco-esquerda.png';
 import lacoDireitaUrl from '../assets/genius/laco-direita.png';
-import lacoEsquerdaAmareloUrl from '../assets/genius/laco-esquerda-amarelo.png';
-import lacoDireitaAmareloUrl from '../assets/genius/laco-direita-amarelo.png';
-import { TemaUi, useTemaUi } from '../shared/ui/temaUi';
+import { useTemaUi } from '../shared/ui/temaUi';
+import { SecaoJogo } from '../shared/ui/componentes';
 
 // Ícones da moldura comum (os mesmos de src/shared/ui/componentes.tsx)
 const ICONE_AJUSTES = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true" focusable="false"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/></svg>`;
@@ -20,17 +20,16 @@ const ICONE_FECHAR = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
 // teclado agora ficam na barra do topo do App.
 const GENIUS_MARKUP = `
   <main id="app">
-    <!-- Fundo decorativo: laços brancos translúcidos no tema escuro, amarelos no claro -->
+    <!-- Fundo decorativo: laços brancos translúcidos (o Genius só tem o tema escuro) -->
     <div class="genius-bg" aria-hidden="true">
-      <img class="genius-laco genius-laco-esq escuro" src="${lacoEsquerdaUrl}" alt="" draggable="false" />
-      <img class="genius-laco genius-laco-dir escuro" src="${lacoDireitaUrl}" alt="" draggable="false" />
-      <img class="genius-laco genius-laco-esq claro" src="${lacoEsquerdaAmareloUrl}" alt="" draggable="false" />
-      <img class="genius-laco genius-laco-dir claro" src="${lacoDireitaAmareloUrl}" alt="" draggable="false" />
+      <img class="genius-laco genius-laco-esq" src="${lacoEsquerdaUrl}" alt="" draggable="false" />
+      <img class="genius-laco genius-laco-dir" src="${lacoDireitaUrl}" alt="" draggable="false" />
+      <!-- Chão em perspectiva (só no modo piano em perspectiva) -->
+      <div class="genius-chao"><div class="genius-chao-plano"></div></div>
     </div>
 
     <header class="topbar">
       <div class="ui-config">
-        <span class="ui-atalho" aria-hidden="true">A</span>
         <button id="settings-btn" class="ui-btn-config" aria-label="Configurações (tecla A)" title="Configurações (A)">${ICONE_AJUSTES}</button>
       </div>
     </header>
@@ -45,6 +44,8 @@ const GENIUS_MARKUP = `
         </div>
         <button id="settings-close" class="ui-btn-fechar" aria-label="Fechar">${ICONE_FECHAR}</button>
       </div>
+      <!-- Jogo e modo de entrada: a mesma seção dos outros jogos, desenhada pelo GeniusView -->
+      <div id="genius-secao-jogo"></div>
       <section class="ui-secao">
         <h3 class="ui-secao-titulo">Partida</h3>
         <label class="ui-interruptor-linha">
@@ -65,18 +66,14 @@ const GENIUS_MARKUP = `
         <p class="ui-dica">Modo desenvolvedor: carrega uma melodia específica. Vale antes da demonstração começar.</p>
       </section>
       <section class="ui-secao">
-        <h3 class="ui-secao-titulo">Entrada</h3>
-        <p class="ui-dica">O modo MIDI ou Teclado é escolhido na barra do topo e vale para os três jogos. No modo Teclado, as letras aparecem sobre as teclas do piano.</p>
-      </section>
-      <section class="ui-secao">
         <h3 class="ui-secao-titulo">Aparência</h3>
-        <div>
-          <span class="ui-rotulo">Tema</span>
-          <div class="ui-segmentado" role="group" aria-label="Tema">
-            <button class="ui-segmentado-opcao" data-genius-tema="claro" aria-pressed="false">Claro</button>
-            <button class="ui-segmentado-opcao" data-genius-tema="escuro" aria-pressed="false">Escuro</button>
-          </div>
-        </div>
+        <label class="ui-interruptor-linha">
+          <span class="ui-interruptor-texto">
+            <span class="ui-interruptor-rotulo">Piano em perspectiva</span>
+            <span class="ui-dica">Teste: o piano deita num chão em perspectiva, em vez de ficar chapado na tela.</span>
+          </span>
+          <input type="checkbox" id="setting-perspectiva" class="ui-interruptor" />
+        </label>
       </section>
     </div>
     <div id="settings-scrim" class="settings-scrim ui-gaveta-fundo" aria-hidden="true"></div>
@@ -136,23 +133,20 @@ interface Props {
   active: boolean;
 }
 
-const CHAVE_TEMA = 'genius-tema';
-
-const temaSalvo = (): TemaUi => {
-  try {
-    const t = window.localStorage.getItem(CHAVE_TEMA);
-    if (t === 'claro' || t === 'escuro') return t;
-  } catch { /* storage indisponível */ }
-  return 'escuro';
+// Piano em perspectiva (teste): ligado por padrão, lembrado entre execuções.
+const CHAVE_PERSPECTIVA = 'genius-perspectiva';
+const perspectivaSalva = (): boolean => {
+  try { return window.localStorage.getItem(CHAVE_PERSPECTIVA) !== 'nao'; } catch { return true; }
 };
 
 const GeniusView: React.FC<Props> = ({ active }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const apiRef = useRef<{ activate: () => void; deactivate: () => void } | null>(null);
-  const [tema, setTema] = useState<TemaUi>(temaSalvo);
+  // Lugar da seção "Jogo e entrada" dentro da gaveta (markup injetado abaixo)
+  const [alvoSecaoJogo, setAlvoSecaoJogo] = useState<HTMLElement | null>(null);
 
-  // Avisa a moldura comum (barra, faixa e gaveta) o tema do Genius quando ele está em cena.
-  useTemaUi(tema, active);
+  // O Genius só tem o tema escuro; avisa a moldura comum quando está em cena.
+  useTemaUi('escuro', active);
 
   // Injeta o markup e inicializa o Genius uma única vez.
   useEffect(() => {
@@ -178,30 +172,26 @@ const GeniusView: React.FC<Props> = ({ active }) => {
     const fechar = () => painel?.classList.add('hidden');
     const btnFechar = document.getElementById('settings-close');
     btnFechar?.addEventListener('click', fechar);
+    setAlvoSecaoJogo(document.getElementById('genius-secao-jogo'));
 
-    // Botões Claro | Escuro da gaveta
-    const botoes = Array.from(document.querySelectorAll<HTMLButtonElement>('[data-genius-tema]'));
-    const escolher = (e: Event) => {
-      const t = (e.currentTarget as HTMLElement).dataset.geniusTema as TemaUi;
-      setTema(t);
+    // Interruptor "Piano em perspectiva": marca o modo no .genius-root (CSS em genius.css)
+    const raiz = containerRef.current;
+    const chave = document.getElementById('setting-perspectiva') as HTMLInputElement | null;
+    const aplicar = (on: boolean) => {
+      raiz?.setAttribute('data-perspectiva', on ? 'sim' : 'nao');
+      try { window.localStorage.setItem(CHAVE_PERSPECTIVA, on ? 'sim' : 'nao'); } catch { /* ignora */ }
     };
-    botoes.forEach((b) => b.addEventListener('click', escolher));
+    const onPerspectiva = () => aplicar(!!chave?.checked);
+    if (chave) {
+      chave.checked = perspectivaSalva();
+      aplicar(chave.checked);
+      chave.addEventListener('change', onPerspectiva);
+    }
     return () => {
       btnFechar?.removeEventListener('click', fechar);
-      botoes.forEach((b) => b.removeEventListener('click', escolher));
+      chave?.removeEventListener('change', onPerspectiva);
     };
   }, []);
-
-  // Aplica e guarda o tema; marca o botão escolhido na gaveta.
-  useEffect(() => {
-    containerRef.current?.setAttribute('data-tema', tema);
-    document.querySelectorAll<HTMLButtonElement>('[data-genius-tema]').forEach((b) => {
-      const on = b.dataset.geniusTema === tema;
-      b.classList.toggle('on', on);
-      b.setAttribute('aria-pressed', String(on));
-    });
-    try { window.localStorage.setItem(CHAVE_TEMA, tema); } catch { /* ignora */ }
-  }, [tema]);
 
   // Liga/desliga listeners e zera a partida conforme o foco.
   useEffect(() => {
@@ -212,12 +202,14 @@ const GeniusView: React.FC<Props> = ({ active }) => {
   }, [active]);
 
   return (
-    <div
-      ref={containerRef}
-      className="genius-root"
-      data-tema={tema}
-      style={{ display: active ? 'block' : 'none' }}
-    />
+    <>
+      <div
+        ref={containerRef}
+        className="genius-root"
+        style={{ display: active ? 'block' : 'none' }}
+      />
+      {alvoSecaoJogo && ReactDOM.createPortal(<SecaoJogo />, alvoSecaoJogo)}
+    </>
   );
 };
 
