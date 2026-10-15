@@ -29,6 +29,8 @@ export const optionsFromSettings = (settings: AppSettings): GelatinaOptions => {
         effect: fontOf(settings.fontKey).effect ?? null,
         axes: eixosDaFonte(settings.fontKey),
         estilos: fontOf(settings.fontKey).estilos,
+        acento: fontOf(settings.fontKey).acento ?? null,
+        eixosToque: fontOf(settings.fontKey).eixosToque,
         noteSystem: settings.noteSystem,
         density: settings.noteDensity,
         spacing: settings.noteSpacing,
@@ -74,7 +76,8 @@ export const ProjectionScreen: React.FC<ProjectionScreenProps> = ({ settings, on
         // Carrega a fonte (e, no efeito 'estilos', todos os estilos) antes de aplicar,
         // para a troca de estilo durante o toque não piscar
         const extras = (opts.estilos?.familias ?? []).concat(opts.estilos?.alternas ?? [])
-            .map(f => `100px "${f}"`);
+            .map(f => `100px "${f}"`)
+            .concat(opts.acento ? [`${opts.acento.peso} 100px "${opts.acento.familia}"`] : []);
         if (doc?.fonts?.load) Promise.all([opts.fontSpec, ...extras].map(sp => doc.fonts.load(sp)))
             .then(aplicar).catch(aplicar);
         else aplicar();

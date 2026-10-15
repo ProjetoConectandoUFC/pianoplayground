@@ -93,7 +93,7 @@ funcionamento nem a jogabilidade de nenhum deles. Cada jogo mantém o próprio p
   que continuam editáveis.
 - **Fontes mutáveis** (Gelatina): a lista de fontes tem duas categorias, "Fontes" e
   "Fontes mutáveis". As mutáveis são variáveis com efeito próprio (os eixos mudam ao tocar, no
-  lugar de esticar a letra): Handjet (pontos que passam de quadrados a redondos), Kablammo,
+  lugar de esticar a letra): Kablammo,
   Shantell Sans e Tilt Warp (gira em 3D). Cheee, Camelion e Hela vieram como fontes de teste
   estáticas (pastas de demo/trial em `public/fontes`): o efeito `estilos` troca o estilo da
   letra conforme a força do toque (Cheee incha, Hela engorda peso a peso, Camelion engorda e
@@ -107,6 +107,18 @@ funcionamento nem a jogabilidade de nenhum deles. Cada jogo mantém o próprio p
   uma vez também a quem já tinha preferências salvas) e o motor deixa uma folga em volta de cada
   palavra (maior nas fontes mutáveis), para nenhuma sair da tela. No efeito `estilos`, a palavra é
   medida pelo estilo mais largo.
+- **Fontes pixel (teste)** no Gelatina: Doto e Pixelify Sans, numa categoria própria (Handjet,
+  Bitcount e Tiny5 saíram). Aparecem com o desenho original, sem suavização (o teste com
+  anti-aliasing por filtro SVG foi descartado). O efeito
+  dessas fontes (`eixos`) só acompanha a força do toque, sem vai e vem.
+- **Acentos compostos**: Anak Gedong, Howdybun, Cheee e Camelion não têm ó, é, á. A letra base
+  fica na fonte original e o acento vem de uma fonte doadora do acervo, escolhida por comparação
+  visual (Blue Winter, Baloo 2, Caprasimo e Poppins). Detalhes em `public/fontes/LEIA-ME.txt`.
+- **Comic Sans, Papyrus e Helvetica** (Gelatina, categoria "Fontes"): são fontes comerciais e
+  não podem ser distribuídas com o projeto. O `@font-face` usa a versão instalada no computador
+  e, na falta dela, uma fonte livre parecida guardada em `public/fontes`: Comic Neue, Macondo e
+  TeX Gyre Heros. O Windows já traz a Comic Sans; a Papyrus vem com o Office; a Helvetica
+  normalmente não está no Windows, então ali aparece a TeX Gyre Heros, desenhada a partir dela.
 - **Sorteios no Gelatina**: dois botões na barra, à esquerda do de configurações. Um sorteia
   uma fonte da lista (nunca a atual) e o outro uma paleta nova de sete cores bem separadas.
 - **Teste: piano em perspectiva** (Genius): interruptor "Piano em perspectiva" na seção

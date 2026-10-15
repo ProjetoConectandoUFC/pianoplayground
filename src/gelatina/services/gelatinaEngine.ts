@@ -19,7 +19,7 @@
 // Novidades do desenho em texto:
 //  - Fontes variáveis podem mudar de eixo a cada quadro
 //    (font-variation-settings). As "fontes mutáveis" (Kablammo, Shantell Sans,
-//    Tilt Warp, Handjet e as de efeito automático, como Hela, Graduate, Cheee e
+//    Tilt Warp, as pixel e as de efeito automático, como Hela, Graduate, Cheee e
 //    Camelion) usam isso como
 //    efeito próprio, no lugar de esticar e entortar a letra.
 //  - Um canvas fora da tela continua sendo usado só para MEDIR as letras
@@ -29,7 +29,7 @@
 export type RGB = [number, number, number];
 
 /** Efeitos próprios de algumas fontes variáveis */
-export type FontEffect = 'kablammo' | 'shantell' | 'tiltwarp' | 'handjet' | 'auto' | 'estilos';
+export type FontEffect = 'kablammo' | 'shantell' | 'tiltwarp' | 'auto' | 'estilos' | 'eixos';
 
 /** Eixo de uma fonte variável (efeito 'auto') */
 export interface EixoVariavel { tag: string; min: number; padrao: number; max: number }
@@ -57,6 +57,11 @@ export interface GelatinaOptions {
     effect?: FontEffect | null;
     /** Eixos da fonte, para o efeito 'auto' (lidos do arquivo no build) */
     axes?: EixoVariavel[];
+    /** Fontes sem acentos: a letra base sai da fonte escolhida e o acento sai desta
+     *  fonte doadora, escalado e posicionado sobre a base (ver measure) */
+    acento?: { familia: string; peso: number } | null;
+    /** Efeito 'eixos': cada eixo vai do repouso ao toque, junto com a força do toque */
+    eixosToque?: { tag: string; repouso: number; toque: number }[];
     /** Efeito 'estilos': famílias estáticas em ordem (repouso → mais forte) e alternas */
     estilos?: { familias: string[]; alternas?: string[] };
     /** Sistema de nomes. No anglicano (uma letra por nota) o arranjo e a
@@ -254,6 +259,76 @@ export function createGelatina(host: HTMLElement, opts: GelatinaOptions, relatio
         probe.remove();
     }
 
+    // ---------- acentos compostos (fontes sem acentos) ----------
+    // A letra acentuada é escrita como base (o, e, a) na fonte escolhida mais o
+    // acento solto (´ ` ^ ~ ¨) da fonte doadora. O acento é escalado pela altura-x
+    // das duas fontes (mantém a proporção que ele tem na doadora), centrado sobre
+    // a tinta da base e posto acima dela com a mesma folga que tem na doadora.
+    const ACENTOS: Record<string, string> = {
+        '\u0301': '\u00B4', '\u0300': '\u0060', '\u0302': '\u02C6', '\u0303': '\u02DC', '\u0308': '\u00A8',
+    };
+    /** Distância do topo da caixa de texto até a linha de base, para uma fonte qualquer */
+    function linhaBase(familia: string, peso: number, tamanho: number): number {
+        const probe = doc.createElement('div');
+        Object.assign(probe.style, {
+            position: 'absolute', left: '0', top: '0', visibility: 'hidden', whiteSpace: 'pre',
+            fontFamily: familia, fontWeight: String(peso), fontSize: `${tamanho}px`, lineHeight: 'normal',
+        } as CSSStyleDeclaration);
+        const txt = doc.createElement('span');
+        txt.textContent = 'Hxo\u00B4';
+        const mark = doc.createElement('span');
+        Object.assign(mark.style, { display: 'inline-block', width: '1px', height: '0', verticalAlign: 'baseline' } as CSSStyleDeclaration);
+        probe.append(txt, mark);
+        stage.appendChild(probe);
+        const v = mark.offsetTop;
+        probe.remove();
+        return v;
+    }
+    interface AcentoComposto { base: string; el: HTMLSpanElement; left: number; w: number; asc: number; desc: number }
+    function comporAcento(ch: string): AcentoComposto | null {
+        const ac = o.acento;
+        if (!ac) return null;
+        const nfd = ch.normalize('NFD');
+        if (nfd.length !== 2 || !ACENTOS[nfd[1]]) return null;
+        const base = nfd[0], marca = ACENTOS[nfd[1]];
+        const fam = `"${ac.familia}"`;
+        const fd = (t: number) => `${ac.peso} ${t}px ${fam}`;
+        const m = (font: string, t: string) => { meter.font = font; return meter.measureText(t); };
+        const b = m(o.fontSpec, base);
+        const xa = m(o.fontSpec, 'x').actualBoundingBoxAscent || FS * 0.5;
+        const dx = m(fd(FS), 'x').actualBoundingBoxAscent || FS * 0.5;
+        const dob = m(fd(FS), base).actualBoundingBoxAscent || dx;
+        const a1 = m(fd(FS), marca);
+        const esc = xa / dx;
+        const tam = FS * esc;
+        const a = m(fd(tam), marca);
+        const bAsc = b.actualBoundingBoxAscent ?? FS * 0.5;
+        // folga da doadora (fundo do acento até o topo da base), com um mínimo
+        const folgaDoadora = (-(a1.actualBoundingBoxDescent ?? 0) - dob) * esc;
+        const fundo = bAsc + Math.max(folgaDoadora, bAsc * 0.1, FS * 0.04);
+        const aL = a.actualBoundingBoxLeft ?? 0, aR = a.actualBoundingBoxRight ?? a.width;
+        const bL = b.actualBoundingBoxLeft ?? 0, bR = b.actualBoundingBoxRight ?? b.width;
+        const centroB = (bR - bL) / 2, centroA = (aR - aL) / 2;
+        const x0 = centroB - centroA;                       // origem do acento, no eixo da base
+        const elevar = fundo + (a.actualBoundingBoxDescent ?? 0); // linha de base do acento acima da base
+        const el = doc.createElement('span');
+        el.textContent = marca;
+        Object.assign(el.style, {
+            position: 'absolute', left: `${x0.toFixed(2)}px`,
+            top: `${(baseline - linhaBase(fam, ac.peso, tam) - elevar).toFixed(2)}px`,
+            fontFamily: fam, fontWeight: String(ac.peso), fontSize: `${tam.toFixed(2)}px`,
+            lineHeight: 'normal', fontVariationSettings: 'normal',
+        } as CSSStyleDeclaration);
+        meter.font = o.fontSpec;
+        const left = Math.max(bL, aL - x0);
+        const right = Math.max(bR, x0 + aR);
+        return {
+            base, el, left, w: left + right,
+            asc: Math.max(bAsc, elevar + (a.actualBoundingBoxAscent ?? 0)),
+            desc: b.actualBoundingBoxDescent ?? 0,
+        };
+    }
+
     // ---------- métricas, molas e elementos, um por letra ----------
     function measure() {
         meter.font = o.fontSpec;
@@ -265,22 +340,25 @@ export function createGelatina(host: HTMLElement, opts: GelatinaOptions, relatio
             s.label = o.labels[i];
             s.el.textContent = '';
             s.letters = Array.from(s.label).map((ch, k) => {
-                const mm = meter.measureText(ch);
-                const left = mm.actualBoundingBoxLeft ?? 0;
+                const comp = comporAcento(ch);
+                meter.font = o.fontSpec;
+                const mm = meter.measureText(comp ? comp.base : ch);
+                const left = comp ? comp.left : (mm.actualBoundingBoxLeft ?? 0);
                 const right = mm.actualBoundingBoxRight ?? mm.width;
                 const prev = old[k];
                 const el = doc.createElement('span');
-                el.textContent = ch;
+                el.textContent = comp ? comp.base : ch;
                 Object.assign(el.style, {
                     position: 'absolute', left: '0', top: '0', transformOrigin: '0 0', whiteSpace: 'pre',
                 } as CSSStyleDeclaration);
                 applyFontStyle(el);
+                if (comp) el.appendChild(comp.el);
                 s.el.appendChild(el);
                 return {
                     ch, left,
-                    w: left + right,
-                    asc: mm.actualBoundingBoxAscent ?? 72,
-                    desc: mm.actualBoundingBoxDescent ?? 0,
+                    w: comp ? comp.w : left + right,
+                    asc: comp ? comp.asc : (mm.actualBoundingBoxAscent ?? 72),
+                    desc: comp ? comp.desc : (mm.actualBoundingBoxDescent ?? 0),
                     lsx: 0.88 + r() * 0.34,
                     lsy: 0.88 + r() * 0.34,
                     dy0: (r() - 0.5) * 20,
@@ -602,14 +680,9 @@ export function createGelatina(host: HTMLElement, opts: GelatinaOptions, relatio
             const yrot = clamp(40 * e * Math.cos(clock * 5 + k * 1.1), -45, 45);
             return `"XROT" ${xrot.toFixed(1)}, "YROT" ${yrot.toFixed(1)}`;
         }
-        if (o.effect === 'handjet') {
-            // Menos etapas: o formato dos pontos só passa do 2 ao 3 (quadrado para
-            // redondo, vizinhos que se transformam suavemente). Do 3,5 ao 5 os pontos
-            // viram traços finos, por isso o efeito para antes. Sem vai e vem e sem
-            // trocar a grade; o peso acompanha o toque.
-            const elsh = 2 + 1 * a;
-            const wght = 400 + 300 * a;
-            return `"ELSH" ${elsh.toFixed(2)}, "wght" ${wght.toFixed(0)}`;
+        if (o.effect === 'eixos' && o.eixosToque) {
+            // contínuo: sem vai e vem, cada eixo acompanha a mola da letra
+            return o.eixosToque.map(x => `"${x.tag}" ${(x.repouso + (x.toque - x.repouso) * a).toFixed(2)}`).join(', ');
         }
         if (o.effect === 'auto' && o.axes && o.axes.length) {
             // Efeito automático para qualquer fonte variável: cada eixo sai do valor
@@ -773,6 +846,7 @@ export function createGelatina(host: HTMLElement, opts: GelatinaOptions, relatio
             buildLinks();
             refreshColors();
             const mudouTexto = antes.fontSpec !== o.fontSpec || antes.family !== o.family
+                || antes.acento?.familia !== o.acento?.familia
                 || (antes.axes ?? []).map(x => x.tag).join() !== (o.axes ?? []).map(x => x.tag).join()
                 || antes.labels.join('|') !== o.labels.join('|') || antes.effect !== o.effect
                 || antes.noteSystem !== o.noteSystem;

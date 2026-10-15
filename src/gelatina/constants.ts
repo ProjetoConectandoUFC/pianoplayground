@@ -93,11 +93,19 @@ export interface FontOption {
     arquivo?: boolean;
     /** Fontes variáveis com efeito próprio: os eixos mudam ao tocar,
      *  no lugar de esticar e entortar a letra. */
-    effect?: 'kablammo' | 'shantell' | 'tiltwarp' | 'handjet' | 'auto' | 'estilos';
+    effect?: 'kablammo' | 'shantell' | 'tiltwarp' | 'auto' | 'estilos' | 'eixos';
+    /** Fontes pixel (categoria de teste), mostradas com o desenho original */
+    pixel?: boolean;
+    /** Efeito 'eixos': cada eixo vai do valor em repouso ao valor do toque, junto com a força do toque */
+    eixosToque?: { tag: string; repouso: number; toque: number }[];
     /** Efeito 'estilos' (fontes estáticas com vários estilos): famílias em ordem,
      *  do estilo em repouso ao mais forte; a letra troca de estilo conforme o toque.
      *  alternas: estilos irmãos (ex.: itálicos) que entram e saem enquanto segura. */
     estilos?: { familias: string[]; alternas?: string[] };
+    /** Fontes sem acentos: de qual fonte do acervo vem o acento (escolhido por
+     *  comparação visual, ver public/fontes/LEIA-ME.txt). A letra base continua
+     *  na fonte original e o motor compõe o acento por cima. */
+    acento?: { familia: string; peso: number };
     /** Efeito 'auto': nome do arquivo em public/fontes. Os eixos são lidos dele no build
      *  e a fonte só aparece na lista se o arquivo estiver lá. */
     arquivoNome?: string;
@@ -112,7 +120,8 @@ export interface FontOption {
 
 const TODAS_AS_FONTES: FontOption[] = [
     { key: 'alfa',         name: 'Alfa Slab One',     family: '"Alfa Slab One"',    weight: 400 },
-    { key: 'anakgedong',   name: 'Anak Gedong',       family: '"Anak Gedong"',      weight: 400, arquivo: true, accents: false },
+    { key: 'anakgedong',   name: 'Anak Gedong',       family: '"Anak Gedong"',      weight: 400, arquivo: true, accents: false,
+      acento: { familia: 'Blue Winter', peso: 400 } },
     { key: 'bagel',        name: 'Bagel Fat One',     family: '"Bagel Fat One"',    weight: 400 },
     { key: 'baloo',        name: 'Baloo 2',           family: '"Baloo 2"',          weight: 800 },
     { key: 'berkshire',    name: 'Berkshire Swash',   family: '"Berkshire Swash"',  weight: 400, arquivo: true },
@@ -120,12 +129,11 @@ const TODAS_AS_FONTES: FontOption[] = [
     { key: 'bowlby',       name: 'Bowlby One',        family: '"Bowlby One"',       weight: 400 },
     { key: 'bungee',       name: 'Bungee',            family: '"Bungee"',           weight: 400 },
     { key: 'caprasimo',    name: 'Caprasimo',         family: '"Caprasimo"',        weight: 400, arquivo: true },
+    { key: 'comicsans',    name: 'Comic Sans',        family: '"PI Comic Sans"',    weight: 400, arquivo: true },
     { key: 'cherry',       name: 'Cherry Bomb One',   family: '"Cherry Bomb One"',  weight: 400 },
-    {
-        key: 'handjet', name: 'Handjet', family: '"Handjet"', weight: 400, arquivo: true, effect: 'handjet',
-        effectHint: 'Efeito próprio: as letras são feitas de pontinhos que trocam de formato e engordam ao tocar (eixos ELSH, ELGR e peso).',
-    },
-    { key: 'howdybun',     name: 'Howdybun',          family: '"Howdybun"',         weight: 400, arquivo: true, accents: false },
+    { key: 'helvetica',    name: 'Helvetica',         family: '"PI Helvetica"',     weight: 400, arquivo: true },
+    { key: 'howdybun',     name: 'Howdybun',          family: '"Howdybun"',         weight: 400, arquivo: true, accents: false,
+      acento: { familia: 'Baloo 2', peso: 800 } },
     { key: 'isometra',     name: 'Isometra',          family: '"Isometra"',         weight: 400, arquivo: true },
     {
         key: 'kablammo', name: 'Kablammo', family: '"Kablammo"', weight: 400, arquivo: true, effect: 'kablammo',
@@ -136,6 +144,7 @@ const TODAS_AS_FONTES: FontOption[] = [
     { key: 'matemasie',    name: 'Matemasie',         family: '"Matemasie"',        weight: 400 },
     { key: 'mochiy',       name: 'Mochiy Pop P One',  family: '"Mochiy Pop P One"', weight: 400 },
     { key: 'modak',        name: 'Modak',             family: '"Modak"',            weight: 400 },
+    { key: 'papyrus',      name: 'Papyrus',           family: '"PI Papyrus"',       weight: 400, arquivo: true },
     { key: 'playfair',     name: 'Playfair Display',  family: '"Playfair Display"', weight: 400 },
     { key: 'righteous',    name: 'Righteous',         family: '"Righteous"',        weight: 400, arquivo: true },
     {
@@ -155,8 +164,9 @@ const TODAS_AS_FONTES: FontOption[] = [
     // em public/fontes, veja LICENCAS.txt). A letra troca de estilo ao tocar.
     {
         key: 'cheee', name: 'Cheee (demo)', family: '"Cheee Sticky"', weight: 400, arquivo: true, effect: 'estilos', accents: false,
+        acento: { familia: 'Caprasimo', peso: 400 },
         estilos: { familias: ['Cheee Sticky', 'Cheee Wowie', 'Cheee Tbone', 'Cheee Jimbo', 'Cheee Choy', 'Cheee Oyen'] },
-        effectHint: 'Efeito próprio: ao tocar, as letras incham como massa de pão, passando por 6 estilos da Cheee. Versão de demonstração, sem acentos.',
+        effectHint: 'Efeito próprio: ao tocar, as letras incham como massa de pão, passando por 6 estilos da Cheee. Versão de demonstração: os acentos vêm de outra fonte do acervo.',
     },
     {
         key: 'hela', name: 'Hela (trial)', family: '"Hela 300"', weight: 400, arquivo: true, effect: 'estilos',
@@ -165,8 +175,21 @@ const TODAS_AS_FONTES: FontOption[] = [
     },
     {
         key: 'camelion', name: 'Camelion (demo)', family: '"Camelion Regular"', weight: 400, arquivo: true, effect: 'estilos', accents: false,
+        acento: { familia: 'Poppins', peso: 700 },
         estilos: { familias: ['Camelion Regular', 'Camelion Medium', 'Camelion Bold', 'Camelion ExtraBold'], alternas: ['Camelion Italic', 'Camelion MediumItalic', 'Camelion BoldItalic', 'Camelion ExtraBoldItalic'] },
-        effectHint: 'Efeito próprio: ao tocar, as letras engordam e, segurando a tecla, balançam entre o reto e o itálico. Versão de demonstração, sem acentos.',
+        effectHint: 'Efeito próprio: ao tocar, as letras engordam e, segurando a tecla, balançam entre o reto e o itálico. Versão de demonstração: os acentos vêm de outra fonte do acervo.',
+    },
+    // Fontes pixel (teste): letras de pontos ou quadradinhos, no desenho original,
+    // com um efeito de eixos contínuo, sem trocas bruscas de desenho.
+    {
+        key: 'doto', name: 'Doto', family: '"Doto"', weight: 700, arquivo: true, pixel: true, effect: 'eixos',
+        eixosToque: [{ tag: 'ROND', repouso: 0, toque: 100 }, { tag: 'wght', repouso: 700, toque: 900 }],
+        effectHint: 'Letra de matriz de pontos: os pontos arredondam e crescem ao tocar (eixos ROND e peso).',
+    },
+    {
+        key: 'pixelify', name: 'Pixelify Sans', family: '"Pixelify Sans"', weight: 400, arquivo: true, pixel: true, effect: 'eixos',
+        eixosToque: [{ tag: 'wght', repouso: 400, toque: 700 }],
+        effectHint: 'Pixel clássico que engorda ao tocar (eixo de peso).',
     },
 ];
 

@@ -14,11 +14,39 @@ Fontes variáveis com efeito próprio, licença SIL OFL 1.1:
   Kablammo.woff2      Kablammo       eixo MORF (OFL-Kablammo.txt)
   ShantellSans.woff2  Shantell Sans  eixos BNCE, INFM e peso (OFL-ShantellSans.txt)
 
+Fontes pixel (teste), SIL OFL 1.1, do repositório google/fonts (subconjunto
+latino, woff2). No Gelatina ficam na categoria "Fontes pixel (teste)", com o
+desenho original (sem suavização):
+
+  Doto.woff2                Doto                Oliver Lalan (OFL-Doto.txt), eixos ROND e peso
+  PixelifySans.woff2        Pixelify Sans       autores do projeto Pixelify Sans, eifetx (OFL-PixelifySans.txt), eixo de peso
+
+Comic Sans, Papyrus e Helvetica: fontes comerciais, que não podem ir junto com
+o projeto. O app usa a versão instalada no computador e, se ela faltar, a
+substituta livre abaixo (declaradas como "PI Comic Sans", "PI Papyrus" e
+"PI Helvetica" no index.html):
+
+  ComicNeue-Bold.woff2      Comic Neue (negrito)  Craig Rozynski (OFL-ComicNeue.txt), no lugar da Comic Sans MS Bold
+  Macondo.woff2             Macondo             John Vargas Beltrán (OFL-Macondo.txt), no lugar da Papyrus
+  TeXGyreHeros-Bold.woff2   TeX Gyre Heros Bold  GUST e-foundry (GUST-TeXGyreHeros.txt), no lugar da Helvetica Bold
+
+Acentos compostos: nas fontes sem acento, a letra base (o, e, a) continua na
+fonte original e o acento vem de outra fonte do acervo, escolhida comparando
+todas as candidatas lado a lado (traço, peso e terminação parecidos):
+
+  Anak Gedong   acento da Blue Winter (mesmo autor, Khurasan; gota grossa)
+  Howdybun      acento da Baloo 2 (peso 800; gota arredondada e brincalhona)
+  Cheee         acento da Caprasimo (gota gorda, combina com a massa inchada)
+  Camelion      acento da Poppins (peso 700; cunha limpa de sans humanista)
+
+O acento é escalado pela altura-x das duas fontes, centrado sobre a base e posto
+com a folga que tem na fonte de origem (src/gelatina/services/gelatinaEngine.ts,
+comporAcento). Para trocar o doador, mude "acento" em src/gelatina/constants.ts.
+
 Mais fontes mutáveis, SIL OFL 1.1 (subconjunto latino, convertidas para woff2
 a partir dos arquivos do repositório google/fonts):
 
   TiltWarp.woff2       Tilt Warp       Andy Clymer (OFL-TiltWarp.txt), eixos XROT e YROT
-  Handjet.woff2        Handjet         Rosetta e David Březina (OFL-Handjet.txt), eixos ELSH, ELGR e peso
 
 Fontes mutáveis feitas de estilos estáticos (versões de teste dos autores,
 nas pastas que vieram no download, sem renomear):

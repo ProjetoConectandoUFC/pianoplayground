@@ -23,11 +23,13 @@
 
       /* Fontes variáveis com efeito próprio ("Fontes mutáveis" na lista do Gelatina).
          Os eixos são animados pelo motor da gelatina: MORF na Kablammo; BNCE, INFM e
-         peso na Shantell Sans; XROT e YROT na Tilt Warp; ELSH, ELGR e peso na Handjet (todas
+         peso na Shantell Sans; XROT e YROT na Tilt Warp (todas
          SIL OFL 1.1). A Graduate usa o efeito automático: os eixos são lidos do arquivo no
          build e ela só aparece no painel se o arquivo estiver em public/fontes. */
       @font-face{font-family:"Tilt Warp";src:url("fontes/TiltWarp.woff2") format("woff2");font-display:swap;}
-      @font-face{font-family:"Handjet";src:url("fontes/Handjet.woff2") format("woff2");font-weight:100 900;font-display:swap;}
+      /* Fontes pixel (teste), SIL OFL 1.1: recebem a suavização (anti-aliasing) no Gelatina */
+      @font-face{font-family:"Doto";src:url("fontes/Doto.woff2") format("woff2");font-weight:100 900;font-display:swap;}
+      @font-face{font-family:"Pixelify Sans";src:url("fontes/PixelifySans.woff2") format("woff2");font-weight:400 700;font-display:swap;}
       /* Cheee e Camelion (OH no Type, demo) e Hela (Renegade, trial): fontes estáticas, um
          estilo por família. O motor da gelatina troca de estilo ao tocar (efeito 'estilos').
          Os arquivos ficam nas pastas de teste que vieram dos autores, dentro de public/fontes. */
@@ -55,6 +57,17 @@
       @font-face{font-family:"Kablammo";src:url("fontes/Kablammo.woff2") format("woff2");font-display:swap;}
       @font-face{font-family:"Shantell Sans";src:url("fontes/ShantellSans.woff2") format("woff2");
         font-weight:300 800;font-display:swap;}
+
+      /* Comic Sans, Papyrus e Helvetica são fontes comerciais e não podem ir junto com o
+         projeto: o app usa a versão instalada no computador (local) e, se ela não existir,
+         uma fonte livre parecida que fica em public/fontes: Comic Neue (OFL), Macondo (OFL)
+         e TeX Gyre Heros (GUST Font License). */
+      @font-face{font-family:"PI Comic Sans";src:local("Comic Sans MS Bold"),local("ComicSansMS-Bold"),
+        url("fontes/ComicNeue-Bold.woff2") format("woff2");font-display:swap;}
+      @font-face{font-family:"PI Papyrus";src:local("Papyrus"),local("Papyrus-Regular"),
+        url("fontes/Macondo.woff2") format("woff2");font-display:swap;}
+      @font-face{font-family:"PI Helvetica";src:local("Helvetica Bold"),local("Helvetica-Bold"),local("Helvetica Neue Bold"),local("HelveticaNeue-Bold"),
+        url("fontes/TeXGyreHeros-Bold.woff2") format("woff2");font-display:swap;}
 
       /* Fontes do Google Fonts embutidas como arquivo (SIL OFL 1.1, subconjunto latino). */
       @font-face{font-family:"Isometra";src:local("Isometra"),local("Isometra-Regular"),

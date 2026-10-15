@@ -12,8 +12,9 @@ import {
 
 /** Categorias da lista de fontes: as fontes de sempre e as mutáveis */
 const GRUPOS_FONTES: { rotulo: string; filtro: (f: FontOption) => boolean }[] = [
-    { rotulo: 'Fontes', filtro: f => !f.effect },
-    { rotulo: 'Fontes mutáveis', filtro: f => !!f.effect },
+    { rotulo: 'Fontes', filtro: f => !f.effect && !f.pixel },
+    { rotulo: 'Fontes mutáveis', filtro: f => !!f.effect && !f.pixel },
+    { rotulo: 'Fontes pixel (teste)', filtro: f => !!f.pixel },
 ];
 
 interface ControlPanelProps {
@@ -160,7 +161,7 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
                                 {FONT_OPTIONS.filter(g.filtro).sort((x, y) => x.name.localeCompare(y.name)).map(f => (
                                     <option key={f.key} value={f.key}>
                                         {f.name}
-                                        {f.accents === false ? ' · sem acentos' : ''}
+                                        {f.accents === false ? (f.acento ? ' · acentos compostos' : ' · sem acentos') : ''}
                                         {ausentes.has(f.key) ? ' · não encontrada' : ''}
                                     </option>
                                 ))}
@@ -176,11 +177,19 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
                     </Dica>
                 )}
                 {fontLacksAccents(settings.fontKey) && settings.noteSystem === 'latin' && (
-                    <Dica>
-                        Esta fonte não tem acentos: em Dó, Ré, Fá e Lá a letra acentuada sai de
-                        uma fonte reserva. Para um visual uniforme, use o sistema anglicano
-                        (C, D, E...) ou outra fonte.
-                    </Dica>
+                    fontOf(settings.fontKey).acento ? (
+                        <Dica>
+                            Esta fonte não tem acentos: em Dó, Ré, Fá e Lá a letra continua nela e
+                            o acento vem da {fontOf(settings.fontKey).acento!.familia}, escolhida no
+                            acervo por combinar com o desenho.
+                        </Dica>
+                    ) : (
+                        <Dica>
+                            Esta fonte não tem acentos: em Dó, Ré, Fá e Lá a letra acentuada sai de
+                            uma fonte reserva. Para um visual uniforme, use o sistema anglicano
+                            (C, D, E...) ou outra fonte.
+                        </Dica>
+                    )
                 )}
 
                 <div>
