@@ -36,6 +36,10 @@ export interface AppSettings {
     motorTexto?: boolean;
     /** Marca que o tamanho inicial menor (densidade 0,8) já foi aplicado */
     tamanhoV2?: boolean;
+    /** Marca que as cores de identidade do Design System Conectando já foram aplicadas */
+    coresIdentidade?: boolean;
+    /** Marca que as cores de identidade do PDF (rosa, turquesa, céu...) já foram aplicadas uma vez */
+    coresIdentidadeV2?: boolean;
 }
 
 export interface KnobValues {

@@ -8,8 +8,9 @@ import { useStatusEntrada } from './shared/ui/statusEntrada';
 import { useJogoAtual } from './shared/ui/jogoAtual';
 import { FaixaMaos } from './shared/ui/FaixaMaos';
 // Imagens do projeto ficam todas em src/assets (catálogo em src/assets/LEIA-ME.md)
-import logoAzulUrl from './assets/marca/logo-conectando-azul.png';
-import logoCremeUrl from './assets/marca/logo-conectando-creme.png';
+// Marca do Design System Conectando: azul sobre fundo claro, branca sobre a tinta
+import logoAzulUrl from './assets/marca/marca-azul.png';
+import logoBrancaUrl from './assets/marca/marca-branca.png';
 import './shared/ui/ui.css';
 import './shell.css';
 
@@ -41,7 +42,7 @@ const App: React.FC = () => {
       <header className="ui-barra" data-view={view}>
         <div className="ui-barra-esq">
           <img className="ui-marca ui-marca-clara" src={logoAzulUrl} alt="Conectando Ciências, Tecnologias e Artes" draggable={false} />
-          <img className="ui-marca ui-marca-escura" src={logoCremeUrl} alt="Conectando Ciências, Tecnologias e Artes" draggable={false} />
+          <img className="ui-marca ui-marca-escura" src={logoBrancaUrl} alt="Conectando Ciências, Tecnologias e Artes" draggable={false} />
         </div>
 
         <div className="ui-barra-dir">

@@ -45,6 +45,20 @@ const carregarConfig = (): AppSettings => {
             ...(salvo.tamanhoV2 ? {} : { noteDensity: DEFAULT_SETTINGS.noteDensity, tamanhoV2: true }),
             noteColors: Array.isArray(salvo.noteColors) && salvo.noteColors.length === 7
                 ? salvo.noteColors : DEFAULT_SETTINGS.noteColors,
+            // cores de identidade do Design System Conectando: substituem a paleta
+            // anterior uma vez; depois disso, o que for escolhido no painel fica guardado
+            ...(salvo.coresIdentidade ? {} : {
+                noteColors: DEFAULT_SETTINGS.noteColors,
+                sharpColor: DEFAULT_SETTINGS.sharpColor,
+                coresIdentidade: true,
+            }),
+            // cores de identidade do PDF do Design System (rosa, turquesa, céu,
+            // rosa antigo, laranja, azul médio e roxo): entram uma vez no lugar da
+            // paleta anterior; depois, o que for escolhido no painel fica guardado
+            ...(salvo.coresIdentidadeV2 ? {} : {
+                noteColors: DEFAULT_SETTINGS.noteColors,
+                coresIdentidadeV2: true,
+            }),
         };
     } catch {
         return DEFAULT_SETTINGS;

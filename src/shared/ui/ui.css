@@ -9,6 +9,50 @@
    ========================================================================== */
 
 :root {
+  /* ---- Tokens do Design System Conectando (projeto/tokens, v1.0) ----
+     Cores amostradas das peças impressas; neutros derivados do azul. */
+  --azul: #1666B0;
+  --azul-profundo: #0E5395;
+  --azul-claro: #2670B5;
+  --azul-brilho: #3D8AD1;
+  --amarelo: #FCE051;
+  --amarelo-suave: #FFF3B0;
+  --coral: #EB5F3E;
+  --coral-suave: #FBDDD4;
+  --n0: #FFFFFF; --n1: #F2F6FB; --n2: #DEE5ED; --n3: #CED7E4;
+  --n4: #BDC9DA; --n6: #9AAEC8; --n8: #7B95B7; --n9: #5F7B9E;
+  --n10: #486284; --n11: #33506F; --n12: #10263F;
+  --ok: #0E7A56; --ok-fundo: #E3F3EC;
+  --erro: #B0261B; --erro-fundo: #FBE6E4;
+  --r-min: 6px; --r-1: 12px; --r-2: 20px; --r-3: 32px; --r-pill: 999px;
+  --sombra-1: 0 1px 2px rgba(16,38,63,.06), 0 2px 6px rgba(16,38,63,.05);
+  --sombra-2: 0 2px 4px rgba(16,38,63,.06), 0 8px 24px rgba(16,38,63,.08);
+  --sombra-3: 0 4px 8px rgba(16,38,63,.07), 0 20px 48px rgba(16,38,63,.12);
+  --alvo-toque: 44px;
+
+  /* ---- Paleta do Design System Conectando (Design System Completo.pdf) ----
+     Usada pelo Genius do Piano (tema sóbrio: fundo noite, foco amarelo).
+     Os outros jogos continuam com os tokens acima. */
+  --cn-azul: #0075c5;
+  --cn-amarelo: #fde31f;
+  --cn-coral: #e34a39;
+  --cn-coral-escuro: #c63b2b;
+  --cn-creme: #fcfaf1;
+  --cn-azul-escuro: #035386;
+  --cn-celeste: #62bfff;
+  --cn-teal: #309f9f;
+  --cn-menta: #a5dede;
+  --cn-lilas: #404573;
+  --cn-gelo: #c8dfe8;
+  --cn-rosa: #ff6776;
+  --cn-turquesa: #24c0c0;
+  --cn-ceu: #3bb8ff;
+  --cn-tinta: #0c0b0a;
+  --cn-titulo: #001320;
+  --cn-noite: #002036;
+  --cn-marinho: #032942;
+  --cn-grafite-azul: #19262e;
+
   /* Barra do topo mais baixa: só a marca, o status e o botão de configurações */
   --ui-header-h: 68px;
   --ui-marca-h: 46px;
@@ -19,56 +63,82 @@
      valor inicial, o da imagem atual (faixa-maos.png, 1974 × 128). */
   --ui-faixa-h: calc((100vw + 4px) / var(--ui-faixa-proporcao-escura, 15.421875));
   --ui-topo: calc(var(--ui-header-h) + var(--ui-faixa-h));
-  --ui-font: "Poppins", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  --ui-mono: "DM Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  /* Uma fonte por função: Poppins para o que se lê, IBM Plex Mono para o que se identifica */
+  --ui-font: "Poppins", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --ui-mono: "IBM Plex Mono", "SFMono-Regular", Menlo, monospace;
 
-  /* Tema escuro (padrão): azul-marinho e amarelo da marca */
-  --ui-ground: #20274f;
-  --ui-surface: #1a2046;
-  --ui-ink: #fcfaf1;
-  --ui-muted: #a9aed0;
-  --ui-line: rgba(252, 250, 241, 0.16);
-  --ui-field: rgba(252, 250, 241, 0.08);
-  --ui-edge: #2a66b3;
-  --ui-edge-hover: #5b8fd6;
-  --ui-accent: #fde300;
-  --ui-accent-fg: #20274f;
-  --ui-pill: rgba(26, 32, 70, 0.9);
-  --ui-pill-hover: rgba(42, 102, 179, 0.28);
-  --ui-scrim: rgba(10, 12, 30, 0.6);
-  --ui-ok: #43b3b4;
-  --ui-aviso: #f0848f;
-  --ui-sombra: 0 16px 40px rgba(0, 0, 0, 0.35);
+  /* Tema escuro (padrão): tinta n12 do sistema, com o amarelo da marca como destaque */
+  --ui-ground: var(--n12);
+  --ui-surface: var(--n12);
+  --ui-ink: var(--n0);
+  --ui-muted: var(--n4);
+  --ui-line: var(--n11);
+  --ui-field: rgba(255, 255, 255, 0.08);
+  --ui-campo-borda: var(--n10);
+  --ui-edge: var(--azul-brilho);
+  --ui-edge-hover: var(--n1);
+  --ui-edge-fg: var(--n12);
+  --ui-accent: var(--amarelo);
+  --ui-accent-hover: #FFEC8A;
+  --ui-accent-fg: var(--n12);
+  --ui-pill: var(--n12);
+  --ui-pill-hover: var(--n11);
+  --ui-scrim: rgba(16, 38, 63, 0.6);
+  --ui-foco: var(--coral);
+  --ui-ok: var(--ok);
+  --ui-aviso: var(--erro);
+  --ui-sombra: var(--sombra-3);
 }
 
 /* Sem a faixa das mãos (ver MOSTRAR_FAIXA em FaixaMaos.tsx) */
 :root.ui-sem-faixa,
 :root.ui-sem-faixa[data-ui-tema] { --ui-faixa-h: 0px; }
 
-/* Tema claro: creme, tinta e azul da marca Conectando */
+/* Tema claro: fundo creme, superfície branca, tinta n12 e o azul da marca como ação */
 :root[data-ui-tema="claro"] {
   /* faixa das mãos do tema claro (valor inicial: faixa-maos-clara.png, 1912 × 128) */
   --ui-faixa-h: calc((100vw + 4px) / var(--ui-faixa-proporcao-clara, 14.9375));
-  --ui-ground: #f6f6c7;
-  --ui-surface: #fbfae8;
-  --ui-ink: #443c1a;
-  --ui-muted: #6b6340;
-  --ui-line: rgba(68, 60, 26, 0.2);
-  --ui-field: rgba(68, 60, 26, 0.08);
-  --ui-edge: #1d58a4;
-  --ui-edge-hover: #2e6fc2;
-  --ui-accent: #1d58a4;
-  --ui-accent-fg: #ffffff;
-  --ui-pill: rgba(246, 246, 199, 0.94);
-  --ui-pill-hover: rgba(29, 88, 164, 0.1);
-  --ui-scrim: rgba(68, 60, 26, 0.42);
-  --ui-ok: #0f7f80;
-  --ui-aviso: #b4232f;
-  --ui-sombra: 0 16px 40px rgba(68, 60, 26, 0.22);
+  --ui-ground: #FCFAF1; /* creme do Design System (página do tema claro) */
+  --ui-surface: var(--n0);
+  --ui-ink: var(--n12);
+  --ui-muted: var(--n10);
+  --ui-line: var(--n3);
+  --ui-field: var(--n1);
+  --ui-campo-borda: var(--n4);
+  --ui-edge: var(--azul);
+  --ui-edge-hover: var(--azul-profundo);
+  --ui-edge-fg: var(--n0);
+  --ui-accent: var(--azul);
+  --ui-accent-hover: var(--azul-profundo);
+  --ui-accent-fg: var(--n0);
+  --ui-pill: var(--n0);
+  --ui-pill-hover: var(--n1);
+  --ui-scrim: rgba(16, 38, 63, 0.42);
+  --ui-sombra: var(--sombra-3);
 }
 
-/* No Genius, o amarelo de destaque é o mesmo do título, um pouco mais intenso */
-:root[data-ui-jogo="genius"] { --ui-accent: #ffd400; }
+/* Genius do Piano: tema sóbrio do Design System (fundo noite, superfície
+   marinho, destaque amarelo, linhas celeste e foco amarelo). Vale para a
+   barra, o botão de configurações e a gaveta enquanto o Genius está em cena. */
+:root[data-ui-jogo="genius"] {
+  --ui-ground: var(--cn-noite);
+  --ui-surface: var(--cn-marinho);
+  --ui-ink: var(--cn-creme);
+  --ui-muted: var(--cn-gelo);
+  --ui-line: rgba(252, 250, 241, 0.14);
+  --ui-field: rgba(252, 250, 241, 0.08);
+  --ui-campo-borda: var(--cn-azul-escuro);
+  --ui-edge: var(--cn-celeste);
+  --ui-edge-hover: var(--cn-creme);
+  --ui-edge-fg: var(--cn-noite);
+  --ui-accent: var(--cn-amarelo);
+  --ui-accent-hover: var(--cn-amarelo);
+  --ui-accent-fg: var(--cn-tinta);
+  --ui-pill: var(--cn-noite);
+  --ui-pill-hover: var(--cn-marinho);
+  --ui-scrim: rgba(0, 32, 54, 0.6);
+  --ui-foco: var(--cn-amarelo);
+}
 
 /* A faixa das mãos fica só no Genius; nos pianos ela some e o palco sobe.
    (Vem depois dos temas para valer também no claro.) */
@@ -79,24 +149,27 @@
 .ui-segmentado {
   display: inline-flex;
   padding: 4px;
-  border-radius: 999px;
+  border-radius: var(--r-pill);
   border: 2px solid var(--ui-edge);
   background: var(--ui-pill);
 }
 .ui-segmentado-opcao {
+  min-height: 36px;
   padding: 8px 18px;
   border: 0;
-  border-radius: 999px;
+  border-radius: var(--r-pill);
   background: transparent;
   color: var(--ui-muted);
   font-family: var(--ui-font);
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
-  transition: background 0.15s ease, color 0.15s ease;
+  transition: background 0.16s ease, color 0.16s ease, transform 0.06s ease;
 }
 .ui-segmentado-opcao:hover { color: var(--ui-ink); }
-.ui-segmentado-opcao.on { background: var(--ui-accent); color: var(--ui-accent-fg); }
+.ui-segmentado-opcao:active { transform: translateY(1px); }
+/* Estado ativo com cor e peso, nunca só a cor */
+.ui-segmentado-opcao.on { background: var(--ui-accent); color: var(--ui-accent-fg); font-weight: 600; }
 
 /* Área do palco de cada jogo na janela principal: começa abaixo da barra e
    da faixa. A janela de projeção não usa esta classe e continua tela cheia. */
@@ -140,14 +213,16 @@
   align-items: center;
   justify-content: center;
   padding: 0;
-  border-radius: 14px;
+  border-radius: var(--r-pill);
   border: 2px solid var(--ui-edge);
   background: var(--ui-pill);
   color: var(--ui-ink);
   cursor: pointer;
-  transition: background 0.15s ease, border-color 0.15s ease;
+  transition: background 0.16s ease, border-color 0.16s ease, color 0.16s ease, transform 0.06s ease;
 }
-.ui-btn-config:hover { background: var(--ui-pill-hover); border-color: var(--ui-edge-hover); }
+/* Hover do secundário do sistema: inverte (fundo da borda, texto contrário) */
+.ui-btn-config:hover { background: var(--ui-edge); border-color: var(--ui-edge); color: var(--ui-edge-fg); }
+.ui-btn-config:active { transform: translateY(1px); }
 .ui-btn-config svg { width: 22px; height: 22px; pointer-events: none; }
 /* ---------- Gaveta de configurações (abre pela direita, junto do botão) ---------- */
 .ui-gaveta-fundo {
@@ -159,7 +234,7 @@
   padding: 0;
   background: var(--ui-scrim);
   cursor: default;
-  animation: ui-surge 0.2s ease-out;
+  animation: ui-surge 0.16s ease;
 }
 .ui-gaveta {
   position: fixed;
@@ -174,11 +249,11 @@
   overflow-y: auto;
   background: var(--ui-surface);
   color: var(--ui-ink);
-  border-left: 2px solid var(--ui-edge);
-  box-shadow: -12px 0 40px rgba(0, 0, 0, 0.22);
+  border-left: 1px solid var(--ui-line);
+  box-shadow: var(--ui-sombra);
   font-family: var(--ui-font);
   -webkit-font-smoothing: antialiased;
-  animation: ui-desliza 0.24s ease-out;
+  animation: ui-desliza 0.2s ease;
 }
 .ui-gaveta *, .ui-gaveta *::before, .ui-gaveta *::after { box-sizing: border-box; }
 @keyframes ui-surge { from { opacity: 0; } to { opacity: 1; } }
@@ -202,12 +277,14 @@
   justify-content: center;
   padding: 0;
   border: 0;
-  border-radius: 12px;
+  border-radius: var(--r-pill);
   background: var(--ui-field);
   color: var(--ui-ink);
   cursor: pointer;
+  transition: background 0.16s ease, color 0.16s ease, transform 0.06s ease;
 }
-.ui-btn-fechar:hover { background: var(--ui-pill-hover); }
+.ui-btn-fechar:hover { background: var(--ui-edge); color: var(--ui-edge-fg); }
+.ui-btn-fechar:active { transform: translateY(1px); }
 .ui-btn-fechar svg { width: 20px; height: 20px; pointer-events: none; }
 
 .ui-secao {
@@ -219,50 +296,57 @@
 }
 .ui-secao-titulo {
   margin: 0;
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.14em;
+  font-family: var(--ui-mono);
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--ui-muted);
 }
 .ui-subtitulo {
   margin: 0 0 8px;
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.14em;
+  font-family: var(--ui-mono);
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--ui-muted);
 }
-.ui-rotulo { display: block; margin: 0 0 8px; font-size: 14px; font-weight: 500; color: var(--ui-ink); }
-.ui-dica { margin: 0; font-size: 12px; line-height: 1.5; color: var(--ui-muted); }
+.ui-rotulo { display: block; margin: 0 0 8px; font-size: 14px; font-weight: 600; color: var(--ui-ink); }
+.ui-dica { margin: 0; font-size: 13px; line-height: 1.5; color: var(--ui-muted); }
 .ui-dica code, .ui-mono { font-family: var(--ui-mono); }
-.ui-valor { font-family: var(--ui-mono); font-size: 12px; color: var(--ui-muted); }
+.ui-valor { font-family: var(--ui-mono); font-size: 13px; font-weight: 500; color: var(--ui-muted); }
 .ui-linha { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
 .ui-linha .ui-rotulo { margin: 0; }
 
+/* Campo do sistema: borda de 2px (1px some no celular ao sol), raio 6 */
 .ui-select {
   width: 100%;
-  padding: 10px 12px;
-  border-radius: 10px;
-  border: 1px solid var(--ui-line);
+  min-height: var(--alvo-toque);
+  padding: 10px 14px;
+  border-radius: var(--r-min);
+  border: 2px solid var(--ui-campo-borda);
   background: var(--ui-surface);
   color: var(--ui-ink);
   font-family: var(--ui-font);
-  font-size: 14px;
+  font-size: 15px;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
+.ui-select:hover { border-color: var(--n6); }
+.ui-select:focus { outline: none; border-color: var(--ui-edge); box-shadow: 0 0 0 3px rgba(22, 102, 176, 0.18); }
 .ui-range { width: 100%; accent-color: var(--ui-accent); cursor: pointer; }
 .ui-cor {
   width: 100%;
-  height: 34px;
+  height: 36px;
   padding: 2px;
-  border-radius: 8px;
-  border: 1px solid var(--ui-line);
+  border-radius: var(--r-min);
+  border: 2px solid var(--ui-campo-borda);
   background: var(--ui-field);
   cursor: pointer;
 }
 .ui-cor.curta { width: 64px; }
 .ui-cor::-webkit-color-swatch-wrapper { padding: 2px; }
-.ui-cor::-webkit-color-swatch { border: none; border-radius: 5px; }
+.ui-cor::-webkit-color-swatch { border: none; border-radius: 3px; }
 
 .ui-btn-principal {
   display: flex;
@@ -270,39 +354,48 @@
   justify-content: center;
   gap: 8px;
   width: 100%;
-  padding: 12px 16px;
-  border: 0;
-  border-radius: 12px;
+  min-height: var(--alvo-toque);
+  padding: 14px 24px;
+  border: 2px solid transparent;
+  border-radius: var(--r-pill);
   background: var(--ui-accent);
   color: var(--ui-accent-fg);
   font-family: var(--ui-font);
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 600;
+  line-height: 1;
   cursor: pointer;
-  transition: opacity 0.15s ease;
+  transition: background 0.16s ease, border-color 0.16s ease, color 0.16s ease, transform 0.06s ease;
 }
-.ui-btn-principal:hover { opacity: 0.9; }
+/* Hover: cor mais escura, nunca opacidade */
+.ui-btn-principal:hover { background: var(--ui-accent-hover); }
+.ui-btn-principal:active { transform: translateY(1px); }
 .ui-btn-principal svg { width: 18px; height: 18px; }
+/* Secundário do sistema: contorno de 2px, hover inverte */
 .ui-btn-secundario {
   width: 100%;
-  padding: 11px 16px;
-  border: 0;
-  border-radius: 12px;
-  background: var(--ui-field);
+  min-height: var(--alvo-toque);
+  padding: 12px 24px;
+  border: 2px solid var(--ui-edge);
+  border-radius: var(--r-pill);
+  background: transparent;
   color: var(--ui-ink);
   font-family: var(--ui-font);
-  font-size: 14px;
-  font-weight: 500;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1;
   cursor: pointer;
+  transition: background 0.16s ease, border-color 0.16s ease, color 0.16s ease, transform 0.06s ease;
 }
-.ui-btn-secundario:hover:not(:disabled) { background: var(--ui-pill-hover); }
-.ui-btn-secundario:disabled { opacity: 0.45; cursor: not-allowed; }
+.ui-btn-secundario:hover:not(:disabled) { background: var(--ui-edge); color: var(--ui-edge-fg); }
+.ui-btn-secundario:active:not(:disabled) { transform: translateY(1px); }
+.ui-btn-secundario:disabled { border-color: var(--n3); color: var(--n8); cursor: not-allowed; }
 
 /* Interruptor liga/desliga */
 .ui-interruptor-linha { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
 label.ui-interruptor-linha { cursor: pointer; }
 .ui-interruptor-texto { display: flex; flex-direction: column; gap: 2px; }
-.ui-interruptor-rotulo { font-size: 14px; font-weight: 500; }
+.ui-interruptor-rotulo { font-size: 14px; font-weight: 600; }
 .ui-interruptor {
   position: relative;
   width: 46px;
@@ -310,9 +403,9 @@ label.ui-interruptor-linha { cursor: pointer; }
   flex: none;
   padding: 0;
   border: 0;
-  border-radius: 999px;
+  border-radius: var(--r-pill);
   background: var(--ui-field);
-  box-shadow: inset 0 0 0 1px var(--ui-line);
+  box-shadow: inset 0 0 0 2px var(--ui-campo-borda);
   cursor: pointer;
   transition: background 0.16s ease;
 }
@@ -342,20 +435,23 @@ input.ui-interruptor { -webkit-appearance: none; appearance: none; margin: 0; }
   gap: 12px;
   width: 100%;
   padding: 10px 14px;
-  border: 2px solid transparent;
-  border-radius: 12px;
-  background: var(--ui-field);
+  min-height: var(--alvo-toque);
+  border: 2px solid var(--ui-line);
+  border-radius: var(--r-1);
+  background: transparent;
   color: var(--ui-ink);
   font-family: var(--ui-font);
   text-align: left;
   cursor: pointer;
-  transition: background 0.15s ease, border-color 0.15s ease;
+  transition: background 0.16s ease, border-color 0.16s ease;
 }
-.ui-jogo:hover { background: var(--ui-pill-hover); }
-.ui-jogo.on { border-color: var(--ui-edge); background: var(--ui-pill-hover); cursor: default; }
+.ui-jogo:hover { border-color: var(--ui-edge); }
+/* Ativo com traço e peso */
+.ui-jogo.on { border-color: var(--ui-edge); background: var(--ui-field); cursor: default; }
+.ui-jogo.on .ui-jogo-rotulo { font-weight: 700; }
 .ui-jogo-texto { display: flex; flex-direction: column; gap: 1px; }
-.ui-jogo-rotulo { font-size: 14px; font-weight: 600; }
-.ui-jogo-dica { font-size: 12px; color: var(--ui-muted); }
+.ui-jogo-rotulo { font-size: 15px; font-weight: 500; }
+.ui-jogo-dica { font-size: 13px; color: var(--ui-muted); }
 /* Bolinha com a cor de cada jogo */
 .ui-ponto-jogo {
   width: 10px;
@@ -364,9 +460,9 @@ input.ui-interruptor { -webkit-appearance: none; appearance: none; margin: 0; }
   border-radius: 50%;
   box-shadow: 0 0 0 2px var(--ui-surface), 0 0 0 3px var(--ui-line);
 }
-.ui-ponto-jogo[data-jogo="genius"] { background: #ffd400; }
-.ui-ponto-jogo[data-jogo="typographic"] { background: #f0848f; }
-.ui-ponto-jogo[data-jogo="gelatina"] { background: #43b3b4; }
+.ui-ponto-jogo[data-jogo="genius"] { background: var(--amarelo); }
+.ui-ponto-jogo[data-jogo="typographic"] { background: var(--coral); }
+.ui-ponto-jogo[data-jogo="gelatina"] { background: var(--azul-brilho); }
 
 /* Mapa de teclas do teclado do computador */
 .ui-mapa { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 6px; }
@@ -375,22 +471,22 @@ input.ui-interruptor { -webkit-appearance: none; appearance: none; margin: 0; }
   flex-direction: column;
   align-items: center;
   padding: 6px 0;
-  border-radius: 8px;
+  border-radius: var(--r-min);
   background: var(--ui-field);
   color: var(--ui-ink);
 }
 .ui-tecla.preta { background: var(--ui-ink); color: var(--ui-surface); }
 .ui-tecla-letra { font-family: var(--ui-mono); font-size: 14px; font-weight: 500; }
-.ui-tecla-nota { font-size: 10px; opacity: 0.8; }
+.ui-tecla-nota { font-size: 11px; }
 
 /* Medidor dos knobs do controlador */
 .ui-knob-linha { display: flex; justify-content: space-between; gap: 12px; font-size: 12px; margin-bottom: 4px; }
-.ui-knob-trilho { height: 6px; border-radius: 999px; background: var(--ui-field); overflow: hidden; }
-.ui-knob-valor { height: 6px; border-radius: 999px; background: var(--ui-accent); }
+.ui-knob-trilho { height: 6px; border-radius: var(--r-pill); background: var(--ui-field); overflow: hidden; }
+.ui-knob-valor { height: 6px; border-radius: var(--r-pill); background: var(--ui-accent); }
 .ui-knob-livre { color: var(--ui-muted); }
 
 .ui-grade-cores { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
-.ui-cor-item { display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 10px; color: var(--ui-muted); }
+.ui-cor-item { display: flex; flex-direction: column; align-items: center; gap: 4px; font-family: var(--ui-mono); font-size: 11px; color: var(--ui-muted); }
 .ui-cor-linha { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
 
 .ui-indicador { display: flex; align-items: center; gap: 8px; font-size: 13px; }
@@ -401,9 +497,11 @@ input.ui-interruptor { -webkit-appearance: none; appearance: none; margin: 0; }
 .ui-gaveta select:focus-visible,
 .ui-gaveta input:focus-visible,
 .ui-btn-config:focus-visible {
-  outline: 3px solid var(--ui-ok);
-  outline-offset: 2px;
+  outline: 3px solid var(--ui-foco);
+  outline-offset: 3px;
 }
+/* O campo de seleção mostra o foco pela borda azul e o halo, como no sistema */
+.ui-gaveta select.ui-select:focus-visible { outline: none; }
 
 @media (prefers-reduced-motion: reduce) {
   .ui-gaveta, .ui-gaveta-fundo { animation: none; }

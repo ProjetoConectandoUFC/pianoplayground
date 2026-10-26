@@ -1,6 +1,6 @@
 // Renderiza um teclado de 25 teclas (estilo AKAI MPK Mini) — C3 (48) a C5 (72).
 // API: build(container), flash(midi, durationMs, mode), clearAll().
-// Efeito visual: no modo 'player' a tecla fica turquesa e solta estrelas e
+// Efeito visual: no modo 'player' a tecla fica coral e solta estrelas e
 // triângulos pelos lados (camada .key-fx-layer, acima de todas as teclas).
 
 const FIRST_MIDI = 48;
@@ -49,7 +49,7 @@ export function buildPiano(container) {
   container.appendChild(fxLayer);
 }
 
-// Estrelas e triângulos turquesa que saem pelos dois lados da tecla tocada.
+// Estrelas e triângulos coral que saem pelos dois lados da tecla tocada.
 const rand = (a, b) => a + Math.random() * (b - a);
 
 function burst(el) {

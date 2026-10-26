@@ -168,7 +168,7 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
                         onChange={(e) => onSettingsChange({ backgroundColor: e.target.value })}
                     />
                 </div>
-                <Dica>O tema escolhe as duas cores acima; depois elas podem ser ajustadas à vontade.</Dica>
+                <Dica>O tema escolhe as duas cores acima e as cores das notas tocadas, todas do Design System Conectando; depois o fundo e as notas inativas podem ser ajustados à vontade.</Dica>
             </Secao>
 
             {/* SEÇÃO 4: Arranjo das notas na tela */}

@@ -5,7 +5,7 @@ import './genius.css';
 // Importados pelo Vite para funcionar também no Electron empacotado (file://).
 // (catálogo das imagens em src/assets/LEIA-ME.md)
 import lacoEsquerdaUrl from '../assets/genius/laco-esquerda.png';
-import lacoDireitaUrl from '../assets/genius/laco-direita.png';
+import maosRodapeUrl from '../assets/moldura/maos-rodape.png';
 import { useTemaUi } from '../shared/ui/temaUi';
 import { SecaoJogo } from '../shared/ui/componentes';
 
@@ -20,11 +20,14 @@ const ICONE_FECHAR = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
 // teclado agora ficam na barra do topo do App.
 const GENIUS_MARKUP = `
   <main id="app">
-    <!-- Fundo decorativo: laços brancos translúcidos (o Genius só tem o tema escuro) -->
+    <!-- Fundo decorativo: os laços brancos da marca, com 20% de opacidade no próprio arquivo (formas
+         decorativas do Design System, nos cantos e atrás do conteúdo). Espelhados
+         para o layout aprovado: o maior no canto de cima à direita, o menor (o mesmo
+         laço, girado) no canto de baixo à esquerda. -->
     <div class="genius-bg" aria-hidden="true">
+      <img class="genius-laco genius-laco-dir" src="${lacoEsquerdaUrl}" alt="" draggable="false" />
       <img class="genius-laco genius-laco-esq" src="${lacoEsquerdaUrl}" alt="" draggable="false" />
-      <img class="genius-laco genius-laco-dir" src="${lacoDireitaUrl}" alt="" draggable="false" />
-      <!-- Chão em perspectiva (só no modo piano em perspectiva) -->
+      <!-- Chão em perspectiva (aparece quando o piano está inclinado) -->
       <div class="genius-chao"><div class="genius-chao-plano"></div></div>
     </div>
 
@@ -67,20 +70,21 @@ const GENIUS_MARKUP = `
       </section>
       <section class="ui-secao">
         <h3 class="ui-secao-titulo">Aparência</h3>
-        <label class="ui-interruptor-linha">
-          <span class="ui-interruptor-texto">
-            <span class="ui-interruptor-rotulo">Piano em perspectiva</span>
-            <span class="ui-dica">Teste: o piano deita num chão em perspectiva, em vez de ficar chapado na tela.</span>
-          </span>
-          <input type="checkbox" id="setting-perspectiva" class="ui-interruptor" />
-        </label>
+        <div>
+          <div class="ui-linha">
+            <label class="ui-rotulo" for="setting-inclinacao">Inclinação do piano</label>
+            <span id="setting-inclinacao-valor" class="ui-valor">75%</span>
+          </div>
+          <input type="range" id="setting-inclinacao" class="ui-range" min="0" max="100" step="1" value="75" />
+          <p class="ui-dica">0% deixa o piano chapado na tela; 100% é a inclinação máxima, com o piano deitado no chão em perspectiva.</p>
+        </div>
       </section>
     </div>
     <div id="settings-scrim" class="settings-scrim ui-gaveta-fundo" aria-hidden="true"></div>
 
     <section id="stage" class="stage">
+      <div id="stage-indicator" class="stage-indicator lv1">Estágio 1 de 3</div>
       <h1 class="genius-title">Genius do Piano</h1>
-      <div id="stage-indicator" class="stage-indicator hidden">Estágio 1 de 3</div>
       <div id="message" class="message">Conecte um teclado MIDI compatível com MPK Mini.</div>
       <div id="melody-name" class="melody-name"></div>
       <button id="start-btn" class="start-btn" disabled>Iniciar partida</button>
@@ -89,6 +93,9 @@ const GENIUS_MARKUP = `
     <section class="piano-wrap">
       <div id="piano" class="piano" aria-label="Teclado MPK Mini virtual"></div>
     </section>
+
+    <!-- Rodapé: o traço com as mãos se encontrando (motivo da "conexão") -->
+    <div class="genius-maos" aria-hidden="true"><img class="genius-maos-img" src="${maosRodapeUrl}" alt="" draggable="false" /></div>
 
     <div id="countdown" class="countdown hidden" aria-hidden="true"></div>
 
@@ -133,10 +140,23 @@ interface Props {
   active: boolean;
 }
 
-// Piano em perspectiva (teste): ligado por padrão, lembrado entre execuções.
-const CHAVE_PERSPECTIVA = 'genius-perspectiva';
-const perspectivaSalva = (): boolean => {
-  try { return window.localStorage.getItem(CHAVE_PERSPECTIVA) !== 'nao'; } catch { return true; }
+// Inclinação do piano, em % (0 = chapado, 100 = máximo), lembrada entre execuções.
+// 100% equivale a INCLINACAO_MAX graus: acima de uns 70° o piano fica de perfil
+// demais para ler as teclas. O padrão reproduz o layout aprovado.
+const INCLINACAO_MAX = 70;
+const INCLINACAO_PADRAO = 75;
+const CHAVE_INCLINACAO = 'genius-inclinacao';
+const CHAVE_PERSPECTIVA_ANTIGA = 'genius-perspectiva'; // interruptor antigo (sim/nao)
+const inclinacaoSalva = (): number => {
+  try {
+    const salvo = window.localStorage.getItem(CHAVE_INCLINACAO);
+    if (salvo !== null && salvo !== '' && Number.isFinite(Number(salvo))) {
+      return Math.min(100, Math.max(0, Number(salvo)));
+    }
+    // Quem tinha desligado o piano em perspectiva continua com ele chapado
+    if (window.localStorage.getItem(CHAVE_PERSPECTIVA_ANTIGA) === 'nao') return 0;
+  } catch { /* ignora */ }
+  return INCLINACAO_PADRAO;
 };
 
 const GeniusView: React.FC<Props> = ({ active }) => {
@@ -174,22 +194,32 @@ const GeniusView: React.FC<Props> = ({ active }) => {
     btnFechar?.addEventListener('click', fechar);
     setAlvoSecaoJogo(document.getElementById('genius-secao-jogo'));
 
-    // Interruptor "Piano em perspectiva": marca o modo no .genius-root (CSS em genius.css)
+    // Slider "Inclinação do piano": 0% (chapado) a 100% (inclinação máxima).
+    // O valor vai para o .genius-root como --inclinacao (graus) e --inclinacao-t
+    // (0 a 1); o CSS em genius.css inclina o piano e acende o chão.
     const raiz = containerRef.current;
-    const chave = document.getElementById('setting-perspectiva') as HTMLInputElement | null;
-    const aplicar = (on: boolean) => {
-      raiz?.setAttribute('data-perspectiva', on ? 'sim' : 'nao');
-      try { window.localStorage.setItem(CHAVE_PERSPECTIVA, on ? 'sim' : 'nao'); } catch { /* ignora */ }
+    const slider = document.getElementById('setting-inclinacao') as HTMLInputElement | null;
+    const valor = document.getElementById('setting-inclinacao-valor');
+    const aplicar = (pct: number) => {
+      const t = Math.min(100, Math.max(0, pct)) / 100;
+      raiz?.style.setProperty('--inclinacao', `${(t * INCLINACAO_MAX).toFixed(2)}deg`);
+      raiz?.style.setProperty('--inclinacao-t', t.toFixed(3));
+      raiz?.setAttribute('data-perspectiva', t > 0 ? 'sim' : 'nao');
+      if (valor) valor.textContent = `${Math.round(t * 100)}%`;
     };
-    const onPerspectiva = () => aplicar(!!chave?.checked);
-    if (chave) {
-      chave.checked = perspectivaSalva();
-      aplicar(chave.checked);
-      chave.addEventListener('change', onPerspectiva);
+    const onInclinacao = () => {
+      const pct = Number(slider?.value ?? INCLINACAO_PADRAO);
+      aplicar(pct);
+      try { window.localStorage.setItem(CHAVE_INCLINACAO, String(pct)); } catch { /* ignora */ }
+    };
+    if (slider) {
+      slider.value = String(inclinacaoSalva());
+      aplicar(Number(slider.value));
+      slider.addEventListener('input', onInclinacao);
     }
     return () => {
       btnFechar?.removeEventListener('click', fechar);
-      chave?.removeEventListener('change', onPerspectiva);
+      slider?.removeEventListener('input', onInclinacao);
     };
   }, []);
 

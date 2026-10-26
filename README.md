@@ -49,16 +49,17 @@ teclado (AKAI MPK Mini) via Web MIDI, ou o teclado do computador (veja abaixo).
 O Genius foi redesenhado para conversar com o Piano Gelatina, sem mexer na estrutura do piano
 (mesmas 25 teclas, mapa e lógica do jogo):
 
-- Fundo azul-marinho `#20274F` com padrão de ondas e os laços da marca (`src/assets/genius/laco-*.png`, com a transparência de 20% já no arquivo),
-  título "Genius do Piano" em amarelo `#FFD400`, um pouco mais intenso que o primeiro `#FDE300` (fonte Poppins, embutida via `@fontsource/poppins`).
+- Fundo na tinta `#10263F` do Design System Conectando, com padrão de ondas e os laços da marca (`src/assets/genius/laco-*.png`, com a transparência de 20% já no arquivo),
+  título "Genius do Piano" no amarelo da marca `#FCE051` (Poppins 800, embutida via `@fontsource/poppins`).
 - Cabeçalho na moldura comum dos três jogos (veja "Interface comum dos três jogos").
-- Feedback das teclas: **amarelo `#FBD84E`** (mais vivo que o `#F2E299` do protótipo, menos que o título) enquanto a melodia é demonstrada (memorização) e
-  **turquesa `#01A0A0`** com estrelas e triângulos saindo pelos lados quando o jogador acerta
+- Feedback das teclas: **amarelo claro `#FFEC8A`** (menos forte que o título) enquanto a melodia é demonstrada (memorização) e
+  **azul-brilho `#3D8AD1`** com estrelas e triângulos saindo pelos lados quando o jogador acerta
   (efeito em `piano.js`, camada `.key-fx-layer`).
-- Resultados, contagem e confete usam a paleta das notas do Gelatina.
+- Resultados, contagem e confete usam as cores do sistema, com fundo chapado (sem gradiente,
+  sem brilho e sem desfoque, como pede o sistema).
 - A tecla desce e muda de cor com curvas de entrada e saída (rápida ao apertar, suave ao soltar).
 
-**Depois de atualizar o projeto, rode `npm install`** para baixar a fonte Poppins.
+**Depois de atualizar o projeto, rode `npm install`** para baixar as fontes Poppins e IBM Plex Mono.
 
 ## Interface comum dos três jogos
 
@@ -87,10 +88,10 @@ funcionamento nem a jogabilidade de nenhum deles. Cada jogo mantém o próprio p
   `src/shared/ui/jogoAtual.ts`.
   No Genius, a lista de melodias (modo desenvolvedor) abre pelo botão "Escolher melodia" da
   seção Partida, antes da demonstração começar.
-- **Temas** (`ui.css`, `temaUi.ts`): claro (creme, tinta e azul) e escuro (azul-marinho e
-  amarelo) no Tipográfico e no Gelatina. O Genius tem só o tema escuro. O Gelatina escuro
-  passou do quase preto para o azul-marinho. No Tipográfico, o tema também escolhe as cores de fundo e das notas inativas,
-  que continuam editáveis.
+- **Temas** (`ui.css`, `temaUi.ts`): claro (fundo n1, branco, tinta e azul) e escuro (tinta
+  n12 e amarelo) no Tipográfico e no Gelatina. O Genius tem só o tema escuro. No Tipográfico, o
+  tema também escolhe as cores de fundo, das notas inativas e das notas tocadas; fundo e notas
+  inativas continuam editáveis.
 - **Fontes mutáveis** (Gelatina): a lista de fontes tem duas categorias, "Fontes" e
   "Fontes mutáveis". As mutáveis são variáveis com efeito próprio (os eixos mudam ao tocar, no
   lugar de esticar a letra): Kablammo,
@@ -121,11 +122,26 @@ funcionamento nem a jogabilidade de nenhum deles. Cada jogo mantém o próprio p
   normalmente não está no Windows, então ali aparece a TeX Gyre Heros, desenhada a partir dela.
 - **Sorteios no Gelatina**: dois botões na barra, à esquerda do de configurações. Um sorteia
   uma fonte da lista (nunca a atual) e o outro uma paleta nova de sete cores bem separadas.
-- **Teste: piano em perspectiva** (Genius): interruptor "Piano em perspectiva" na seção
-  Aparência da gaveta, ligado por padrão e lembrado entre execuções. O piano deita num chão
-  com grade azul que some ao longe, sem linha de horizonte; teclas, cores e partículas são
-  as mesmas. Desligado, volta ao piano chapado. CSS no fim de `genius.css`.
-- **Tipografia da interface**: Poppins em toda a moldura, DM Mono para valores e teclas.
+- **Piano em perspectiva** (Genius): interruptor "Piano em perspectiva" na seção Aparência da
+  gaveta, ligado por padrão e lembrado entre execuções, com inclinação fixa de 26°. O piano
+  deita num chão com grade azul que some ao longe, sem linha de horizonte; teclas, cores e
+  partículas são as mesmas. Desligado, volta ao piano chapado. O piano (1500 × 300px) e o
+  botão "Iniciar partida" têm tamanho fixo e não acompanham a proporção da tela; em janelas
+  com menos de 1500px de largura as pontas do piano ficam cortadas. CSS no fim de `genius.css`.
+- **Design System Conectando** (aplicado em outubro de 2026): a moldura comum segue os tokens
+  do sistema, declarados no topo de `src/shared/ui/ui.css` (azul `#1666B0`, azul profundo
+  `#0E5395`, amarelo `#FCE051`, coral `#EB5F3E`, neutros derivados do azul de `#FFFFFF` a
+  `#10263F`, verde e vermelho semânticos no status). Botões em pílula com hover mais escuro
+  (nunca opacidade) e pressionado de 1px, campos com borda de 2px e raio 6, foco em anel coral
+  de 3px, sombras azuladas, alvos de toque de 44px e nada de desfoque. Tipografia: Poppins
+  para o que se lê e IBM Plex Mono para o que se identifica (títulos de seção, valores,
+  teclas e status), as duas embutidas pelo Fontsource. Nos pianos com fontes escolhíveis, só a
+  interface de configurações mudou de fonte; as notas continuam na fonte escolhida. As cores
+  padrão do Tipográfico e do Gelatina começam pelas do sistema e seguem editáveis. No Gelatina,
+  as sete notas usam só as cores de identidade (cor da marca e cores de apoio: azul, coral,
+  amarelo, azul profundo, coral suave, azul brilho e amarelo suave), e quem já tinha
+  preferências salvas recebe essa paleta uma vez. Logotipos trocados pelos do
+  sistema: `marca-azul.png` no claro e `marca-branca.png` no escuro.
 - **Imagens**: todas em `src/assets` (marca, moldura e genius), catalogadas em
   `src/assets/LEIA-ME.md`. São importadas pelo código e embutidas no build, então funcionam
   sem internet. As fontes continuam em `public/fontes`.

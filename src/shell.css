@@ -45,7 +45,7 @@
   padding-right: calc(var(--ui-config-tam) * 3 + 20px + 18px);
 }
 
-/* Marca: a versão azul no tema claro, a creme no escuro */
+/* Marca do sistema: azul sobre fundo claro, branca sobre a tinta (tema escuro) */
 .ui-marca { display: block; height: var(--ui-marca-h); width: auto; user-select: none; -webkit-user-drag: none; }
 .ui-marca-clara { display: none; }
 :root[data-ui-tema="claro"] .ui-marca-clara { display: block; }
@@ -58,9 +58,11 @@
   align-items: center;
   gap: 8px;
   color: var(--ui-muted);
+  font-family: var(--ui-mono);
   font-size: 13px;
   font-weight: 500;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
   white-space: nowrap;
   cursor: default;
 }
@@ -69,13 +71,14 @@
   height: 10px;
   flex: none;
   border-radius: 50%;
-  background: #ef4444;
-  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.22);
-  transition: background 0.2s ease, box-shadow 0.2s ease;
+  /* Cores semânticas do sistema (fora da família da marca, de propósito) */
+  background: var(--erro);
+  box-shadow: 0 0 0 3px var(--erro-fundo);
+  transition: background 0.16s ease, box-shadow 0.16s ease;
 }
 .ui-status.ativo .ui-status-ponto {
-  background: #22c55e;
-  box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.22);
+  background: var(--ok);
+  box-shadow: 0 0 0 3px var(--ok-fundo);
 }
 
 /* ---------- Faixa das mãos, logo abaixo da barra ----------
@@ -102,4 +105,3 @@
 :root.ui-sem-faixa .ui-faixa { display: none; }
 /* Só o Genius tem a faixa; nos pianos ela sai para a tela ficar livre */
 :root:not([data-ui-jogo="genius"]) .ui-faixa { display: none; }
-

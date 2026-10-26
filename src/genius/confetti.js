@@ -2,10 +2,10 @@
 // Fica caindo indefinidamente até stopConfetti(). Peças são removidas
 // quando completam a animação para não inchar o DOM.
 
-// Cores das notas do Piano Gelatina (Dó Ré Mi Fá Sol Lá Si) + amarelo e creme da marca.
+// Cores da marca no Design System Conectando: azuis, amarelos, corais e branco.
 const COLORS = [
-  '#43B3B4', '#F0848F', '#FBDF53', '#E9573B',
-  '#1D58A4', '#2E9E5B', '#CC2936', '#FDE300', '#FCFAF1',
+  '#1666B0', '#3D8AD1', '#FCE051', '#FFF3B0',
+  '#EB5F3E', '#FBDDD4', '#FFFFFF',
 ];
 
 let intervalHandle = null;

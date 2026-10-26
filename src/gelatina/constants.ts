@@ -43,14 +43,21 @@ export const NOTE_RELATIONS: number[][] = [
 // Identidade visual
 // ==========================================
 
-/** Cores da marca Conectando, usadas também na interface de configurações */
+/** Cores do Design System Conectando (tokens/colors.css). São o ponto de partida:
+ *  tudo continua editável no painel. */
 export const BRAND = {
-    creme: '#F6F6C7',
-    tinta: '#443C1A',
-    azul: '#1D58A4',
-    petroleo: '#0F3D49',
-    escuro: '#20274F',   // azul-marinho, o mesmo fundo escuro dos três jogos
-    cremeClaro: '#F2EED6',
+    azul: '#1666B0',
+    azulProfundo: '#0E5395',
+    azulBrilho: '#3D8AD1',
+    amarelo: '#FCE051',
+    amareloSuave: '#FFF3B0',
+    coral: '#EB5F3E',
+    coralSuave: '#FBDDD4',
+    ground: '#FCFAF1',   // creme do Design System, fundo de página do tema claro
+    tinta: '#10263F',    // n12, texto e o fundo escuro dos três jogos
+    ok: '#0E7A56',
+    atencao: '#9A6A08',
+    erro: '#B0261B',
 };
 
 export interface ThemeDef {
@@ -61,19 +68,34 @@ export interface ThemeDef {
 }
 
 export const THEMES: { [k in ThemeName]: ThemeDef } = {
-    claro:  { ground: BRAND.creme,  ink: BRAND.tinta,      sharp: BRAND.petroleo, wash: 0.16 },
-    escuro: { ground: BRAND.escuro, ink: BRAND.cremeClaro, sharp: '#5CC6D8',      wash: 0.30 },
+    claro:  { ground: BRAND.ground, ink: BRAND.tinta,  sharp: BRAND.tinta,        wash: 0.16 },
+    escuro: { ground: BRAND.tinta,  ink: BRAND.ground, sharp: BRAND.amareloSuave, wash: 0.30 },
 };
 
-/** Cor de cada nota natural, na ordem da escala: Dó Ré Mi Fá Sol Lá Si */
+/** Cores de identidade do Design System Conectando (seção "Cores de identidade"
+ *  do Design System Completo.pdf), as mesmas que identificam pessoas e peças. */
+export const IDENTIDADE = {
+    rosa: '#FF6776',
+    turquesa: '#24C0C0',
+    ceu: '#3BB8FF',
+    rosaAntigo: '#DD6A75',
+    laranja: '#D86F33',
+    azulMedio: '#4074B2',
+    roxo: '#A740B2',
+};
+
+/** Cor padrão de cada nota natural, na ordem da escala: Dó Ré Mi Fá Sol Lá Si.
+ *  São as sete cores de identidade, uma por nota, na ordem em que aparecem no
+ *  Design System. Sem as semânticas (verde, âmbar, vermelho), que ficam para
+ *  status. Tudo continua editável no painel. */
 export const NOTE_HIGHLIGHT_COLORS: string[] = [
-    '#43B3B4', // Dó  turquesa
-    '#F0848F', // Ré  rosa
-    '#FBDF53', // Mi  amarelo
-    '#E9573B', // Fá  vermelho alaranjado
-    '#1D58A4', // Sol azul
-    '#2E9E5B', // Lá  verde
-    '#CC2936', // Si  vermelho
+    IDENTIDADE.rosa,       // Dó  rosa
+    IDENTIDADE.turquesa,   // Ré  turquesa
+    IDENTIDADE.ceu,        // Mi  céu
+    IDENTIDADE.rosaAntigo, // Fá  rosa antigo
+    IDENTIDADE.laranja,    // Sol laranja
+    IDENTIDADE.azulMedio,  // Lá  azul médio
+    IDENTIDADE.roxo,       // Si  roxo
 ];
 
 
@@ -271,13 +293,15 @@ export const DEFAULT_SETTINGS: AppSettings = {
     theme: 'claro',
     noteSystem: 'latin',
     noteColors: NOTE_HIGHLIGHT_COLORS,
-    sharpColor: BRAND.petroleo,
+    sharpColor: BRAND.tinta,
     noteDensity: 0.8,
     noteSpacing: 0.02,
     noteRandomness: 0.8,
     growAmount: 1.45,
     motorTexto: true,
     tamanhoV2: true,
+    coresIdentidade: true,
+    coresIdentidadeV2: true,
 };
 
 /** Chave usada para lembrar as preferências entre sessões */

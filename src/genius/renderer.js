@@ -65,10 +65,10 @@ export function initGenius() {
   // Pronto para jogar: no modo teclado não depende de dispositivo MIDI.
   const inputReady = () => isKeyboardMode() || midiConnected;
   const idleMessage = () => {
-    if (isKeyboardMode()) return 'Pronto! Toque com as teclas de Q a U e de Z a M. Clique em "Iniciar partida".';
-    return midiConnected
-      ? 'Pronto! Clique em "Iniciar partida" para começar.'
-      : 'Conecte um teclado MIDI compatível com MPK Mini.';
+    // Pronto para jogar: o convite do layout aprovado. No modo Teclado as
+    // letras de Q a U e de Z a M aparecem sobre as teclas do piano.
+    if (isKeyboardMode() || midiConnected) return 'Ouça a melodia e repita no teclado.';
+    return 'Conecte um teclado MIDI compatível com MPK Mini.';
   };
   let currentLevel = 1;
   let lastMelodyId = null;
@@ -194,7 +194,8 @@ export function initGenius() {
     switch (state) {
       case Game.States.IDLE:
         hideCountdown();
-        hideStageIndicator();
+        // Antes da partida a pílula já mostra o estágio de partida (layout aprovado)
+        showStageIndicator(1);
         hideOverlay();
         setMelodyName('');
         ui.message.classList.remove('pulse');
