@@ -104,6 +104,14 @@ const LAG  = 0.07;     // atraso de uma letra para a próxima
 const WOBBLE = 0.06;   // tremor enquanto a tecla está segurada
 const MAX_STRETCH = 0.35, MAX_SKEW = 18;   // limites: 35% de esticada, 18 graus
 const SHADOW = 0.013;  // deslocamento do contorno, em fração da altura
+// Quanto da variação de tamanho entre as notas (Q_SIZE) é usado, com desalinhamento em 100%
+const VAR_TAMANHO_NOTA = 0.35;
+// Variação de tamanho entre as letras de uma palavra (latino), em torno de 1: ±3%
+const VAR_TAMANHO_LETRA = 0.2;
+// Maiúscula inicial: altura mínima em relação à minúscula. Fontes comuns já passam disso;
+// nas só de maiúsculas (Bungee, Hela, Kablammo...) a inicial cresce até MAIUSCULA_MAX.
+const MAIUSCULA_ALVO = 1.32;
+const MAIUSCULA_MAX = 1.3;
 
 // ---------- sistema anglicano (C D E F G A B), só ele usa estes valores ----------
 // Cada nota é uma letra só. Em vez de esticar a letra para encher a linha,
@@ -243,6 +251,8 @@ export function createGelatina(host: HTMLElement, opts: GelatinaOptions, relatio
 
     let W = 0, H = 0, CW = 0, CH = 0, PAD = 10;
     let clock = 0, last = 0, raf = 0, vivo = true;
+    // quanto a maiúscula inicial cresce nesta fonte (1 = nada); calculado em measure
+    let reforcoMaiuscula = 1;
 
     const refreshColors = () => {
         state.forEach((s, i) => {
@@ -350,6 +360,16 @@ export function createGelatina(host: HTMLElement, opts: GelatinaOptions, relatio
         meter.font = o.fontSpec;
         meter.textBaseline = 'alphabetic';
         measureBaseline();
+        // Altura da maiúscula em relação à minúscula nesta fonte. Fontes só de maiúsculas
+        // ficam perto de 1 (a "minúscula" é outra maiúscula); as comuns, de 1,3 a 1,5.
+        {
+            const alt = (t: string) => {
+                const v = Array.from(t).map(ch => meter.measureText(ch).actualBoundingBoxAscent ?? 0);
+                return v.reduce((a, b) => a + b, 0) / v.length;
+            };
+            const razao = alt('DMRFSL') / Math.max(1, alt('oms'));
+            reforcoMaiuscula = clamp(MAIUSCULA_ALVO / Math.max(0.5, razao), 1, MAIUSCULA_MAX);
+        }
         state.forEach((s, i) => {
             const r = seeded(9173 + i * 1277);
             const old = s.letters;
@@ -436,7 +456,15 @@ export function createGelatina(host: HTMLElement, opts: GelatinaOptions, relatio
             // gorda ou espichada, a ponto de mudar a cara da fonte. O sorteio continua
             // variando o tamanho de cada letra, sem mexer na proporção.
             // anglicano: variação de tamanho mais contida, para a letra não parecer gorda
-            const lsu = compact ? 1 + ((l.lsx + l.lsy) / 2 - 1.05) * 0.3 : (l.lsx + l.lsy) / 2;
+            // Latino: variação pequena entre as letras, e a maiúscula inicial nunca menor
+            // que as outras. Antes a variação ia de 0,88 a 1,22 e uma minúscula podia
+            // ficar maior que a inicial, apagando a diferença entre elas. Nas fontes em
+            // que a minúscula tem quase a altura da maiúscula, a inicial ganha o reforço
+            // calculado em measure (reforcoMaiuscula), sempre na mesma proporção.
+            const varia = 1 + ((l.lsx + l.lsy) / 2 - 1.05) * VAR_TAMANHO_LETRA;
+            const inicial = k === 0 && L.length > 1 && l.ch !== l.ch.toLowerCase();
+            const lsu = compact ? 1 + ((l.lsx + l.lsy) / 2 - 1.05) * 0.3
+                : inicial ? Math.max(1, varia) * reforcoMaiuscula : Math.min(1, varia);
             const lsx = lsu;
             const lsy = lsu;
             if (compact) stretch *= ANG_STRETCH;
@@ -486,30 +514,17 @@ export function createGelatina(host: HTMLElement, opts: GelatinaOptions, relatio
         return { g, w: maxX - minX, asc: -minY, desc: maxY };
     }
 
-    // ---------- quebra em linhas de peso equilibrado ----------
-    function partition(weights: number[], L: number): number[][] {
-        const n = weights.length;
-        let best: number[][] | null = null, bestCost = Infinity;
-        const target = weights.reduce((a, b) => a + b, 0) / L;
-        const cuts: number[] = [];
-        (function walk(start: number, depth: number) {
-            if (depth === L - 1) {
-                const groups: number[][] = []; let prev = 0, cost = 0;
-                for (const c of cuts) { groups.push([prev, c]); prev = c; }
-                groups.push([prev, n]);
-                for (const [a, b] of groups) {
-                    let w = 0;
-                    for (let i = a; i < b; i++) w += weights[i];
-                    cost += (w - target) * (w - target);
-                }
-                if (cost < bestCost) { bestCost = cost; best = groups; }
-                return;
-            }
-            for (let c = start + 1; c <= n - (L - 1 - depth); c++) {
-                cuts.push(c); walk(c, depth + 1); cuts.pop();
-            }
-        })(0, 0);
-        return best || [[0, n]];
+    // ---------- quebra fixa: as primeiras linhas levam uma nota a mais ----------
+    // 7 notas: 2 linhas = 4+3; 3 linhas = 3+2+2; 4 linhas = 2+2+2+1
+    function gruposFixos(n: number, L: number): number[][] {
+        const grupos: number[][] = [];
+        let inicio = 0;
+        for (let li = 0; li < L; li++) {
+            const qtd = Math.ceil((n - inicio) / (L - li));
+            grupos.push([inicio, inicio + qtd]);
+            inicio += qtd;
+        }
+        return grupos;
     }
 
     // ---------- lugares fixos ----------
@@ -518,7 +533,10 @@ export function createGelatina(host: HTMLElement, opts: GelatinaOptions, relatio
 
         const n = state.length;
         const desal = o.randomness;
-        const sc = Q_SIZE.slice(0, n);
+        // Diferença de tamanho entre as notas: antes ia de 0,84 (Si) a 1,20 (Fá), e o Dó
+        // saía bem maior que o Si. Agora é uma fração disso, ligada ao desalinhamento:
+        // no máximo (100%) fica entre 0,94 e 1,07; em 0% todas têm o mesmo tamanho.
+        const sc = Q_SIZE.slice(0, n).map(q => 1 + (q - 1) * VAR_TAMANHO_NOTA * desal);
         const wu = state.map((s, i) => sc[i] * (s.nom as Cluster).w / 100);
         const hu = state.map((s, i) => sc[i] * ((s.nom as Cluster).asc + (s.nom as Cluster).desc) / 100);
         const gapU = (i: number, j: number) => (GAP_X + Q_GAP[i] * desal) * (sc[i] + sc[j]) / 2;
@@ -529,36 +547,38 @@ export function createGelatina(host: HTMLElement, opts: GelatinaOptions, relatio
         const X0 = PAD + (W - AW) / 2, Y0 = PAD + (H - AH) / 2;
 
 
-        // Arranjo de um número de linhas: cada linha enche a largura e, se o conjunto
-        // passar da altura, tudo encolhe por igual (u < 1). Nunca estica só na altura:
-        // antes a palavra era esticada na vertical (sy = sx * kv) para encher a tela,
-        // o que deformava as letras paradas.
+        // Arranjo de um número de linhas, com uma escala única para todas: a da linha
+        // mais comprida, que é a que limita. Antes cada linha era ampliada até encher a
+        // largura, e uma linha curta (ou uma nota sozinha) saía enorme perto das outras.
+        // Se o conjunto passar da altura, tudo encolhe por igual (u < 1). Nunca estica
+        // só na altura, o que deformaria as letras paradas.
         const arranjo = (L: number) => {
-            const groups = partition(wu.map((w, i) => w + GAP_X * sc[i]), L);
-            const lines = groups.map(([a, b]) => {
+            const groups = gruposFixos(n, L);
+            const brutas = groups.map(([a, b]) => {
                 let sum = 0;
                 for (let i = a; i < b; i++) { sum += wu[i]; if (i < b - 1) sum += gapU(i, i + 1); }
                 const fixed = (b - a - 1) * PAD;
-                const f = Math.max(1e-3, (AW - fixed) / sum);
+                return { a, b, sum, fixed, fLinha: Math.max(1e-3, (AW - fixed) / sum) };
+            });
+            const f = Math.min(...brutas.map(l => l.fLinha));
+            const lines = brutas.map(l => {
                 let h = 0;
-                for (let i = a; i < b; i++) h = Math.max(h, f * hu[i]);
-                return { a, b, f, h, sum, fixed };
+                for (let i = l.a; i < l.b; i++) h = Math.max(h, f * hu[i]);
+                return { a: l.a, b: l.b, sum: l.sum, fixed: l.fixed, f, h };
             });
             const natural = lines.reduce((t, l) => t + l.h, 0);
             const gapY = 0.045 * (natural / L);
             const kv = Math.max(1e-3, (AH - (L - 1) * PAD) / (natural + gapY * (L - 1)));
             const u = Math.min(1, kv);
-            // área de tinta ocupada: escolhe o número de linhas que melhor enche a tela
-            let area = 0;
-            lines.forEach(ln => { for (let i = ln.a; i < ln.b; i++) area += (wu[i] * ln.f * u) * (hu[i] * ln.f * u); });
-            return { L, lines, gapY, u, area };
+            return { L, lines, gapY, u };
         };
-        let melhor = arranjo(1);
-        for (let L = 2; L <= Math.min(n, 5); L++) {
-            const c = arranjo(L);
-            if (c.area > melhor.area) melhor = c;
-        }
-        const { lines, gapY, u } = melhor;
+        // Número de linhas fixo pelo formato da área, igual para todas as fontes. Antes o
+        // motor testava de 1 a 5 linhas e ficava com a que mais enchia a tela; como cada
+        // fonte tem largura própria, umas saíam 4+3, outras 2+5 ou 3+2+2. Limites tirados
+        // da medida das 29 fontes: em 16:9 o 4+3 perde só ~9% de tamanho para o melhor
+        // arranjo; abaixo de 1,6 o 3+2+2 vence em quase todas; em pé, 2+2+2+1.
+        const formato = AW / Math.max(1, AH);
+        const { lines, gapY, u } = arranjo(Math.min(n, formato >= 1.6 ? 2 : formato >= 1.05 ? 3 : 4));
 
         // Sobra de altura (quando nem encolher foi preciso) fica dividida acima e abaixo
         const alturaTotal = lines.reduce((t, l) => t + l.h * u, 0) + (lines.length - 1) * (gapY * u + PAD);
