@@ -23,3 +23,12 @@
   - abaixo de 1,05 (tela quadrada ou em pé): 2+2+2+1.
 - Os limites saíram da medida das 29 fontes: abaixo de 1,6 o 3+2+2 deixa as letras maiores em quase todas. Em 16:9 o 4+3 fica só cerca de 9% menor que o melhor arranjo e foi mantido por ser a divisão mais regular (a mesma do sistema anglicano).
 - Conferido: as 29 fontes saem 4+3 em 1920x1080, 3+2+2 em 1024x768 e 2+2+2+1 em 600x900. tsc e build sem erros.
+
+## Espaços padronizados e maiúscula mais forte em Modak e Oi (09/11/2026)
+- Problema: letras coladas em umas palavras e afastadas em outras, e notas quase encostando nas vizinhas.
+- Causas e correções (src/gelatina/services/gelatinaEngine.ts):
+  - Entre letras: o espaço era sorteado por letra (1,2% a 3,4% do tamanho da fonte), e a leve rotação de cada letra abria ou fechava esse espaço. Agora é fixo, GAP_LETRA = 7% do tamanho da fonte, de tinta a tinta, sem contar a rotação, e acompanha o tamanho das duas letras vizinhas (cresce depois da maiúscula ampliada).
+  - Entre notas: o espaço horizontal variava de nota para nota (Q_GAP, 8% a 19%). Agora é fixo, GAP_NOTA = 22%. Entre linhas, o mesmo espaço mais uma folga para o desalinhamento vertical (antes eram só 4,5% da altura da linha). O desalinhamento vertical das palavras caiu de 0,5 para 0,3 da altura da linha (DY_NOTA).
+  - Hela (efeito 'estilos'): a largura das letras era medida no estilo mais forte (Hela 700), mas em repouso aparece o Hela 300, com M mais largo e i mais fino; o M encostava no i. Agora a largura vem do estilo de repouso, e a altura continua vindo do mais forte.
+- Maiúscula: o alvo da altura da inicial em relação à minúscula sobe de 1,32 até 1,52 quando a fonte tem minúsculas quase da altura das maiúsculas, com teto de +50%. Modak: inicial +21% (antes +13%); Oi: +36% (antes +22%); Bungee, Hela, Kablammo e Luckiest: +50%. Fontes comuns não mudam.
+- Conferido no navegador: as 29 fontes lado a lado. Nas itálicas (Shrikhand, Berkshire), o espaço de tinta a tinta parece um pouco mais aberto por causa da inclinação. tsc e build sem erros.

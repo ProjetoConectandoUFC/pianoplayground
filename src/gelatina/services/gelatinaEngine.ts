@@ -110,8 +110,12 @@ const VAR_TAMANHO_NOTA = 0.35;
 const VAR_TAMANHO_LETRA = 0.2;
 // Maiúscula inicial: altura mínima em relação à minúscula. Fontes comuns já passam disso;
 // nas só de maiúsculas (Bungee, Hela, Kablammo...) a inicial cresce até MAIUSCULA_MAX.
+// O alvo sobe de 1,32 (fontes comuns) até 1,52 quando a minúscula tem quase a altura
+// da maiúscula: nessas (Modak, Oi...) a minúscula costuma ter o mesmo desenho, e só
+// o tamanho separa as duas.
 const MAIUSCULA_ALVO = 1.32;
-const MAIUSCULA_MAX = 1.3;
+const MAIUSCULA_ALVO_EXTRA = 0.2;
+const MAIUSCULA_MAX = 1.5;
 
 // ---------- sistema anglicano (C D E F G A B), só ele usa estes valores ----------
 // Cada nota é uma letra só. Em vez de esticar a letra para encher a linha,
@@ -130,7 +134,11 @@ const Q_DY   = [0.05, -0.11, 0.12, -0.06, 0.10, -0.13, 0.03];
 const Q_GAP  = [-0.04, 0.05, -0.06, 0.03, -0.05, 0.04, 0.00];
 const Q_ROT  = [-0.016, 0.022, -0.010, 0.018, -0.020, 0.012, -0.014];
 const LINE_ROT = [-0.010, 0.008, -0.006, 0.011, -0.007];
-const GAP_X = 0.14;
+// Espaços padronizados, em fração do tamanho da fonte (de tinta a tinta)
+const GAP_LETRA = 0.07;   // entre as letras de uma palavra
+const GAP_NOTA = 0.22;    // entre notas vizinhas e entre linhas
+// Desalinhamento vertical das palavras (Q_DY), em fração da altura da linha (antes 0,5)
+const DY_NOTA = 0.3;
 
 const mix = (a: RGB, b: RGB, t: number): RGB =>
     [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t];
@@ -368,7 +376,8 @@ export function createGelatina(host: HTMLElement, opts: GelatinaOptions, relatio
                 return v.reduce((a, b) => a + b, 0) / v.length;
             };
             const razao = alt('DMRFSL') / Math.max(1, alt('oms'));
-            reforcoMaiuscula = clamp(MAIUSCULA_ALVO / Math.max(0.5, razao), 1, MAIUSCULA_MAX);
+            const alvo = MAIUSCULA_ALVO + MAIUSCULA_ALVO_EXTRA * clamp((1.3 - razao) / 0.3, 0, 1);
+            reforcoMaiuscula = clamp(alvo / Math.max(0.5, razao), 1, MAIUSCULA_MAX);
         }
         state.forEach((s, i) => {
             const r = seeded(9173 + i * 1277);
@@ -379,8 +388,18 @@ export function createGelatina(host: HTMLElement, opts: GelatinaOptions, relatio
                 const comp = comporAcento(ch);
                 meter.font = o.fontSpec;
                 const mm = meter.measureText(comp ? comp.base : ch);
-                const left = comp ? comp.left : (mm.actualBoundingBoxLeft ?? 0);
-                const right = mm.actualBoundingBoxRight ?? mm.width;
+                // Efeito 'estilos': a altura vem do estilo mais forte (fontSpec), mas a
+                // largura vem do estilo de repouso, que é o que aparece com a tela parada.
+                // Medida pelo mais forte, no Hela o M de repouso (mais largo) encostava no
+                // i, e o i fino de repouso ficava solto numa caixa larga.
+                let mh: TextMetrics = mm;
+                if (o.estilos?.familias.length && !comp) {
+                    meter.font = `${o.weight} ${FS}px "${o.estilos.familias[0]}", ${o.family}`;
+                    mh = meter.measureText(ch);
+                    meter.font = o.fontSpec;
+                }
+                const left = comp ? comp.left : (mh.actualBoundingBoxLeft ?? 0);
+                const right = mh.actualBoundingBoxRight ?? mh.width;
                 const prev = old[k];
                 const el = doc.createElement('span');
                 el.textContent = comp ? comp.base : ch;
@@ -399,6 +418,8 @@ export function createGelatina(host: HTMLElement, opts: GelatinaOptions, relatio
                     lsy: 0.88 + r() * 0.34,
                     dy0: (r() - 0.5) * 20,
                     rot0: (r() - 0.5) * 0.09,
+                    // sem uso desde o espaço fixo (GAP_LETRA); o sorteio fica para não
+                    // mudar a sequência dos valores seguintes (cor, fase, velocidade)
                     gap: 0.012 + r() * 0.022,
                     tint: r() * 0.14,
                     ph: r() * Math.PI * 2,
@@ -439,7 +460,7 @@ export function createGelatina(host: HTMLElement, opts: GelatinaOptions, relatio
         const still = neutral || !!o.effect || reduced;
         const compact = isCompact();
         const desal = 0.35 + 0.65 * o.randomness;   // desalinho próprio das letras
-        let cursor = 0;
+        let cursor = 0, sxAnterior = 1;
         let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
 
         for (let k = 0; k < L.length; k++) {
@@ -479,7 +500,9 @@ export function createGelatina(host: HTMLElement, opts: GelatinaOptions, relatio
 
             // bordas da letra, medidas nos quatro cantos já deformados.
             // Para o espaçamento conta só parte da inclinação, senão o
-            // canto vazio de uma letra tombada abriria um buraco.
+            // canto vazio de uma letra tombada abriria um buraco. A leve rotação
+            // própria de cada letra também fica de fora: antes ela abria ou fechava
+            // o espaço conforme o lado para onde a letra pendia.
             const hw = l.w * sx / 2, ty = -l.asc * sy, by = l.desc * sy;
             const cr = Math.cos(rotw), sr = Math.sin(rotw);
             let lo = Infinity, hi = -Infinity, tp = Infinity, bt = -Infinity;
@@ -494,12 +517,17 @@ export function createGelatina(host: HTMLElement, opts: GelatinaOptions, relatio
                 if (rx > hi) hi = rx;
                 if (ry < tp) tp = ry;
                 if (ry > bt) bt = ry;
-                const nx2 = (ox - skew * 0.45 * oy) * cr - oy * sr;
+                const nx2 = ox - skew * 0.45 * oy;
                 if (nx2 < nlo) nlo = nx2;
                 if (nx2 > nhi) nhi = nx2;
             }
 
-            const gap = k ? l.gap * 100 * sx : 0;
+            // Espaço entre letras igual em todas: GAP_LETRA do tamanho da fonte, de tinta
+            // a tinta. Antes era sorteado por letra (1,2% a 3,4%) e umas ficavam coladas.
+            // Acompanha a média das duas letras vizinhas: depois da maiúscula ampliada
+            // o espaço cresce junto, senão a minúscula parecia grudada nela.
+            const gap = k ? GAP_LETRA * FS * (sx + sxAnterior) / 2 : 0;
+            sxAnterior = sx;
             const cx = cursor + gap - nlo;
             cursor = cx + nhi;
 
@@ -539,7 +567,9 @@ export function createGelatina(host: HTMLElement, opts: GelatinaOptions, relatio
         const sc = Q_SIZE.slice(0, n).map(q => 1 + (q - 1) * VAR_TAMANHO_NOTA * desal);
         const wu = state.map((s, i) => sc[i] * (s.nom as Cluster).w / 100);
         const hu = state.map((s, i) => sc[i] * ((s.nom as Cluster).asc + (s.nom as Cluster).desc) / 100);
-        const gapU = (i: number, j: number) => (GAP_X + Q_GAP[i] * desal) * (sc[i] + sc[j]) / 2;
+        // Espaço entre notas igual para todas (GAP_NOTA do tamanho da fonte). Antes variava
+        // de nota para nota (Q_GAP) e umas quase encostavam nas vizinhas.
+        const gapU = (i: number, j: number) => GAP_NOTA * (sc[i] + sc[j]) / 2;
 
         // a densidade define quanto da área disponível o conjunto ocupa
         const fill = 0.45 + 0.55 * clamp(o.density, 0.05, 1);
@@ -567,7 +597,12 @@ export function createGelatina(host: HTMLElement, opts: GelatinaOptions, relatio
                 return { a: l.a, b: l.b, sum: l.sum, fixed: l.fixed, f, h };
             });
             const natural = lines.reduce((t, l) => t + l.h, 0);
-            const gapY = 0.045 * (natural / L);
+            // Entre linhas, o mesmo espaço que entre notas na horizontal, mais a folga do
+            // desalinhamento vertical (duas palavras vizinhas podem se aproximar até
+            // 2 × DY_NOTA × maior Q_DY da altura da linha). Antes era 4,5% da altura da
+            // linha, e o desalinhamento comia parte disso.
+            const folgaDy = 2 * DY_NOTA * Math.max(...Q_DY.map(Math.abs)) * desal * (natural / L);
+            const gapY = f * GAP_NOTA + folgaDy;
             const kv = Math.max(1e-3, (AH - (L - 1) * PAD) / (natural + gapY * (L - 1)));
             const u = Math.min(1, kv);
             return { L, lines, gapY, u };
@@ -598,7 +633,7 @@ export function createGelatina(host: HTMLElement, opts: GelatinaOptions, relatio
                 const sy = sx;
                 const inkW = nom.w * sx;
                 const inkH = (nom.asc + nom.desc) * sy;
-                let wy = y + (lh - inkH) / 2 + Q_DY[i] * desal * lh * 0.5;
+                let wy = y + (lh - inkH) / 2 + Q_DY[i] * desal * lh * DY_NOTA;
                 wy = clamp(wy, PAD, Math.max(PAD, CH - PAD - inkH));
                 const px = x + inkW / 2 - ccx, py = wy + inkH / 2 - ccy;
                 const rx = ccx + px * cos - py * sin, ry = ccy + px * sin + py * cos;
