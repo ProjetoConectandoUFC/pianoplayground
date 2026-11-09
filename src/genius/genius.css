@@ -17,7 +17,11 @@
   --muted: var(--cn-gelo);
   --accent: var(--cn-amarelo);  /* título, botão e destaques */
   --demo: var(--cn-amarelo);    /* tecla: memorização */
-  --player: var(--cn-coral);    /* tecla: reprodução do jogador (coral do sistema) */
+  /* Tecla: reprodução do jogador. Padrão turquesa (o ciano das cores padrão do
+     Piano Gelatina); a gaveta troca entre as sete cores e o GeniusView grava
+     --player e --player-tinta no .genius-root. */
+  --player: var(--cn-turquesa);
+  --player-tinta: var(--cn-tinta);
   --good: var(--cn-celeste);
   --bad: var(--cn-coral);
   --pink: var(--cn-rosa);
@@ -175,6 +179,8 @@
 .stage-indicator.lv1 { border-color: var(--good); }
 .stage-indicator.lv2 { color: var(--accent); border-color: var(--accent); }
 .stage-indicator.lv3 { color: var(--pink); border-color: var(--pink); }
+/* Nome do modo (Fácil ou Desafio) antes do estágio, um pouco mais apagado */
+.stage-indicator .stage-modo { opacity: 0.75; }
 
 /* Primário sobre fundo escuro: amarelo com texto tinta. O botão sobe 2px
    no hover (.2s), como no Design System. */
@@ -278,11 +284,12 @@
   box-shadow: 0 2px 4px rgba(0, 32, 54, 0.4);
 }
 
-/* Reprodução: o jogador toca em coral (as partículas vêm do piano.js) */
+/* Reprodução: o jogador toca na cor escolhida (as partículas vêm do piano.js).
+   A borda é a mesma cor, 20% mais escura. */
 .key.player-pressed.white,
 .key.player-pressed.black {
   background-color: var(--player);
-  border-color: var(--cn-coral-escuro);
+  border-color: color-mix(in srgb, var(--player) 80%, #000);
 }
 .key.player-pressed.white {
   transform: translateY(3px) scaleY(0.99);
@@ -349,7 +356,7 @@
 .key.white .key-label { color: var(--cn-azul-escuro); }
 .key.black .key-label { color: var(--cn-gelo); bottom: 8px; font-size: 12px; }
 .key.pressed .key-label { color: var(--cn-tinta); }
-.key.player-pressed .key-label { color: var(--cn-creme); }
+.key.player-pressed .key-label { color: var(--player-tinta); }
 
 /* ─── Contagem 3, 2, 1 ─── */
 .countdown {
@@ -640,6 +647,23 @@
   margin-bottom: 14px;
   color: var(--accent);
 }
+/* Botões do cartão de resultado: o principal e, quando há escolha (fim do modo
+   fácil), um secundário com contorno */
+.overlay-acoes {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 14px;
+}
+.start-btn.hidden { display: none; }
+.start-btn.secundario {
+  background: transparent;
+  color: var(--cream);
+  border-color: var(--cream);
+}
+.start-btn.secundario:hover { background: var(--cream); color: var(--cn-tinta); }
+.tier-badge.facil { background: var(--cn-turquesa); color: var(--cn-tinta); border: 1px solid var(--cn-turquesa); }
+
 .overlay-sub {
   font-size: 17px;
   color: var(--muted);
@@ -724,21 +748,123 @@
 
 /* ─── Rodapé: traço com as mãos se encontrando ─── */
 .genius-maos {
+  --maos-respiro: 20px; /* folga entre o traço das mãos e o pé da tela */
   position: relative;
   flex: none;
-  /* Espaço do traço das mãos (a parte de cima do arquivo é transparente) */
-  height: calc(100vh * 146 / 927);
+  /* Espaço do traço das mãos (a parte de cima do arquivo é transparente),
+     mais a folga do pé, para o traço não chegar mais perto do piano */
+  height: calc(100vh * 146 / 927 + var(--maos-respiro));
   pointer-events: none;
 }
 /* maos-rodape.png (912 × 276): no layout de referência fica em tamanho
-   natural, centralizado e encostado no pé da tela */
+   natural e centralizado; sobe 20px (--maos-respiro) para não ficar colado
+   no pé da tela */
 .genius-maos-img {
   position: absolute;
   left: 50%;
-  bottom: 0;
+  bottom: var(--maos-respiro);
   height: calc(100vh * 276 / 927);
   width: auto;
   transform: translateX(-50%);
   user-select: none;
   -webkit-user-drag: none;
 }
+
+/* ─── Gaveta: amostras da cor do jogador ───
+   A gaveta mora no <body> (fora do .genius-root), por isso sem escopo. */
+.genius-cores {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+.genius-cor {
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background: var(--cor);
+  box-shadow: inset 0 0 0 2px var(--ui-surface);
+  cursor: pointer;
+  transition: transform 0.12s ease, border-color 0.12s ease;
+}
+.genius-cor:hover { transform: translateY(-2px); }
+/* Escolhida: anel creme, nunca só a cor */
+.genius-cor.on { border-color: var(--ui-ink); }
+.genius-cor:focus-visible { outline: 3px solid var(--ui-foco); outline-offset: 2px; }
+.genius-modo-dica { margin-top: 8px; }
+
+/* ─── Modo tomate ───
+   Camada acima do cartão de resultado (z 12), sem capturar cliques. As
+   manchas evitam o miolo da tela (tomates.js), então o cartão continua
+   legível. */
+.tomates {
+  position: fixed;
+  inset: 0;
+  z-index: 12;
+  pointer-events: none;
+  overflow: hidden;
+}
+.tomates.tranco { animation: tomateTranco 260ms ease-out; }
+@keyframes tomateTranco {
+  0%, 100% { transform: translate(0, 0); }
+  30% { transform: translate(-6px, 5px); }
+  60% { transform: translate(4px, -3px); }
+}
+/* "Lavando" a tela antes da próxima rodada */
+.tomates.limpando > * { transition: opacity 420ms ease, transform 420ms ease; opacity: 0; transform: translate(-50%, -40%) scale(0.92); }
+
+/* O tomate vem do fundo da cena, girando, e cresce até "bater na cara" */
+.tomate-voo {
+  position: absolute;
+  width: 150px;
+  height: 150px;
+  transform: translate(-50%, -50%);
+  animation: tomateVoo var(--voo, 520ms) cubic-bezier(0.5, 0, 0.9, 0.6) forwards;
+}
+.tomate-voo svg { width: 100%; height: 100%; display: block; filter: drop-shadow(0 10px 12px rgba(0, 0, 0, 0.35)); }
+@keyframes tomateVoo {
+  from {
+    transform: translate(calc(-50% + var(--de-x, 0vw)), calc(-50% + var(--de-y, 30vh))) rotate(0deg) scale(0.12);
+  }
+  to {
+    transform: translate(-50%, -50%) rotate(var(--giro, 180deg)) scale(1.25);
+  }
+}
+
+/* Mancha: achata no impacto e escorre devagar */
+.tomate-mancha {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  animation: tomateSplat 260ms cubic-bezier(0.2, 1.4, 0.4, 1) both;
+}
+.tomate-mancha svg { width: 100%; height: 100%; display: block; overflow: visible; opacity: 0.94; }
+@keyframes tomateSplat {
+  0%   { transform: translate(-50%, -50%) scale(0.35, 0.25); }
+  60%  { transform: translate(-50%, -50%) scale(1.12, 1.05); }
+  100% { transform: translate(-50%, -50%) scale(1); }
+}
+.tomate-escorrido {
+  transform-box: fill-box;
+  transform-origin: top;
+  transform: scaleY(0);
+  animation: tomateEscorre 1800ms cubic-bezier(0.3, 0.6, 0.5, 1) var(--atraso, 300ms) forwards;
+}
+@keyframes tomateEscorre {
+  to { transform: scaleY(1); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .tomate-voo { animation-duration: 1ms; }
+  .tomates.tranco { animation: none; }
+  .tomate-escorrido { animation-duration: 1ms; }
+}
+
+/* ─── Janela de projeção (telão) ───
+   O espelho (espelho.js) copia o .genius-root inteiro. No telão some o que é
+   só de quem opera: o botão de configurações (fica invisível para não mudar
+   o layout) e o console do observador. */
+.genius-projecao .genius-root { display: block !important; }
+.genius-projecao .topbar { visibility: hidden; }
+.genius-projecao .debug-panel,
+.genius-projecao .melody-picker { display: none !important; }
+.genius-projecao-acoes { display: flex; flex-direction: column; gap: 8px; }

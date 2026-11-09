@@ -15,6 +15,7 @@ import { attachKeyboard, isTypingTarget } from '../shared/keyboardInput';
 import { openProjectionWindow, ProjectionWindow } from '../shared/projectionWindow';
 import { BotaoConfig, BotoesSorteio } from '../shared/ui/componentes';
 import { useTemaUi } from '../shared/ui/temaUi';
+import { LacosFundo } from '../shared/ui/LacosFundo';
 import { publicarStatus } from '../shared/ui/statusEntrada';
 import './gelatina.css';
 
@@ -43,6 +44,11 @@ const carregarConfig = (): AppSettings => {
             ...(salvo.motorTexto ? {} : { growAmount: DEFAULT_SETTINGS.growAmount, motorTexto: true }),
             // tamanho inicial menor (densidade 0,8): aplicado uma vez a quem tinha o padrão antigo
             ...(salvo.tamanhoV2 ? {} : { noteDensity: DEFAULT_SETTINGS.noteDensity, tamanhoV2: true }),
+            // opacidade dos laços do fundo: entre 0 e 1; sem valor guardado, o padrão (20%)
+            // (padrão 10% desde lacosV2: quem tinha o valor da primeira versão, 20%, volta ao padrão uma vez)
+            lacosOpacidade: salvo.lacosV2 && typeof salvo.lacosOpacidade === 'number' && Number.isFinite(salvo.lacosOpacidade)
+                ? Math.min(1, Math.max(0, salvo.lacosOpacidade)) : DEFAULT_SETTINGS.lacosOpacidade,
+            lacosV2: true,
             noteColors: Array.isArray(salvo.noteColors) && salvo.noteColors.length === 7
                 ? salvo.noteColors : DEFAULT_SETTINGS.noteColors,
             // cores de identidade do Design System Conectando: substituem a paleta
@@ -381,6 +387,11 @@ const GelatinaApp: React.FC = () => {
     }, [isKeyboardMode, inputs, selectedInputId, midiStatus]);
 
     return (
+        <>
+        {/* Laços da marca no fundo, como no Genius. Ficam fora do .gelatina-root
+            (que é um plano acima da barra do topo) para passarem por baixo da
+            barra, da marca e do status, como na tela do Genius. */}
+        <LacosFundo tema={settings.theme} opacidade={settings.lacosOpacidade} />
         <div className="gelatina-root">
             {/* Palco: as notas elásticas, abaixo da barra e da faixa do topo */}
             <div className="ui-palco">
@@ -389,7 +400,7 @@ const GelatinaApp: React.FC = () => {
 
             {/* Mesma tela espelhada na janela de projeção, quando aberta */}
             {projectionContainer && ReactDOM.createPortal(
-                <ProjectionScreen settings={settings} onEngine={registrarEngineProjecao} />,
+                <ProjectionScreen settings={settings} onEngine={registrarEngineProjecao} comLacos />,
                 projectionContainer,
             )}
 
@@ -419,6 +430,7 @@ const GelatinaApp: React.FC = () => {
                 />
             )}
         </div>
+        </>
     );
 };
 

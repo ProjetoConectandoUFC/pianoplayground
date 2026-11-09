@@ -116,6 +116,14 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
                     onChange={(t) => onSettingsChange({ tema: t, ...TEMAS_TIPOGRAFICO[t] })}
                 />
 
+                <Deslizante
+                    id="tipo-lacos" rotulo="Opacidade dos laços" valor={settings.lacosOpacidade}
+                    min={0} max={1} passo={0.01}
+                    formato={(v) => `${Math.round(v * 100)}%`}
+                    onChange={(v) => onSettingsChange({ lacosOpacidade: v })}
+                />
+                <Dica>Os laços da marca no fundo, como na tela do Genius: brancos no tema escuro, celeste no claro. 0% os esconde.</Dica>
+
                 <Campo rotulo="Sistema de notas" htmlFor="tipo-sistema">
                     <select
                         id="tipo-sistema"

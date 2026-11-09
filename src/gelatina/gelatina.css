@@ -29,3 +29,9 @@
   position: absolute; inset: 0; overflow: hidden; z-index: 0; /* letras ficam num plano só */
   pointer-events: none; user-select: none; -webkit-user-select: none;
 }
+
+/* Na janela principal o fundo do tema já está no <body> (GelatinaApp); o palco
+   fica transparente para deixar aparecer os laços da marca, que passam por
+   baixo da barra do topo (src/shared/ui/LacosFundo.tsx). Na projeção a tela
+   continua com a cor do tema e desenha os laços dentro dela. */
+.gelatina-root .ui-palco .tela-notas { background-color: transparent !important; }

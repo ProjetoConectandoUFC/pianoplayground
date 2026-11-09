@@ -168,20 +168,36 @@ function rankFor(score) {
   return { label: 'Passou!', stars: 1, sub: 'Você acertou as notas. Foque na regularidade do ritmo.' };
 }
 
+// Ritmo como requisito: só no modo desafio. No fácil, acertar as notas basta
+// (a nota de ritmo continua aparecendo, mas não reprova ninguém).
+let ritmoObrigatorio = true;
+export function setRitmoObrigatorio(on) { ritmoObrigatorio = !!on; }
+
 function finishWin() {
   clearWatchdog();
   const score = computeRhythmScore();
-  if (score < 40) {
-    return finishLose('Ritmo inconsistente demais.');
+  if (ritmoObrigatorio && score < 40) {
+    return finishLose('Ritmo inconsistente demais.', 'ritmo');
   }
   const r = rankFor(score);
   setState(States.WIN, { score, ...r, level: currentLevel });
 }
 
-function finishLose(reason) {
+// kind: 'nota' (nota errada), 'tempo' (demorou) ou 'ritmo'. O modo tomate
+// só arremessa quando a nota foi errada.
+// pos/total: posição da nota errada (1 = primeira) e tamanho da melodia,
+// usados pelo modo tomate para dosar quantos tomates jogar.
+function finishLose(reason, kind = 'tempo') {
   clearWatchdog();
-  setState(States.LOSE, { reason, level: currentLevel });
+  const total = currentMelody ? currentMelody.notes.length : 0;
+  setState(States.LOSE, { reason, kind, pos: inputIndex + 1, total, level: currentLevel });
 }
+
+// Som da resposta do jogador: cada tecla tocada soa com o mesmo timbre da
+// demonstração, para ajudar a memorizar. Ligado por padrão; a gaveta desliga
+// (útil quando um sintetizador externo já dá o som do teclado MIDI).
+let playerSound = true;
+export function setPlayerSound(on) { playerSound = !!on; }
 
 export function handleNoteOn({ midi, time }) {
   if (currentState !== States.INPUT) {
@@ -197,13 +213,17 @@ export function handleNoteOn({ midi, time }) {
     `esperava ${midiName(expected.midi)} (pc=${wantPc}) · ` +
     `recebi ${midiName(midi)} (pc=${gotPc})`);
 
+  const beatMs = 60000 / currentMelody.bpm;
+  // A nota que o jogador tocou soa de verdade (inclusive a errada: ouvir a
+  // diferença também ensina). Duração igual à da demonstração.
+  if (playerSound) playNote(midi, gotPc === wantPc ? expected.beats * beatMs * 0.75 : 420);
+
   if (gotPc !== wantPc) {
     dlog('err', `→ REJEITADO (classes ${wantPc} ≠ ${gotPc})`);
-    return finishLose(`Nota errada na posição ${inputIndex + 1}.`);
+    return finishLose(`Nota errada na posição ${inputIndex + 1}.`, 'nota');
   }
   dlog('ok', `→ ACEITO`);
 
-  const beatMs = 60000 / currentMelody.bpm;
   flash(midi, beatMs * expected.beats * 0.8, 'player');
   inputTimes.push(time);
   inputIndex++;

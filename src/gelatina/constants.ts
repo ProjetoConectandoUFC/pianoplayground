@@ -1,5 +1,6 @@
 import eixosLidos from 'virtual:eixos-fontes';
 import { AppSettings, ThemeName } from './types';
+import { LACOS_OPACIDADE_PADRAO } from '../shared/ui/LacosFundo';
 
 // ==========================================
 // Sistemas de Nomenclatura de Notas
@@ -298,10 +299,12 @@ export const DEFAULT_SETTINGS: AppSettings = {
     noteSpacing: 0.02,
     noteRandomness: 0.8,
     growAmount: 1.45,
+    lacosOpacidade: LACOS_OPACIDADE_PADRAO, // laços da marca no fundo (10%)
     motorTexto: true,
     tamanhoV2: true,
     coresIdentidade: true,
     coresIdentidadeV2: true,
+    lacosV2: true,
 };
 
 /** Chave usada para lembrar as preferências entre sessões */

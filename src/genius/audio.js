@@ -1,6 +1,8 @@
 // Sintetizador minimalista para a demonstração, ticks de countdown e jingles
 // de vitória/derrota. O GarageBand toca o som do que o jogador pressiona.
 
+import vaiaDataUrl from '../assets/genius/vaia-plateia.mp3?inline';
+
 let ctx = null;
 
 function ensureCtx() {
@@ -15,6 +17,8 @@ function midiToFreq(midi) {
 
 export function primeAudio() {
   ensureCtx();
+  // Deixa a vaia decodificada antes da primeira derrota (sem atraso no erro)
+  preloadBoo();
 }
 
 export function playNote(midi, durationMs, opts = {}) {
@@ -169,5 +173,108 @@ export function playFireworks(burstCount = 7) {
     const base = 200 + i * 380;
     const jitter = (Math.random() - 0.5) * 220;
     scheduleCelebration(playFireworkBurst, base + jitter);
+  }
+}
+
+// ─── Modo tomate: "splat" de um tomate batendo na tela ───
+// Um baque grave curto (seno caindo de tom) somado a um chiado de ruído
+// filtrado, que dá a textura molhada do esmagamento.
+export function playSplat() {
+  const c = ensureCtx();
+  const t = c.currentTime;
+
+  const thump = c.createOscillator();
+  const thumpGain = c.createGain();
+  thump.type = 'sine';
+  thump.frequency.setValueAtTime(190, t);
+  thump.frequency.exponentialRampToValueAtTime(55, t + 0.16);
+  thumpGain.gain.setValueAtTime(0.0001, t);
+  thumpGain.gain.exponentialRampToValueAtTime(0.5, t + 0.008);
+  thumpGain.gain.exponentialRampToValueAtTime(0.0001, t + 0.22);
+  thump.connect(thumpGain).connect(c.destination);
+  thump.start(t);
+  thump.stop(t + 0.25);
+
+  const dur = 0.32;
+  const buf = c.createBuffer(1, Math.floor(c.sampleRate * dur), c.sampleRate);
+  const data = buf.getChannelData(0);
+  for (let i = 0; i < data.length; i++) {
+    const env = Math.pow(1 - i / data.length, 2.2);
+    data[i] = (Math.random() * 2 - 1) * env;
+  }
+  const noise = c.createBufferSource();
+  noise.buffer = buf;
+  const filtro = c.createBiquadFilter();
+  filtro.type = 'bandpass';
+  filtro.frequency.setValueAtTime(1400, t);
+  filtro.frequency.exponentialRampToValueAtTime(380, t + dur);
+  filtro.Q.value = 0.9;
+  const noiseGain = c.createGain();
+  noiseGain.gain.value = 0.55;
+  noise.connect(filtro).connect(noiseGain).connect(c.destination);
+  noise.start(t);
+}
+
+// ─── Modo tomate: vaia da plateia ───
+// Gravação real de uma plateia vaiando (src/assets/genius/vaia-plateia.mp3):
+// os 3 primeiros segundos do áudio enviado pela equipe, com fade no fim.
+//
+// Toca pelo MESMO AudioContext das notas (Web Audio), não por um <audio>
+// separado. O <audio> podia ser bloqueado pela política de autoplay do
+// navegador (jogo só pelo teclado MIDI, ou comandado pelo telão), e aí a
+// vaia sumia enquanto as notas tocavam. O arquivo vem embutido no código
+// (?inline, base64), então também não depende de fetch no Electron (file://).
+let vaiaBuffer = null;
+let vaiaCarregando = null;
+let vaiaFonte = null;
+
+function base64ParaArrayBuffer(dataUrl) {
+  const b64 = dataUrl.slice(dataUrl.indexOf(',') + 1);
+  const bin = atob(b64);
+  const bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  return bytes.buffer;
+}
+
+export function preloadBoo() {
+  if (vaiaBuffer) return Promise.resolve(vaiaBuffer);
+  if (vaiaCarregando) return vaiaCarregando;
+  const c = ensureCtx();
+  vaiaCarregando = new Promise((resolve, reject) => {
+    // forma com callbacks: funciona em todas as versões do Chromium
+    c.decodeAudioData(base64ParaArrayBuffer(vaiaDataUrl), resolve, reject);
+  }).then((buf) => {
+    vaiaBuffer = buf;
+    return buf;
+  }).catch((err) => {
+    vaiaCarregando = null; // tenta de novo na próxima
+    console.warn('[genius] vaia não decodificada', err);
+    return null;
+  });
+  return vaiaCarregando;
+}
+
+export function playBoo() {
+  const c = ensureCtx(); // também retoma o contexto se estiver suspenso
+  stopBoo();
+  const tocar = (buf) => {
+    if (!buf) return;
+    const fonte = c.createBufferSource();
+    fonte.buffer = buf;
+    const g = c.createGain();
+    g.gain.value = 0.9;
+    fonte.connect(g).connect(c.destination);
+    fonte.onended = () => { if (vaiaFonte === fonte) vaiaFonte = null; };
+    fonte.start();
+    vaiaFonte = fonte;
+  };
+  if (vaiaBuffer) tocar(vaiaBuffer);
+  else preloadBoo().then(tocar);
+}
+
+export function stopBoo() {
+  if (vaiaFonte) {
+    try { vaiaFonte.stop(); } catch { /* já parou */ }
+    vaiaFonte = null;
   }
 }

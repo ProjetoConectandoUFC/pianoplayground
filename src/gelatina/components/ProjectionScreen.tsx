@@ -2,11 +2,15 @@ import React, { useEffect, useRef } from 'react';
 import { AppSettings } from '../types';
 import { NOTE_NAME_SYSTEMS, NOTE_RELATIONS, THEMES, eixosDaFonte, fontOf, fontSpecOf, fontStackOf } from '../constants';
 import { createGelatina, Gelatina, GelatinaOptions } from '../services/gelatinaEngine';
+import { LacosFundo } from '../../shared/ui/LacosFundo';
 
 interface ProjectionScreenProps {
     settings: AppSettings;
     /** Registra o motor recém-criado, para que o App possa mandar notas para ele */
     onEngine: (engine: Gelatina | null) => void;
+    /** Desenha os laços da marca atrás das notas. Só na janela de projeção: na
+     *  principal o GelatinaApp os põe por baixo da barra do topo. */
+    comLacos?: boolean;
 }
 
 /** Traduz as configurações da aplicação para as opções que o motor entende */
@@ -45,7 +49,7 @@ export const optionsFromSettings = (settings: AppSettings): GelatinaOptions => {
  * das notas. O React só entrega as configurações: a animação roda fora do
  * ciclo de renderização, por conta do motor.
  */
-export const ProjectionScreen: React.FC<ProjectionScreenProps> = ({ settings, onEngine }) => {
+export const ProjectionScreen: React.FC<ProjectionScreenProps> = ({ settings, onEngine, comLacos = false }) => {
     const hostRef = useRef<HTMLDivElement | null>(null);
     const engineRef = useRef<Gelatina | null>(null);
     const tema = THEMES[settings.theme];
@@ -89,6 +93,8 @@ export const ProjectionScreen: React.FC<ProjectionScreenProps> = ({ settings, on
             className="tela-notas transition-colors duration-500"
             style={{ backgroundColor: tema.ground }}
         >
+            {comLacos && <LacosFundo tema={settings.theme} opacidade={settings.lacosOpacidade} />}
+
             {/* As notas não recebem cliques: tocar é só por MIDI ou pelo teclado */}
             <div
                 ref={hostRef}

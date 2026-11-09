@@ -35,10 +35,22 @@ recolorir, distorcer nem aplicar sombra.
 
 | Arquivo | O que é | Onde aparece |
 |---|---|---|
-| `laco-esquerda.png` | Laço da marca, branco com 20% de opacidade no arquivo. Usado duas vezes: espelhado no canto superior direito e, menor e girado, no canto inferior esquerdo | Fundo do Genius · `src/genius/GeniusView.tsx` (posição em `genius.css`) |
+| `laco-esquerda.png` | Laço da marca, branco com 20% de opacidade no arquivo. Usado duas vezes: espelhado no canto superior direito e, menor e girado, no canto inferior esquerdo | Fundo do Genius · `src/genius/GeniusView.tsx` (posição em `genius.css`). Também é a origem dos arquivos de `lacos/` |
 | `laco-esquerda-amarelo.png` | O mesmo laço em amarelo `#F2E299`, chapado | Não usada no app desde que o Genius ficou só com o tema escuro; guardada como original |
 | `laco-direita.png` | Laço da marca, branco com 20% de opacidade no arquivo | Não usada desde o layout novo do Genius: o desenho é recortado nas quatro bordas e o corte aparecia no canto da tela; guardada como original |
 | `laco-direita-amarelo.png` | O mesmo laço em amarelo `#F2E299`, chapado | Não usada no app desde que o Genius ficou só com o tema escuro; guardada como original |
 | `laco-esquerda.svg` | Versão vetorial do laço da esquerda | Não usada no app; guardada como original |
 | `laco-direita.svg` | Versão vetorial do laço da direita | Não usada no app; guardada como original |
 
+
+## lacos/
+
+O mesmo desenho de `genius/laco-esquerda.png`, com opacidade cheia (a
+transparência vem do slider "Opacidade dos laços" de cada piano, padrão 10%).
+Mesma composição do Genius: espelhado no canto superior direito e, menor e
+girado, no canto inferior esquerdo. Posição em `src/shared/ui/ui.css` (`.ui-lacos`).
+
+| Arquivo | O que é | Onde aparece |
+|---|---|---|
+| `laco-branco.png` | Laço da marca, branco (737 × 714, fundo transparente) | Fundo do Piano Tipográfico e do Piano Gelatina no tema escuro, também na projeção · `src/shared/ui/LacosFundo.tsx` |
+| `laco-azul.png` | Laço da marca, celeste `#62BFFF` (737 × 714, fundo transparente) | Fundo do Piano Tipográfico e do Piano Gelatina no tema claro, também na projeção · `src/shared/ui/LacosFundo.tsx` |

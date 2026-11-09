@@ -1,4 +1,5 @@
 import { AppSettings } from './types';
+import { LACOS_OPACIDADE_PADRAO } from '../shared/ui/LacosFundo';
 
 // ==========================================
 // Sistemas de Nomenclatura de Notas
@@ -93,6 +94,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
     noteSystem: 'anglican',
     noteDensity: 0.3, // Densidade padrão (0 a 1)
     noteRandomness: 80, // Aleatoriedade padrão (valores mais altos ficam mais espalhados)
+    lacosOpacidade: LACOS_OPACIDADE_PADRAO, // laços da marca no fundo (10%)
 };
 
 

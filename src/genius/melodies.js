@@ -1,4 +1,5 @@
 // Banco de melodias icônicas (games, filmes, séries, rock, pop).
+// 04/11/2026: "Tubarão" (jaws) retirada a pedido da equipe.
 // Cada música tem 3 versões — uma por nível de dificuldade — com a mesma
 // linha melódica em comprimentos crescentes.
 //
@@ -272,28 +273,6 @@ export const MELODIES = [
         { midi: 63, beats: 0.75 }, { midi: 64, beats: 0.25 },
         { midi: 67, beats: 1 },
         { midi: 72, beats: 1 }, { midi: 71, beats: 2 },
-      ],
-    },
-  },
-  {
-    id: 'jaws',
-    name: 'Tubarão',
-    bpm: 56,
-    versions: {
-      1: [
-        { midi: 64, beats: 1 }, { midi: 65, beats: 1 },
-        { midi: 64, beats: 1 }, { midi: 65, beats: 1 },
-      ],
-      2: [
-        { midi: 64, beats: 1 }, { midi: 65, beats: 1 },
-        { midi: 64, beats: 0.75 }, { midi: 65, beats: 0.75 },
-        { midi: 64, beats: 0.5 }, { midi: 65, beats: 0.5 },
-      ],
-      3: [
-        { midi: 64, beats: 1 }, { midi: 65, beats: 1 },
-        { midi: 64, beats: 0.75 }, { midi: 65, beats: 0.75 },
-        { midi: 64, beats: 0.5 }, { midi: 65, beats: 0.5 },
-        { midi: 64, beats: 0.5 }, { midi: 65, beats: 0.5 },
       ],
     },
   },
@@ -1028,7 +1007,24 @@ export function pickRandomMelody(excludeId) {
   return pool[Math.floor(Math.random() * pool.length)];
 }
 
-export function resolveMelody(melody, level) {
+// Modo fácil: quantas notas cada estágio usa. As notas são o começo da versão
+// mais longa (nível 3) da mesma música, então a melodia cresce de estágio em
+// estágio (2, depois 4, depois 6 notas) sem precisar de transcrições novas.
+export const NOTAS_MODO_FACIL = { 1: 2, 2: 4, 3: 6 };
+
+// modo: 'facil' | 'desafio'. O modo desafio usa as versões escritas para
+// cada nível (o funcionamento original do jogo).
+export function resolveMelody(melody, level, modo = 'desafio') {
+  if (modo === 'facil') {
+    const longa = melody.versions[3] || melody.versions[2] || melody.versions[1];
+    const qtd = NOTAS_MODO_FACIL[level] || NOTAS_MODO_FACIL[1];
+    const notes = longa.slice(0, qtd).map((n) => ({ ...n }));
+    // A última nota ganha pelo menos 1,5 tempo: o trecho cortado termina com
+    // respiro, em vez de parar seco numa colcheia.
+    const ultima = notes[notes.length - 1];
+    if (ultima && ultima.beats < 1.5) ultima.beats = 1.5;
+    return { id: melody.id, name: melody.name, bpm: melody.bpm, notes };
+  }
   const notes = melody.versions[level] || melody.versions[1];
   return {
     id: melody.id,
@@ -1037,4 +1033,3 @@ export function resolveMelody(melody, level) {
     notes,
   };
 }
-

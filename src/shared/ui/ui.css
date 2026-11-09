@@ -506,3 +506,41 @@ input.ui-interruptor { -webkit-appearance: none; appearance: none; margin: 0; }
 @media (prefers-reduced-motion: reduce) {
   .ui-gaveta, .ui-gaveta-fundo { animation: none; }
 }
+
+/* ---------- Laços da marca no fundo (Tipográfico e Gelatina) ----------
+   A mesma composição da tela inicial do Genius (genius.css, .genius-laco):
+   laco-esquerda espelhado no canto de cima à direita, na altura da tela, e
+   menor (40vh), girado -90°, no canto de baixo à esquerda, com os cortes do
+   arquivo fora da tela. Componente em src/shared/ui/LacosFundo.tsx; a cor vem
+   do arquivo (branco no tema escuro, celeste #62BFFF no claro) e a opacidade,
+   do slider "Opacidade dos laços" de cada piano. Fixa na tela: na projeção,
+   ocupa a janela de projeção inteira. */
+.ui-lacos {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+.ui-laco {
+  position: absolute;
+  display: block;
+  width: auto;
+  max-width: none;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+.ui-laco-dir {
+  top: 0;
+  right: calc(100vh * -117 / 927);
+  height: 100vh;
+  transform: scaleX(-1);
+}
+.ui-laco-esq {
+  --laco-esq-h: 40vh;
+  left: calc(var(--laco-esq-h) * -0.05);
+  bottom: calc(var(--laco-esq-h) * -0.17);
+  height: var(--laco-esq-h);
+  transform: rotate(-90deg);
+}

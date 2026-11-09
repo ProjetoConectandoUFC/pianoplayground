@@ -7,7 +7,10 @@ import './genius.css';
 import lacoEsquerdaUrl from '../assets/genius/laco-esquerda.png';
 import maosRodapeUrl from '../assets/moldura/maos-rodape.png';
 import { useTemaUi } from '../shared/ui/temaUi';
-import { SecaoJogo } from '../shared/ui/componentes';
+import { SecaoJogo, BotaoProjecao } from '../shared/ui/componentes';
+import { openProjectionWindow, ProjectionWindow } from '../shared/projectionWindow';
+import { criarEspelho } from './espelho.js';
+import { IDENTIDADE } from '../gelatina/constants';
 
 // Ícones da moldura comum (os mesmos de src/shared/ui/componentes.tsx)
 const ICONE_AJUSTES = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true" focusable="false"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/></svg>`;
@@ -51,12 +54,34 @@ const GENIUS_MARKUP = `
       <div id="genius-secao-jogo"></div>
       <section class="ui-secao">
         <h3 class="ui-secao-titulo">Partida</h3>
+        <div>
+          <span class="ui-rotulo">Modo de jogo</span>
+          <div class="ui-segmentado" role="group" aria-label="Modo de jogo">
+            <button type="button" class="ui-segmentado-opcao on" data-modo="facil" aria-pressed="true">Fácil</button>
+            <button type="button" class="ui-segmentado-opcao" data-modo="desafio" aria-pressed="false">Desafio</button>
+          </div>
+          <p id="setting-modo-dica" class="ui-dica genius-modo-dica">Fácil: 2, 4 e 6 notas nos três estágios. Ao vencer os três, o jogo oferece o modo desafio.</p>
+        </div>
         <label class="ui-interruptor-linha">
           <span class="ui-interruptor-texto">
             <span class="ui-interruptor-rotulo">Mesma melodia nos 3 níveis</span>
             <span class="ui-dica">Cada estágio repete a melodia do anterior, mais longa.</span>
           </span>
           <input type="checkbox" id="setting-same-melody" class="ui-interruptor" checked />
+        </label>
+        <label class="ui-interruptor-linha">
+          <span class="ui-interruptor-texto">
+            <span class="ui-interruptor-rotulo">Som das notas do jogador</span>
+            <span class="ui-dica">Cada tecla tocada soa como na demonstração. Desligue se um sintetizador externo já toca o som do teclado MIDI.</span>
+          </span>
+          <input type="checkbox" id="setting-som-jogador" class="ui-interruptor" checked />
+        </label>
+        <label class="ui-interruptor-linha">
+          <span class="ui-interruptor-texto">
+            <span class="ui-interruptor-rotulo">Modo tomate</span>
+            <span class="ui-dica">Errou a nota, leva tomate na cara e a plateia vaia. Quanto mais cedo o erro, mais tomates (8 na primeira nota, 2 na última).</span>
+          </span>
+          <input type="checkbox" id="setting-tomate" class="ui-interruptor" />
         </label>
         <label class="ui-interruptor-linha">
           <span class="ui-interruptor-texto">
@@ -69,6 +94,11 @@ const GENIUS_MARKUP = `
         <p class="ui-dica">Modo desenvolvedor: carrega uma melodia específica. Vale antes da demonstração começar.</p>
       </section>
       <section class="ui-secao">
+        <h3 class="ui-secao-titulo">Projeção</h3>
+        <!-- Botão desenhado pelo GeniusView (o mesmo dos pianos) -->
+        <div id="genius-secao-projecao" class="genius-projecao-acoes"></div>
+      </section>
+      <section class="ui-secao">
         <h3 class="ui-secao-titulo">Aparência</h3>
         <div>
           <div class="ui-linha">
@@ -77,6 +107,14 @@ const GENIUS_MARKUP = `
           </div>
           <input type="range" id="setting-inclinacao" class="ui-range" min="0" max="100" step="1" value="75" />
           <p class="ui-dica">0% deixa o piano chapado na tela; 100% é a inclinação máxima, com o piano deitado no chão em perspectiva.</p>
+        </div>
+        <div>
+          <div class="ui-linha">
+            <span class="ui-rotulo">Cor da resposta do jogador</span>
+            <span id="setting-cor-jogador-nome" class="ui-valor">Turquesa</span>
+          </div>
+          <div id="setting-cor-jogador" class="genius-cores" role="radiogroup" aria-label="Cor da resposta do jogador"></div>
+          <p class="ui-dica">As cores padrão do Piano Gelatina. A demonstração continua em amarelo.</p>
         </div>
       </section>
     </div>
@@ -100,6 +138,9 @@ const GENIUS_MARKUP = `
     <div id="countdown" class="countdown hidden" aria-hidden="true"></div>
 
     <div id="confetti" class="confetti hidden" aria-hidden="true"></div>
+
+    <!-- Modo tomate: tomates arremessados e as manchas que ficam na tela -->
+    <div id="tomates" class="tomates" aria-hidden="true"></div>
 
     <div id="melody-picker" class="melody-picker hidden" role="dialog">
       <div class="melody-picker-card">
@@ -130,7 +171,10 @@ const GENIUS_MARKUP = `
         <div id="overlay-score" class="overlay-score"></div>
         <div id="overlay-stars" class="overlay-stars"></div>
         <div id="overlay-sub" class="overlay-sub"></div>
-        <button id="overlay-btn" class="start-btn">Jogar de novo</button>
+        <div class="overlay-acoes">
+          <button id="overlay-btn" class="start-btn">Jogar de novo</button>
+          <button id="overlay-btn-2" class="start-btn secundario hidden">Jogar de novo</button>
+        </div>
       </div>
     </div>
   </main>
@@ -159,11 +203,39 @@ const inclinacaoSalva = (): number => {
   return INCLINACAO_PADRAO;
 };
 
+// Cor da resposta do jogador: só as cores padrão do Piano Gelatina (as sete
+// cores de identidade do Design System, src/gelatina/constants.ts), sem roda
+// de cores. O padrão é o turquesa (o ciano da paleta). `tinta` é a cor da
+// letra do teclado sobre a tecla acesa, escolhida pelo contraste.
+const CORES_JOGADOR: { id: string; nome: string; cor: string; tinta: string }[] = [
+  { id: 'rosa', nome: 'Rosa', cor: IDENTIDADE.rosa, tinta: '#0c0b0a' },
+  { id: 'turquesa', nome: 'Turquesa', cor: IDENTIDADE.turquesa, tinta: '#0c0b0a' },
+  { id: 'ceu', nome: 'Céu', cor: IDENTIDADE.ceu, tinta: '#0c0b0a' },
+  { id: 'rosaAntigo', nome: 'Rosa antigo', cor: IDENTIDADE.rosaAntigo, tinta: '#0c0b0a' },
+  { id: 'laranja', nome: 'Laranja', cor: IDENTIDADE.laranja, tinta: '#0c0b0a' },
+  { id: 'azulMedio', nome: 'Azul médio', cor: IDENTIDADE.azulMedio, tinta: '#fcfaf1' },
+  { id: 'roxo', nome: 'Roxo', cor: IDENTIDADE.roxo, tinta: '#fcfaf1' },
+];
+const COR_JOGADOR_PADRAO = 'turquesa';
+const CHAVE_COR_JOGADOR = 'genius-cor-jogador';
+const corJogadorSalva = (): string => {
+  try {
+    const salvo = window.localStorage.getItem(CHAVE_COR_JOGADOR);
+    if (salvo && CORES_JOGADOR.some((c) => c.id === salvo)) return salvo;
+  } catch { /* ignora */ }
+  return COR_JOGADOR_PADRAO;
+};
+
 const GeniusView: React.FC<Props> = ({ active }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const apiRef = useRef<{ activate: () => void; deactivate: () => void } | null>(null);
   // Lugar da seção "Jogo e entrada" dentro da gaveta (markup injetado abaixo)
   const [alvoSecaoJogo, setAlvoSecaoJogo] = useState<HTMLElement | null>(null);
+  const [alvoProjecao, setAlvoProjecao] = useState<HTMLElement | null>(null);
+  // Janela de projeção (telão): espelho ao vivo do palco do Genius
+  const [projecaoAberta, setProjecaoAberta] = useState(false);
+  const projecaoRef = useRef<ProjectionWindow | null>(null);
+  const espelhoRef = useRef<{ desligar: () => void } | null>(null);
 
   // O Genius só tem o tema escuro; avisa a moldura comum quando está em cena.
   useTemaUi('escuro', active);
@@ -193,6 +265,7 @@ const GeniusView: React.FC<Props> = ({ active }) => {
     const btnFechar = document.getElementById('settings-close');
     btnFechar?.addEventListener('click', fechar);
     setAlvoSecaoJogo(document.getElementById('genius-secao-jogo'));
+    setAlvoProjecao(document.getElementById('genius-secao-projecao'));
 
     // Slider "Inclinação do piano": 0% (chapado) a 100% (inclinação máxima).
     // O valor vai para o .genius-root como --inclinacao (graus) e --inclinacao-t
@@ -217,9 +290,42 @@ const GeniusView: React.FC<Props> = ({ active }) => {
       aplicar(Number(slider.value));
       slider.addEventListener('input', onInclinacao);
     }
+
+    // Cor da resposta do jogador: amostras clicáveis. A cor vai para o
+    // .genius-root como --player (tecla, partículas) e --player-tinta (letra).
+    const grade = document.getElementById('setting-cor-jogador');
+    const nomeCor = document.getElementById('setting-cor-jogador-nome');
+    const aplicarCor = (id: string) => {
+      const c = CORES_JOGADOR.find((x) => x.id === id) ?? CORES_JOGADOR[1];
+      raiz?.style.setProperty('--player', c.cor);
+      raiz?.style.setProperty('--player-tinta', c.tinta);
+      if (nomeCor) nomeCor.textContent = c.nome;
+      grade?.querySelectorAll<HTMLButtonElement>('.genius-cor').forEach((b) => {
+        const on = b.dataset.cor === c.id;
+        b.classList.toggle('on', on);
+        b.setAttribute('aria-checked', on ? 'true' : 'false');
+      });
+    };
+    const onCor = (e: Event) => {
+      const alvo = (e.target as HTMLElement).closest<HTMLButtonElement>('.genius-cor');
+      if (!alvo?.dataset.cor) return;
+      alvo.blur();
+      aplicarCor(alvo.dataset.cor);
+      try { window.localStorage.setItem(CHAVE_COR_JOGADOR, alvo.dataset.cor); } catch { /* ignora */ }
+    };
+    if (grade) {
+      grade.innerHTML = CORES_JOGADOR.map((c) =>
+        `<button type="button" class="genius-cor" role="radio" data-cor="${c.id}" ` +
+        `style="--cor:${c.cor}" title="${c.nome}" aria-label="${c.nome}" aria-checked="false"></button>`,
+      ).join('');
+      grade.addEventListener('click', onCor);
+    }
+    aplicarCor(corJogadorSalva());
+
     return () => {
       btnFechar?.removeEventListener('click', fechar);
       slider?.removeEventListener('input', onInclinacao);
+      grade?.removeEventListener('click', onCor);
     };
   }, []);
 
@@ -231,6 +337,59 @@ const GeniusView: React.FC<Props> = ({ active }) => {
     else api.deactivate();
   }, [active]);
 
+  // ─── Projeção ───
+  // Abre (ou traz para frente) a janela do telão. Ela recebe as mesmas folhas
+  // de estilo (openProjectionWindow) e um espelho ao vivo do .genius-root
+  // (espelho.js). Tudo continua rodando na janela principal (jogo, som,
+  // MIDI); as teclas apertadas com a projeção em foco são repassadas para cá.
+  const abrirProjecao = () => {
+    const atual = projecaoRef.current;
+    if (atual && !atual.win.closed) {
+      atual.win.focus();
+      return;
+    }
+    const raiz = containerRef.current;
+    if (!raiz) return;
+    const proj = openProjectionWindow('Genius do Piano: projeção', () => {
+      espelhoRef.current?.desligar();
+      espelhoRef.current = null;
+      projecaoRef.current = null;
+      setProjecaoAberta(false);
+    });
+    if (!proj) return;
+    const doc = proj.win.document;
+    // Mesmo tema da janela principal (variáveis do :root, como --ui-header-h)
+    for (const a of Array.from(document.documentElement.attributes)) {
+      doc.documentElement.setAttribute(a.name, a.value);
+    }
+    doc.body.classList.add('genius-projecao');
+    doc.body.style.background = getComputedStyle(document.body).backgroundColor || '#002036';
+    espelhoRef.current = criarEspelho(raiz, doc, proj.container);
+
+    // Teclas na projeção valem como teclas na janela principal (notas no modo
+    // Teclado, A para a gaveta, ESC). A gaveta abre aqui, que vem para a frente.
+    const repassar = (e: KeyboardEvent) => {
+      if (e.key === 'F11') return;
+      if (e.type === 'keydown' && (e.code === 'KeyA' || e.key === 'Escape')) window.focus();
+      window.dispatchEvent(new KeyboardEvent(e.type, {
+        key: e.key, code: e.code, repeat: e.repeat,
+        shiftKey: e.shiftKey, altKey: e.altKey, ctrlKey: e.ctrlKey, metaKey: e.metaKey,
+      }));
+    };
+    proj.win.addEventListener('keydown', repassar);
+    proj.win.addEventListener('keyup', repassar);
+
+    projecaoRef.current = proj;
+    setProjecaoAberta(true);
+  };
+
+  // Genius saiu de cena (ou o componente desmontou): fecha o telão, para não
+  // sobrar uma janela parada.
+  useEffect(() => {
+    if (!active) projecaoRef.current?.close();
+  }, [active]);
+  useEffect(() => () => { projecaoRef.current?.close(); }, []);
+
   return (
     <>
       <div
@@ -239,6 +398,10 @@ const GeniusView: React.FC<Props> = ({ active }) => {
         style={{ display: active ? 'block' : 'none' }}
       />
       {alvoSecaoJogo && ReactDOM.createPortal(<SecaoJogo />, alvoSecaoJogo)}
+      {alvoProjecao && ReactDOM.createPortal(
+        <BotaoProjecao aberta={projecaoAberta} onClick={abrirProjecao} />,
+        alvoProjecao,
+      )}
     </>
   );
 };
