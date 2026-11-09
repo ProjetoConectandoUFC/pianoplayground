@@ -1,12 +1,16 @@
 import React, { useEffect, useRef } from 'react';
 import { AppSettings } from '../types';
-import { NOTE_NAME_SYSTEMS, NOTE_RELATIONS, THEMES, fontOf, fontSpecOf, fontStackOf } from '../constants';
+import { NOTE_NAME_SYSTEMS, NOTE_RELATIONS, THEMES, eixosDaFonte, fontOf, fontSpecOf, fontStackOf } from '../constants';
 import { createGelatina, Gelatina, GelatinaOptions } from '../services/gelatinaEngine';
+import { LacosFundo } from '../../shared/ui/LacosFundo';
 
 interface ProjectionScreenProps {
     settings: AppSettings;
     /** Registra o motor recém-criado, para que o App possa mandar notas para ele */
     onEngine: (engine: Gelatina | null) => void;
+    /** Desenha os laços da marca atrás das notas. Só na janela de projeção: na
+     *  principal o GelatinaApp os põe por baixo da barra do topo. */
+    comLacos?: boolean;
 }
 
 /** Traduz as configurações da aplicação para as opções que o motor entende */
@@ -19,10 +23,18 @@ export const optionsFromSettings = (settings: AppSettings): GelatinaOptions => {
         ground: tema.ground,
         ink: tema.ink,
         wash: tema.wash,
-        fontSpec: fontSpecOf(settings.fontKey),
+        // efeito 'estilos': mede pelo estilo mais forte (o mais largo), para a palavra
+        // tocada caber na tela; em repouso ela só fica com um pouco mais de folga
+        fontSpec: fontOf(settings.fontKey).estilos
+            ? `${fontOf(settings.fontKey).weight} 100px "${fontOf(settings.fontKey).estilos!.familias.slice(-1)[0]}", ${fontStackOf(settings.fontKey)}`
+            : fontSpecOf(settings.fontKey),
         family: fontStackOf(settings.fontKey),
         weight: fontOf(settings.fontKey).weight,
         effect: fontOf(settings.fontKey).effect ?? null,
+        axes: eixosDaFonte(settings.fontKey),
+        estilos: fontOf(settings.fontKey).estilos,
+        acento: fontOf(settings.fontKey).acento ?? null,
+        eixosToque: fontOf(settings.fontKey).eixosToque,
         noteSystem: settings.noteSystem,
         density: settings.noteDensity,
         spacing: settings.noteSpacing,
@@ -37,7 +49,7 @@ export const optionsFromSettings = (settings: AppSettings): GelatinaOptions => {
  * das notas. O React só entrega as configurações: a animação roda fora do
  * ciclo de renderização, por conta do motor.
  */
-export const ProjectionScreen: React.FC<ProjectionScreenProps> = ({ settings, onEngine }) => {
+export const ProjectionScreen: React.FC<ProjectionScreenProps> = ({ settings, onEngine, comLacos = false }) => {
     const hostRef = useRef<HTMLDivElement | null>(null);
     const engineRef = useRef<Gelatina | null>(null);
     const tema = THEMES[settings.theme];
@@ -65,7 +77,13 @@ export const ProjectionScreen: React.FC<ProjectionScreenProps> = ({ settings, on
         const opts = optionsFromSettings(settings);
         const aplicar = () => { if (vivo) engine.update(opts); };
         const doc = hostRef.current?.ownerDocument;
-        if (doc?.fonts?.load) doc.fonts.load(opts.fontSpec).then(aplicar).catch(aplicar);
+        // Carrega a fonte (e, no efeito 'estilos', todos os estilos) antes de aplicar,
+        // para a troca de estilo durante o toque não piscar
+        const extras = (opts.estilos?.familias ?? []).concat(opts.estilos?.alternas ?? [])
+            .map(f => `100px "${f}"`)
+            .concat(opts.acento ? [`${opts.acento.peso} 100px "${opts.acento.familia}"`] : []);
+        if (doc?.fonts?.load) Promise.all([opts.fontSpec, ...extras].map(sp => doc.fonts.load(sp)))
+            .then(aplicar).catch(aplicar);
         else aplicar();
         return () => { vivo = false; };
     }, [settings]);
@@ -75,6 +93,8 @@ export const ProjectionScreen: React.FC<ProjectionScreenProps> = ({ settings, on
             className="tela-notas transition-colors duration-500"
             style={{ backgroundColor: tema.ground }}
         >
+            {comLacos && <LacosFundo tema={settings.theme} opacidade={settings.lacosOpacidade} />}
+
             {/* As notas não recebem cliques: tocar é só por MIDI ou pelo teclado */}
             <div
                 ref={hostRef}

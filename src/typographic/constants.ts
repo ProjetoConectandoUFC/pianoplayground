@@ -1,4 +1,5 @@
 import { AppSettings } from './types';
+import { LACOS_OPACIDADE_PADRAO } from '../shared/ui/LacosFundo';
 
 // ==========================================
 // Sistemas de Nomenclatura de Notas
@@ -41,31 +42,59 @@ export const FONT_OPTIONS: { name: string; value: string }[] = [
     { name: 'Black Ops One', value: "'Black Ops One', cursive" },
 ];
 
-// Paleta de cores mapeando cada nota musical individual para uma cor de destaque específica (formato HEX)
-export const NOTE_HIGHLIGHT_COLORS: { [key: string]: string } = {
-    'C': "#87F50B", 'D': "#0031F5", 'E': "#07C9F5",
-    'F': "#F6CE0C", 'G': "#FA21FA", 'A': "#F94302",
-    'B': "#FF66FF", 'C#': "#FF507A", 'D#': "#FFAA50",
-    'F#': "#50FFB0", 'G#': "#50DFFF", 'A#': "#B085FF",
+// Cor de destaque de cada nota (formato HEX), com as cores do Design System Conectando.
+// Uma paleta por tema, porque o sistema proíbe amarelo como texto sobre fundo claro
+// e as cores escuras somem sobre a tinta. Os sustenidos usam tons vizinhos.
+export const CORES_NOTAS_CLARO: { [key: string]: string } = {
+    'C': '#1666B0', // azul
+    'D': '#EB5F3E', // coral
+    'E': '#0E7A56', // verde (ok)
+    'F': '#9A6A08', // âmbar (atenção)
+    'G': '#B0261B', // vermelho (erro)
+    'A': '#3D8AD1', // azul-brilho
+    'B': '#10263F', // tinta n12
+    'C#': '#0E5395', // azul-profundo
+    'D#': '#33506F', // n11
+    'F#': '#486284', // n10
+    'G#': '#2670B5', // azul-claro
+    'A#': '#5F7B9E', // n9
 };
+export const CORES_NOTAS_ESCURO: { [key: string]: string } = {
+    'C': '#FCE051', // amarelo
+    'D': '#EB5F3E', // coral
+    'E': '#3D8AD1', // azul-brilho
+    'F': '#FFFFFF', // n0
+    'G': '#FFF3B0', // amarelo-suave
+    'A': '#FBDDD4', // coral-suave
+    'B': '#9AAEC8', // n6
+    'C#': '#FFEC8A', // amarelo do hover sobre azul
+    'D#': '#F2B8A6', // borda da etiqueta de alerta
+    'F#': '#DEE5ED', // n2
+    'G#': '#EFCF3A', // borda da etiqueta de destaque
+    'A#': '#BDC9DA', // n4
+};
+export const NOTE_HIGHLIGHT_COLORS = CORES_NOTAS_CLARO;
 
 // Configurações padrão aplicadas quando o aplicativo é inicializado ou redefinido
 // Cores de fundo e das notas inativas de cada tema da moldura comum
 // (src/shared/ui). Continuam editáveis no painel depois de escolher o tema.
-export const TEMAS_TIPOGRAFICO: { [k in AppSettings['tema']]: Pick<AppSettings, 'backgroundColor' | 'textColor'> } = {
-    escuro: { backgroundColor: '#20274F', textColor: '#3A4272' }, // azul-marinho da marca
-    claro: { backgroundColor: '#F6F6C7', textColor: '#DCD7A4' },  // creme da marca
+// Começam pelas cores do Design System Conectando: fundo creme #FCFAF1 e notas inativas n3 no
+// claro; tinta n12 e notas inativas n11 no escuro.
+export const TEMAS_TIPOGRAFICO: { [k in AppSettings['tema']]: Pick<AppSettings, 'backgroundColor' | 'textColor' | 'noteColors'> } = {
+    escuro: { backgroundColor: '#10263F', textColor: '#33506F', noteColors: CORES_NOTAS_ESCURO },
+    claro: { backgroundColor: '#FCFAF1', textColor: '#CED7E4', noteColors: CORES_NOTAS_CLARO },
 };
 
 export const DEFAULT_SETTINGS: AppSettings = {
-    tema: 'escuro',
+    tema: 'claro',
     fontFamily: "'Roboto Mono', monospace",
-    textColor: TEMAS_TIPOGRAFICO.escuro.textColor, // cor discreta para notas inativas
-    backgroundColor: TEMAS_TIPOGRAFICO.escuro.backgroundColor,
-    noteColors: NOTE_HIGHLIGHT_COLORS,
+    textColor: TEMAS_TIPOGRAFICO.claro.textColor, // cor discreta para notas inativas
+    backgroundColor: TEMAS_TIPOGRAFICO.claro.backgroundColor,
+    noteColors: TEMAS_TIPOGRAFICO.claro.noteColors,
     noteSystem: 'anglican',
     noteDensity: 0.3, // Densidade padrão (0 a 1)
     noteRandomness: 80, // Aleatoriedade padrão (valores mais altos ficam mais espalhados)
+    lacosOpacidade: LACOS_OPACIDADE_PADRAO, // laços da marca no fundo (10%)
 };
 
 

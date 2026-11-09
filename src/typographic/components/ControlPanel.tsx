@@ -66,12 +66,12 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
             </Secao>
 
             {/* SEÇÃO 2: Entrada (teclado do computador ou MIDI). O modo é
-                escolhido na barra do topo e vale para os três jogos. */}
+                escolhido em "Jogo e entrada", no começo desta gaveta, e vale para os três jogos. */}
             {isKeyboardMode ? (
                 <Secao titulo="Entrada · teclado do computador">
                     <Dica>
                         Modo Teclado ativo: o MIDI é ignorado. Para usar um aparelho MIDI conectado,
-                        escolha MIDI na barra do topo.
+                        escolha MIDI em "Jogo e entrada", acima.
                     </Dica>
                     <MapaTeclas />
                 </Secao>
@@ -105,7 +105,7 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
                                 : 'Nenhum aparelho MIDI encontrado. Conecte um e recarregue, ou ligue a demonstração para ver o efeito.'}
                         </Dica>
                     )}
-                    <Dica>Sem teclado MIDI? Escolha Teclado na barra do topo para tocar pelo computador.</Dica>
+                    <Dica>Sem teclado MIDI? Escolha Teclado em "Jogo e entrada", acima, para tocar pelo computador.</Dica>
                 </Secao>
             )}
 
@@ -115,6 +115,14 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
                     valor={settings.tema}
                     onChange={(t) => onSettingsChange({ tema: t, ...TEMAS_TIPOGRAFICO[t] })}
                 />
+
+                <Deslizante
+                    id="tipo-lacos" rotulo="Opacidade dos laços" valor={settings.lacosOpacidade}
+                    min={0} max={1} passo={0.01}
+                    formato={(v) => `${Math.round(v * 100)}%`}
+                    onChange={(v) => onSettingsChange({ lacosOpacidade: v })}
+                />
+                <Dica>Os laços da marca no fundo, como na tela do Genius: brancos no tema escuro, celeste no claro. 0% os esconde.</Dica>
 
                 <Campo rotulo="Sistema de notas" htmlFor="tipo-sistema">
                     <select
@@ -168,7 +176,7 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
                         onChange={(e) => onSettingsChange({ backgroundColor: e.target.value })}
                     />
                 </div>
-                <Dica>O tema escolhe as duas cores acima; depois elas podem ser ajustadas à vontade.</Dica>
+                <Dica>O tema escolhe as duas cores acima e as cores das notas tocadas, todas do Design System Conectando; depois o fundo e as notas inativas podem ser ajustados à vontade.</Dica>
             </Secao>
 
             {/* SEÇÃO 4: Arranjo das notas na tela */}

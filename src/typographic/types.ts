@@ -15,6 +15,7 @@ export interface AppSettings {
     noteSystem: 'anglican' | 'latin';
     noteDensity: number;     // quantidade de notas na tela (0,05 a 1)
     noteRandomness: number;  // quanto da tela as notas ocupam (10 a 100%)
+    lacosOpacidade: number;  // laços da marca no fundo (0 a 1; 0 esconde)
 }
 
 export interface KnobValues {

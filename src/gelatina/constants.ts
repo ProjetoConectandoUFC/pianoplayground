@@ -1,4 +1,6 @@
+import eixosLidos from 'virtual:eixos-fontes';
 import { AppSettings, ThemeName } from './types';
+import { LACOS_OPACIDADE_PADRAO } from '../shared/ui/LacosFundo';
 
 // ==========================================
 // Sistemas de Nomenclatura de Notas
@@ -42,14 +44,21 @@ export const NOTE_RELATIONS: number[][] = [
 // Identidade visual
 // ==========================================
 
-/** Cores da marca Conectando, usadas também na interface de configurações */
+/** Cores do Design System Conectando (tokens/colors.css). São o ponto de partida:
+ *  tudo continua editável no painel. */
 export const BRAND = {
-    creme: '#F6F6C7',
-    tinta: '#443C1A',
-    azul: '#1D58A4',
-    petroleo: '#0F3D49',
-    escuro: '#20274F',   // azul-marinho, o mesmo fundo escuro dos três jogos
-    cremeClaro: '#F2EED6',
+    azul: '#1666B0',
+    azulProfundo: '#0E5395',
+    azulBrilho: '#3D8AD1',
+    amarelo: '#FCE051',
+    amareloSuave: '#FFF3B0',
+    coral: '#EB5F3E',
+    coralSuave: '#FBDDD4',
+    ground: '#FCFAF1',   // creme do Design System, fundo de página do tema claro
+    tinta: '#10263F',    // n12, texto e o fundo escuro dos três jogos
+    ok: '#0E7A56',
+    atencao: '#9A6A08',
+    erro: '#B0261B',
 };
 
 export interface ThemeDef {
@@ -60,19 +69,34 @@ export interface ThemeDef {
 }
 
 export const THEMES: { [k in ThemeName]: ThemeDef } = {
-    claro:  { ground: BRAND.creme,  ink: BRAND.tinta,      sharp: BRAND.petroleo, wash: 0.16 },
-    escuro: { ground: BRAND.escuro, ink: BRAND.cremeClaro, sharp: '#5CC6D8',      wash: 0.30 },
+    claro:  { ground: BRAND.ground, ink: BRAND.tinta,  sharp: BRAND.tinta,        wash: 0.16 },
+    escuro: { ground: BRAND.tinta,  ink: BRAND.ground, sharp: BRAND.amareloSuave, wash: 0.30 },
 };
 
-/** Cor de cada nota natural, na ordem da escala: Dó Ré Mi Fá Sol Lá Si */
+/** Cores de identidade do Design System Conectando (seção "Cores de identidade"
+ *  do Design System Completo.pdf), as mesmas que identificam pessoas e peças. */
+export const IDENTIDADE = {
+    rosa: '#FF6776',
+    turquesa: '#24C0C0',
+    ceu: '#3BB8FF',
+    rosaAntigo: '#DD6A75',
+    laranja: '#D86F33',
+    azulMedio: '#4074B2',
+    roxo: '#A740B2',
+};
+
+/** Cor padrão de cada nota natural, na ordem da escala: Dó Ré Mi Fá Sol Lá Si.
+ *  São as sete cores de identidade, uma por nota, na ordem em que aparecem no
+ *  Design System. Sem as semânticas (verde, âmbar, vermelho), que ficam para
+ *  status. Tudo continua editável no painel. */
 export const NOTE_HIGHLIGHT_COLORS: string[] = [
-    '#43B3B4', // Dó  turquesa
-    '#F0848F', // Ré  rosa
-    '#FBDF53', // Mi  amarelo
-    '#E9573B', // Fá  vermelho alaranjado
-    '#1D58A4', // Sol azul
-    '#2E9E5B', // Lá  verde
-    '#CC2936', // Si  vermelho
+    IDENTIDADE.rosa,       // Dó  rosa
+    IDENTIDADE.turquesa,   // Ré  turquesa
+    IDENTIDADE.ceu,        // Mi  céu
+    IDENTIDADE.rosaAntigo, // Fá  rosa antigo
+    IDENTIDADE.laranja,    // Sol laranja
+    IDENTIDADE.azulMedio,  // Lá  azul médio
+    IDENTIDADE.roxo,       // Si  roxo
 ];
 
 
@@ -92,7 +116,24 @@ export interface FontOption {
     arquivo?: boolean;
     /** Fontes variáveis com efeito próprio: os eixos mudam ao tocar,
      *  no lugar de esticar e entortar a letra. */
-    effect?: 'kablammo' | 'shantell';
+    effect?: 'kablammo' | 'shantell' | 'tiltwarp' | 'auto' | 'estilos' | 'eixos';
+    /** Fontes pixel (categoria de teste), mostradas com o desenho original */
+    pixel?: boolean;
+    /** Efeito 'eixos': cada eixo vai do valor em repouso ao valor do toque, junto com a força do toque */
+    eixosToque?: { tag: string; repouso: number; toque: number }[];
+    /** Efeito 'estilos' (fontes estáticas com vários estilos): famílias em ordem,
+     *  do estilo em repouso ao mais forte; a letra troca de estilo conforme o toque.
+     *  alternas: estilos irmãos (ex.: itálicos) que entram e saem enquanto segura. */
+    estilos?: { familias: string[]; alternas?: string[] };
+    /** Fontes sem acentos: de qual fonte do acervo vem o acento (escolhido por
+     *  comparação visual, ver public/fontes/LEIA-ME.txt). A letra base continua
+     *  na fonte original e o motor compõe o acento por cima. Nenhuma fonte da
+     *  lista usa isso desde 09/11/2026 (as de acento composto saíram do menu);
+     *  o recurso fica no motor para uma fonte futura, se preciso. */
+    acento?: { familia: string; peso: number };
+    /** Efeito 'auto': nome do arquivo em public/fontes. Os eixos são lidos dele no build
+     *  e a fonte só aparece na lista se o arquivo estiver lá. */
+    arquivoNome?: string;
     /** Peso usado para medir a letra (fontes que engordam ao tocar) */
     measureWeight?: number;
     /** Uma linha explicando o efeito próprio, mostrada no painel */
@@ -102,9 +143,8 @@ export interface FontOption {
     accents?: boolean;
 }
 
-export const FONT_OPTIONS: FontOption[] = [
+const TODAS_AS_FONTES: FontOption[] = [
     { key: 'alfa',         name: 'Alfa Slab One',     family: '"Alfa Slab One"',    weight: 400 },
-    { key: 'anakgedong',   name: 'Anak Gedong',       family: '"Anak Gedong"',      weight: 400, arquivo: true, accents: false },
     { key: 'bagel',        name: 'Bagel Fat One',     family: '"Bagel Fat One"',    weight: 400 },
     { key: 'baloo',        name: 'Baloo 2',           family: '"Baloo 2"',          weight: 800 },
     { key: 'berkshire',    name: 'Berkshire Swash',   family: '"Berkshire Swash"',  weight: 400, arquivo: true },
@@ -112,8 +152,9 @@ export const FONT_OPTIONS: FontOption[] = [
     { key: 'bowlby',       name: 'Bowlby One',        family: '"Bowlby One"',       weight: 400 },
     { key: 'bungee',       name: 'Bungee',            family: '"Bungee"',           weight: 400 },
     { key: 'caprasimo',    name: 'Caprasimo',         family: '"Caprasimo"',        weight: 400, arquivo: true },
+    { key: 'comicsans',    name: 'Comic Sans',        family: '"PI Comic Sans"',    weight: 400, arquivo: true },
     { key: 'cherry',       name: 'Cherry Bomb One',   family: '"Cherry Bomb One"',  weight: 400 },
-    { key: 'howdybun',     name: 'Howdybun',          family: '"Howdybun"',         weight: 400, arquivo: true, accents: false },
+    { key: 'helvetica',    name: 'Helvetica',         family: '"PI Helvetica"',     weight: 400, arquivo: true },
     { key: 'isometra',     name: 'Isometra',          family: '"Isometra"',         weight: 400, arquivo: true },
     {
         key: 'kablammo', name: 'Kablammo', family: '"Kablammo"', weight: 400, arquivo: true, effect: 'kablammo',
@@ -124,6 +165,8 @@ export const FONT_OPTIONS: FontOption[] = [
     { key: 'matemasie',    name: 'Matemasie',         family: '"Matemasie"',        weight: 400 },
     { key: 'mochiy',       name: 'Mochiy Pop P One',  family: '"Mochiy Pop P One"', weight: 400 },
     { key: 'modak',        name: 'Modak',             family: '"Modak"',            weight: 400 },
+    { key: 'oi',           name: 'Oi',                family: '"Oi"',               weight: 400, arquivo: true },
+    { key: 'papyrus',      name: 'Papyrus',           family: '"PI Papyrus"',       weight: 400, arquivo: true },
     { key: 'playfair',     name: 'Playfair Display',  family: '"Playfair Display"', weight: 400 },
     { key: 'righteous',    name: 'Righteous',         family: '"Righteous"',        weight: 400, arquivo: true },
     {
@@ -131,8 +174,56 @@ export const FONT_OPTIONS: FontOption[] = [
         effectHint: 'Efeito próprio: ao tocar, as letras quicam, ficam com traço de mão e engordam (eixos BNCE, INFM e peso).',
     },
     { key: 'shrikhand',    name: 'Shrikhand',         family: '"Shrikhand"',        weight: 400 },
+    {
+        key: 'tiltwarp', name: 'Tilt Warp', family: '"Tilt Warp"', weight: 400, arquivo: true, effect: 'tiltwarp',
+        effectHint: 'Efeito próprio: ao tocar, as letras giram em 3D, balançando para os lados e para frente (eixos XROT e YROT).',
+    },
     { key: 'titan',        name: 'Titan One',         family: '"Titan One"',        weight: 400 },
+    // Fontes mutáveis com efeito automático: basta o arquivo estar em public/fontes
+    // com este nome (e o @font-face no index.html) para elas entrarem na lista.
+    { key: 'graduate', name: 'Graduate', family: '"Graduate"', weight: 400, arquivo: true, effect: 'auto', arquivoNome: 'GraduateGX.woff2' },
+    // Fontes mutáveis feitas de estilos estáticos (versão trial que está em
+    // public/fontes, veja LICENCAS.txt). A letra troca de estilo ao tocar.
+    // Cheee e Camelion (demo) saíram em 09/11/2026: não têm acentos e o acento
+    // composto de outra fonte ficava artificial. Os arquivos seguem em public/fontes.
+    {
+        key: 'hela', name: 'Hela (trial)', family: '"Hela 300"', weight: 400, arquivo: true, effect: 'estilos',
+        estilos: { familias: ['Hela 300', 'Hela 350', 'Hela 400', 'Hela 500', 'Hela 600', 'Hela 700'] },
+        effectHint: 'Efeito próprio: ao tocar, as letras engordam peso a peso (Hela 300 a 700), cada letra no seu tempo.',
+    },
+    // Fontes pixel (teste): letras de pontos ou quadradinhos, no desenho original,
+    // com um efeito de eixos contínuo, sem trocas bruscas de desenho.
+    {
+        key: 'doto', name: 'Doto', family: '"Doto"', weight: 700, arquivo: true, pixel: true, effect: 'eixos',
+        eixosToque: [{ tag: 'ROND', repouso: 0, toque: 100 }, { tag: 'wght', repouso: 700, toque: 900 }],
+        effectHint: 'Letra de matriz de pontos: os pontos arredondam e crescem ao tocar (eixos ROND e peso).',
+    },
+    {
+        key: 'pixelify', name: 'Pixelify Sans', family: '"Pixelify Sans"', weight: 400, arquivo: true, pixel: true, effect: 'eixos',
+        eixosToque: [{ tag: 'wght', repouso: 400, toque: 700 }],
+        effectHint: 'Pixel clássico que engorda ao tocar (eixo de peso).',
+    },
 ];
+
+/** Eixos lidos dos arquivos de public/fontes no build (vite-eixos-fontes.ts) */
+export type EixoFonte = { tag: string; min: number; padrao: number; max: number };
+const EIXOS: Record<string, EixoFonte[]> = eixosLidos;
+
+/** Eixos da fonte com efeito automático (vazio para as demais) */
+export const eixosDaFonte = (key: string): EixoFonte[] => {
+    const f = TODAS_AS_FONTES.find(o => o.key === key);
+    return f?.effect === 'auto' && f.arquivoNome ? EIXOS[f.arquivoNome] ?? [] : [];
+};
+
+/** Lista mostrada no painel: as fontes de efeito automático só entram quando o
+ *  arquivo delas está em public/fontes; a dica lista os eixos encontrados. */
+export const FONT_OPTIONS: FontOption[] = TODAS_AS_FONTES
+    .filter(f => f.effect !== 'auto' || (f.arquivoNome && EIXOS[f.arquivoNome]?.length))
+    .map(f => f.effect !== 'auto' ? f : {
+        ...f,
+        effectHint: `Efeito automático: ao tocar, os eixos da fonte (${EIXOS[f.arquivoNome!].map(e => e.tag).join(', ')}) se transformam juntos.`,
+    });
+
 
 /** Monta a especificação que o canvas entende, ex: 400 100px "Modak".
  *  Fontes sem acentos ganham uma reserva gorda ("Lilita One", que saiu da
@@ -192,12 +283,17 @@ export const DEFAULT_SETTINGS: AppSettings = {
     theme: 'claro',
     noteSystem: 'latin',
     noteColors: NOTE_HIGHLIGHT_COLORS,
-    sharpColor: BRAND.petroleo,
-    noteDensity: 1,
+    sharpColor: BRAND.tinta,
+    noteDensity: 0.8,
     noteSpacing: 0.02,
     noteRandomness: 0.8,
     growAmount: 1.45,
+    lacosOpacidade: LACOS_OPACIDADE_PADRAO, // laços da marca no fundo (10%)
     motorTexto: true,
+    tamanhoV2: true,
+    coresIdentidade: true,
+    coresIdentidadeV2: true,
+    lacosV2: true,
 };
 
 /** Chave usada para lembrar as preferências entre sessões */

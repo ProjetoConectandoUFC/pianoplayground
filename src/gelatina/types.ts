@@ -32,8 +32,18 @@ export interface AppSettings {
     noteRandomness: number;
     /** Crescimento da nota pressionada, em relação ao tamanho inativo */
     growAmount: number;
+    /** Opacidade dos laços da marca no fundo (0 a 1; 0 esconde) */
+    lacosOpacidade: number;
     /** Marca as preferências já ajustadas ao motor em texto (crescimento padrão 1,45) */
     motorTexto?: boolean;
+    /** Marca que o tamanho inicial menor (densidade 0,8) já foi aplicado */
+    tamanhoV2?: boolean;
+    /** Marca que as cores de identidade do Design System Conectando já foram aplicadas */
+    coresIdentidade?: boolean;
+    /** Marca que a opacidade dos laços já voltou uma vez ao padrão novo (10%) */
+    lacosV2?: boolean;
+    /** Marca que as cores de identidade do PDF (rosa, turquesa, céu...) já foram aplicadas uma vez */
+    coresIdentidadeV2?: boolean;
 }
 
 export interface KnobValues {

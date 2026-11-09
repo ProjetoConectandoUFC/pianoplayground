@@ -1,6 +1,6 @@
 // Renderiza um teclado de 25 teclas (estilo AKAI MPK Mini) — C3 (48) a C5 (72).
 // API: build(container), flash(midi, durationMs, mode), clearAll().
-// Efeito visual: no modo 'player' a tecla fica turquesa e solta estrelas e
+// Efeito visual: no modo 'player' a tecla fica na cor do jogador (--player, turquesa por padrão) e solta estrelas e
 // triângulos pelos lados (camada .key-fx-layer, acima de todas as teclas).
 
 const FIRST_MIDI = 48;
@@ -49,7 +49,7 @@ export function buildPiano(container) {
   container.appendChild(fxLayer);
 }
 
-// Estrelas e triângulos turquesa que saem pelos dois lados da tecla tocada.
+// Estrelas e triângulos (na cor do jogador) que saem pelos dois lados da tecla tocada.
 const rand = (a, b) => a + Math.random() * (b - a);
 
 function burst(el) {
@@ -71,8 +71,12 @@ function burst(el) {
     const startX = side < 0 ? x + rand(-0.04, 0.06) * w : x + w - rand(-0.04, 0.06) * w;
     const startY = y + h * rand(0.08, 0.98);
 
-    p.style.left = `${startX}px`;
-    p.style.top = `${startY}px`;
+    // Posição em % da camada: a mesma peça cai no lugar certo também na
+    // janela de projeção, que costuma ter outro tamanho
+    const camadaW = fxLayer.offsetWidth || 1;
+    const camadaH = fxLayer.offsetHeight || 1;
+    p.style.left = `${((startX / camadaW) * 100).toFixed(3)}%`;
+    p.style.top = `${((startY / camadaH) * 100).toFixed(3)}%`;
     p.style.setProperty('--size', `${size.toFixed(1)}px`);
     p.style.setProperty('--dx', `${(side * unit * rand(0.18, 0.55)).toFixed(1)}px`);
     p.style.setProperty('--dy', `${(-unit * rand(0.05, 0.35)).toFixed(1)}px`);

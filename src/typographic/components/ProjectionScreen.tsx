@@ -1,6 +1,7 @@
 import React from 'react';
 import { AppSettings, VisualNote, ActiveNoteInfo } from '../types';
 import { Note } from './Note';
+import { LacosFundo } from '../../shared/ui/LacosFundo';
 
 // Define a estrutura de dados (tipos) que a tela de projeção precisa receber via props
 interface ProjectionScreenProps {
@@ -27,6 +28,9 @@ export const ProjectionScreen: React.FC<ProjectionScreenProps> = ({
             className="absolute inset-0 transition-colors duration-500 overflow-hidden"
             style={{ backgroundColor: settings.backgroundColor }}
         >
+            {/* Laços da marca no fundo, atrás das notas (fixos na tela, como no Genius) */}
+            <LacosFundo tema={settings.tema} opacidade={settings.lacosOpacidade} />
+
             {/* Percorre a lista de notas visuais e renderiza cada uma na tela */}
             {visualNotes.map((note) => {
                 const noteName = note.text;

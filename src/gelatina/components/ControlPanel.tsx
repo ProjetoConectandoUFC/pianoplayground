@@ -2,12 +2,20 @@ import React, { useEffect, useState } from 'react';
 import { AppSettings, KnobValues, MidiDevice, NoteSystem } from '../types';
 import {
     AKAI_MPK_MINI_KNOBS, FONT_OPTIONS, KNOB_MAPPINGS, NOTE_NAME_SYSTEMS,
-    fontOf, fontSpecOf, fontLacksAccents,
+    fontOf, fontSpecOf, fontLacksAccents, FontOption,
 } from '../constants';
 import {
     BotaoProjecao, Campo, Deslizante, Dica, Gaveta, Interruptor, MapaTeclas,
     MedidorKnob, Secao, SeletorTema,
 } from '../../shared/ui/componentes';
+
+
+/** Categorias da lista de fontes: as fontes de sempre e as mutáveis */
+const GRUPOS_FONTES: { rotulo: string; filtro: (f: FontOption) => boolean }[] = [
+    { rotulo: 'Fontes', filtro: f => !f.effect && !f.pixel },
+    { rotulo: 'Fontes mutáveis', filtro: f => !!f.effect && !f.pixel },
+    { rotulo: 'Fontes pixel (teste)', filtro: f => !!f.pixel },
+];
 
 interface ControlPanelProps {
     inputs: MidiDevice[];
@@ -91,13 +99,13 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
                 />
             </Secao>
 
-            {/* O modo (MIDI ou Teclado) é escolhido na barra do topo e vale
+            {/* O modo (MIDI ou Teclado) é escolhido em "Jogo e entrada", no começo da gaveta, e vale
                 para os três jogos do Piano Interativo. */}
             {isKeyboardMode ? (
                 <Secao titulo="Entrada · teclado do computador">
                     <Dica>
                         Modo Teclado ativo: o MIDI é ignorado. Para usar o teclado MIDI, escolha
-                        MIDI na barra do topo. Segure a tecla para manter a nota.
+                        MIDI em "Jogo e entrada", acima. Segure a tecla para manter a nota.
                     </Dica>
                     <MapaTeclas />
                     <Dica>O sustenido pinta a palavra da nota natural com a cor escolhida abaixo.</Dica>
@@ -120,12 +128,20 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
                             </select>
                         </Campo>
                     )}
-                    <Dica>Sem teclado MIDI? Escolha Teclado na barra do topo para tocar pelo computador.</Dica>
+                    <Dica>Sem teclado MIDI? Escolha Teclado em "Jogo e entrada", acima, para tocar pelo computador.</Dica>
                 </Secao>
             )}
 
             <Secao titulo="Aparência">
                 <SeletorTema valor={settings.theme} onChange={t => onSettingsChange({ theme: t })} />
+
+                <Deslizante
+                    id="gel-lacos" rotulo="Opacidade dos laços" valor={settings.lacosOpacidade}
+                    min={0} max={1} passo={0.01}
+                    formato={v => `${Math.round(v * 100)}%`}
+                    onChange={v => onSettingsChange({ lacosOpacidade: v })}
+                />
+                <Dica>Os laços da marca no fundo, como na tela do Genius: brancos no tema escuro, celeste no claro. 0% os esconde.</Dica>
 
                 <Campo rotulo="Sistema de notas" htmlFor="gel-sistema">
                     <select
@@ -146,12 +162,18 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
                         value={settings.fontKey}
                         onChange={e => onSettingsChange({ fontKey: e.target.value })}
                     >
-                        {FONT_OPTIONS.map(f => (
-                            <option key={f.key} value={f.key}>
-                                {f.name}
-                                {f.accents === false ? ' · sem acentos' : ''}
-                                {ausentes.has(f.key) ? ' · não encontrada' : ''}
-                            </option>
+                        {/* Duas categorias: as fontes de sempre e as mutáveis (variáveis
+                            com efeito próprio, cujos eixos mudam ao tocar) */}
+                        {GRUPOS_FONTES.map(g => (
+                            <optgroup key={g.rotulo} label={g.rotulo}>
+                                {FONT_OPTIONS.filter(g.filtro).sort((x, y) => x.name.localeCompare(y.name)).map(f => (
+                                    <option key={f.key} value={f.key}>
+                                        {f.name}
+                                        {f.accents === false ? (f.acento ? ' · acentos compostos' : ' · sem acentos') : ''}
+                                        {ausentes.has(f.key) ? ' · não encontrada' : ''}
+                                    </option>
+                                ))}
+                            </optgroup>
                         ))}
                     </select>
                 </Campo>
@@ -163,11 +185,19 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
                     </Dica>
                 )}
                 {fontLacksAccents(settings.fontKey) && settings.noteSystem === 'latin' && (
-                    <Dica>
-                        Esta fonte não tem acentos: em Dó, Ré, Fá e Lá a letra acentuada sai de
-                        uma fonte reserva. Para um visual uniforme, use o sistema anglicano
-                        (C, D, E...) ou outra fonte.
-                    </Dica>
+                    fontOf(settings.fontKey).acento ? (
+                        <Dica>
+                            Esta fonte não tem acentos: em Dó, Ré, Fá e Lá a letra continua nela e
+                            o acento vem da {fontOf(settings.fontKey).acento!.familia}, escolhida no
+                            acervo por combinar com o desenho.
+                        </Dica>
+                    ) : (
+                        <Dica>
+                            Esta fonte não tem acentos: em Dó, Ré, Fá e Lá a letra acentuada sai de
+                            uma fonte reserva. Para um visual uniforme, use o sistema anglicano
+                            (C, D, E...) ou outra fonte.
+                        </Dica>
+                    )
                 )}
 
                 <div>

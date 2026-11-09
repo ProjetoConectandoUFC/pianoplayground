@@ -9,7 +9,12 @@ import {
   playChampionJingle,
   playFireworks,
   cancelCelebrationSounds,
+  playSplat,
+  playBoo,
+  stopBoo,
+  preloadBoo,
 } from './audio.js';
+import { initTomates, throwTomatoes, clearTomatoes } from './tomates.js';
 import { startConfetti, stopConfetti } from './confetti.js';
 import { setupDebugUi, showPanel as showDebugPanel, hidePanel as hideDebugPanel, dlog, midiName } from './debug.js';
 import { getInputMode, onInputModeChange } from '../shared/inputMode';
@@ -37,6 +42,7 @@ export function initGenius() {
     overlayStars: document.getElementById('overlay-stars'),
     overlaySub: document.getElementById('overlay-sub'),
     overlayBtn: document.getElementById('overlay-btn'),
+    overlayBtn2: document.getElementById('overlay-btn-2'),
     picker: document.getElementById('melody-picker'),
     pickerLevel: document.getElementById('picker-level'),
     pickerList: document.getElementById('picker-list'),
@@ -45,7 +51,12 @@ export function initGenius() {
     settingsPanel: document.getElementById('settings-panel'),
     settingSameMelody: document.getElementById('setting-same-melody'),
     settingConsole: document.getElementById('setting-console'),
+    settingTomate: document.getElementById('setting-tomate'),
+    settingSomJogador: document.getElementById('setting-som-jogador'),
+    tomates: document.getElementById('tomates'),
     settingsMelodias: document.getElementById('settings-melodias'),
+    modoBtns: Array.from(document.querySelectorAll('#settings-panel [data-modo]')),
+    modoDica: document.getElementById('setting-modo-dica'),
   };
 
   const MAX_LEVEL = 3;
@@ -65,14 +76,31 @@ export function initGenius() {
   // Pronto para jogar: no modo teclado não depende de dispositivo MIDI.
   const inputReady = () => isKeyboardMode() || midiConnected;
   const idleMessage = () => {
-    if (isKeyboardMode()) return 'Pronto! Toque com as teclas de Q a U e de Z a M. Clique em "Iniciar partida".';
-    return midiConnected
-      ? 'Pronto! Clique em "Iniciar partida" para começar.'
-      : 'Conecte um teclado MIDI compatível com MPK Mini.';
+    // Pronto para jogar: o convite do layout aprovado. No modo Teclado as
+    // letras de Q a U e de Z a M aparecem sobre as teclas do piano.
+    if (isKeyboardMode() || midiConnected) return 'Ouça a melodia e repita no teclado.';
+    return 'Conecte um teclado MIDI compatível com MPK Mini.';
   };
   let currentLevel = 1;
   let lastMelodyId = null;
-  let nextAction = 'restart'; // 'continue' | 'restart'
+  let nextAction = 'restart'; // 'continue' | 'restart' | 'desafio' | 'repetir' | 'rodizio'
+  let nextAction2 = null;     // ação do botão secundário (só no fim do modo fácil)
+
+  // Modo de jogo: 'facil' (2, 4 e 6 notas) ou 'desafio' (as versões completas
+  // de cada nível, o funcionamento original). O jogo sempre abre no fácil;
+  // a troca é pela gaveta ou pelo convite ao fim do modo fácil.
+  let modo = 'facil';
+  // Modo tomate: começa desligado a cada execução; liga pela gaveta.
+  let tomatoMode = false;
+  // Invalida a derrota "atrasada" do modo tomate (o cartão espera os
+  // tomates caírem) quando a partida muda antes disso.
+  let loseToken = 0;
+  initTomates(ui.tomates);
+
+  const MODO_DICAS = {
+    facil: 'Fácil: 2, 4 e 6 notas nos três estágios. Ao vencer os três, o jogo oferece o modo desafio.',
+    desafio: 'Desafio: as melodias completas de cada estágio, valendo os brindes.',
+  };
 
   // Modo de sorteio: por padrão, a mesma música é executada nos 3 níveis
   // (apenas em comprimentos diferentes). Alternar via menu para randomizar.
@@ -85,7 +113,8 @@ export function initGenius() {
   function setMelodyName(text) { ui.melodyName.textContent = text; }
 
   function showStageIndicator(level) {
-    ui.stageIndicator.textContent = `Estágio ${level} de ${MAX_LEVEL}`;
+    const rotuloModo = modo === 'facil' ? 'Fácil' : 'Desafio';
+    ui.stageIndicator.innerHTML = `<span class="stage-modo">${rotuloModo} · </span>Estágio ${level} de ${MAX_LEVEL}`;
     ui.stageIndicator.classList.remove('hidden', 'lv1', 'lv2', 'lv3');
     ui.stageIndicator.classList.add(`lv${level}`);
   }
@@ -104,15 +133,50 @@ export function initGenius() {
 
   function hideOverlay() {
     ui.overlay.classList.add('hidden');
+    hideSecondButton();
     ui.overlay.classList.remove('win', 'lose', 'champion');
     stopConfetti();
     cancelCelebrationSounds();
+    stopBoo(); // nova rodada ou volta ao início: a vaia para
   }
 
   function setOverlayBadge(tier) {
     ui.overlayBadge.style.display = 'inline-block';
+    // No modo fácil não há brindes: a etiqueta só diz o modo.
+    if (modo === 'facil') {
+      ui.overlayBadge.className = 'tier-badge facil';
+      ui.overlayBadge.textContent = 'Modo fácil';
+      return;
+    }
     ui.overlayBadge.className = `tier-badge t${tier}`;
     ui.overlayBadge.textContent = TIER_LABELS[tier];
+  }
+
+  function showSecondButton(text, action) {
+    ui.overlayBtn2.textContent = text;
+    ui.overlayBtn2.classList.remove('hidden');
+    nextAction2 = action;
+  }
+  function hideSecondButton() {
+    ui.overlayBtn2.classList.add('hidden');
+    nextAction2 = null;
+  }
+
+  // Fim do modo fácil com os três estágios vencidos: convite ao desafio.
+  function showEasyComplete({ score, label, stars }) {
+    ui.overlay.classList.remove('hidden', 'lose', 'win');
+    ui.overlay.classList.add('win', 'champion');
+    ui.overlayTitle.textContent = 'Modo fácil concluído!';
+    ui.overlayTitle.className = 'overlay-title win';
+    setOverlayBadge(3);
+    ui.overlayScore.textContent = String(score);
+    ui.overlayScore.style.display = 'block';
+    ui.overlayStars.textContent = '★'.repeat(stars) + '☆'.repeat(3 - stars);
+    ui.overlayStars.style.display = 'block';
+    ui.overlaySub.textContent = `${label} · Você venceu os três estágios. Que tal encarar as melodias completas no modo desafio?`;
+    ui.overlayBtn.textContent = 'Avançar para o modo desafio →';
+    nextAction = 'desafio';
+    showSecondButton('Jogar o fácil de novo', 'restart');
   }
 
   function showInterimWin({ score, label, stars, sub, level }) {
@@ -141,8 +205,26 @@ export function initGenius() {
     ui.overlayStars.textContent = '★'.repeat(stars) + '☆'.repeat(3 - stars);
     ui.overlayStars.style.display = 'block';
     ui.overlaySub.textContent = `${label} · Procure nossa equipe no stand pra retirar o Brinde Premium!`;
+    // Fim do desafio: a próxima pessoa começa do fácil, com outra música
     ui.overlayBtn.textContent = 'Nova partida';
-    nextAction = 'restart';
+    nextAction = 'rodizio';
+  }
+
+  // Quantos tomates: quanto mais cedo o erro, mais tomates. 8 na primeira
+  // nota, caindo em linha reta até 2 na última.
+  const TOMATES_MAX = 8;
+  const TOMATES_MIN = 2;
+  function tomatoCount(pos, total) {
+    if (!total || total <= 1) return TOMATES_MAX;
+    const p = Math.min(Math.max(pos, 1), total);
+    const frac = (p - 1) / (total - 1);
+    return Math.round(TOMATES_MAX - frac * (TOMATES_MAX - TOMATES_MIN));
+  }
+
+  // Título da derrota quando o jogador levou tomates
+  let lastLoseKind = null;
+  function tomatoTitle() {
+    return tomatoMode && lastLoseKind ? 'Tomatada!' : null;
   }
 
   function showFinalLose({ reason, level }) {
@@ -152,8 +234,22 @@ export function initGenius() {
     ui.overlayScore.style.display = 'none';
     ui.overlayStars.style.display = 'none';
 
+    if (modo === 'facil') {
+      // Sem brindes no modo fácil: só o incentivo para tentar de novo.
+      ui.overlay.classList.remove('win');
+      ui.overlay.classList.add('lose');
+      ui.overlayTitle.textContent = tomatoTitle() || 'Quase lá!';
+      ui.overlayTitle.className = 'overlay-title lose';
+      setOverlayBadge(0);
+      ui.overlaySub.textContent = `${reason || ''} Respire fundo e tente outra vez, você consegue!`;
+      ui.overlayBtn.textContent = 'Tentar a mesma música';
+      nextAction = 'repetir';
+      showSecondButton('Nova música', 'restart');
+      return;
+    }
+
     if (tier === 0) {
-      ui.overlayTitle.textContent = 'Quase lá!';
+      ui.overlayTitle.textContent = tomatoTitle() || 'Quase lá!';
       ui.overlayTitle.className = 'overlay-title lose';
       setOverlayBadge(0);
       ui.overlaySub.textContent = `${reason || ''} Respire fundo e tente outra vez, você consegue!`;
@@ -166,8 +262,20 @@ export function initGenius() {
         : 'Parabéns! Procure nossa equipe pra retirar seu brinde.';
       ui.overlaySub.textContent = congrats;
     }
-    ui.overlayBtn.textContent = 'Nova partida';
-    nextAction = 'restart';
+    // Sem brinde: o principal é tentar de novo a mesma música. Com brinde, o
+    // principal segue sendo a nova partida (a fila do estande anda) e a
+    // repetição fica como segunda opção.
+    // "Nova partida" no desafio sempre faz o rodízio: volta ao fácil com
+    // outra música.
+    if (tier === 0) {
+      ui.overlayBtn.textContent = 'Tentar a mesma música';
+      nextAction = 'repetir';
+      showSecondButton('Nova partida', 'rodizio');
+    } else {
+      ui.overlayBtn.textContent = 'Nova partida';
+      nextAction = 'rodizio';
+      showSecondButton('Tentar a mesma música', 'repetir');
+    }
   }
 
   function updateButton() {
@@ -193,14 +301,20 @@ export function initGenius() {
   Game.on('state', ({ state, payload }) => {
     switch (state) {
       case Game.States.IDLE:
+        loseToken++;
+        clearTomatoes(true);
         hideCountdown();
-        hideStageIndicator();
+        // Antes da partida a pílula já mostra o estágio de partida (layout aprovado)
+        showStageIndicator(1);
         hideOverlay();
         setMelodyName('');
         ui.message.classList.remove('pulse');
         setMessage(idleMessage());
         break;
       case Game.States.INTRO:
+        loseToken++;
+        // Tela "lavada" antes da nova rodada
+        clearTomatoes(true);
         hideCountdown();
         hideOverlay();
         showStageIndicator(payload.level);
@@ -225,6 +339,10 @@ export function initGenius() {
         if (payload.level < MAX_LEVEL) {
           showInterimWin(payload);
           playWinJingle();
+        } else if (modo === 'facil') {
+          showEasyComplete(payload);
+          playChampionJingle();
+          startConfetti();
         } else {
           showChampion(payload);
           playChampionJingle();
@@ -233,10 +351,31 @@ export function initGenius() {
           setTimeout(() => playFireworks(7), 700);
         }
         break;
-      case Game.States.LOSE:
-        showFinalLose(payload);
-        playLoseJingle();
+      case Game.States.LOSE: {
+        lastLoseKind = payload.kind;
+        // Modo tomate: qualquer derrota leva tomate (nota errada, tempo
+        // esgotado ou ritmo irregular no desafio)
+        if (tomatoMode) {
+          // Primeiro os tomates (o jogador vê a tela suja), depois o cartão.
+          const token = ++loseToken;
+          const qtd = tomatoCount(payload.pos, payload.total);
+          dlog('info', `Modo tomate: erro na nota ${payload.pos}/${payload.total} → ${qtd} tomates`);
+          setMessage('Tomatada!');
+          // A vaia da plateia (gravação de 3 s) substitui o jingle de derrota
+          playBoo();
+          throwTomatoes(qtd, () => playSplat()).then(() => {
+            setTimeout(() => {
+              if (token !== loseToken || Game.getState() !== Game.States.LOSE) return;
+              showFinalLose(payload);
+              updateButton();
+            }, 650);
+          });
+        } else {
+          showFinalLose(payload);
+          playLoseJingle();
+        }
         break;
+      }
     }
     updateButton();
   });
@@ -317,7 +456,8 @@ export function initGenius() {
       lastMelodyId = currentBaseMelody.id;
     }
 
-    const resolved = resolveMelody(currentBaseMelody, level);
+    const resolved = resolveMelody(currentBaseMelody, level, modo);
+    Game.setRitmoObrigatorio(modo === 'desafio');
     Game.startRound(resolved, level);
   }
 
@@ -329,7 +469,8 @@ export function initGenius() {
     currentBaseMelody = baseMelody;
     lastMelodyId = baseMelody.id;
     currentLevel = level;
-    const resolved = resolveMelody(baseMelody, level);
+    const resolved = resolveMelody(baseMelody, level, modo);
+    Game.setRitmoObrigatorio(modo === 'desafio');
     Game.startRound(resolved, level);
   }
 
@@ -337,7 +478,7 @@ export function initGenius() {
     ui.pickerLevel.textContent = String(level);
     ui.pickerList.innerHTML = '';
     for (const m of MELODIES) {
-      const noteCount = (m.versions[level] || m.versions[1]).length;
+      const noteCount = resolveMelody(m, level, modo).notes.length;
       const btn = document.createElement('button');
       btn.className = 'picker-item';
       btn.innerHTML =
@@ -373,15 +514,67 @@ export function initGenius() {
 
   ui.startBtn.addEventListener('click', startNewGame);
 
-  ui.overlayBtn.addEventListener('click', () => {
+  function runAction(action) {
     Game.abort();
-    if (nextAction === 'continue') {
+    if (action === 'continue') {
       currentLevel = Math.min(MAX_LEVEL, currentLevel + 1);
       startRoundAtLevel(currentLevel);
+    } else if (action === 'desafio') {
+      // O desafio começa com a mesma música que o jogador acabou de vencer
+      // no modo fácil, agora com as melodias completas.
+      setModo('desafio', { silencioso: true });
+      currentLevel = 1;
+      if (currentBaseMelody) startRoundWithBase(currentBaseMelody, 1);
+      else startNewGame();
+    } else if (action === 'rodizio') {
+      // Rodízio do estande: "Nova partida" no desafio volta ao modo fácil e
+      // sorteia outra música (pickRandomMelody já evita repetir a última).
+      setModo('facil', { silencioso: true });
+      startNewGame();
+    } else if (action === 'repetir') {
+      // Mesma música, mesmo modo, do estágio 1
+      currentLevel = 1;
+      if (currentBaseMelody) startRoundWithBase(currentBaseMelody, 1);
+      else startNewGame();
     } else {
       startNewGame();
     }
+  }
+  ui.overlayBtn.addEventListener('click', () => runAction(nextAction));
+  ui.overlayBtn2.addEventListener('click', () => {
+    if (nextAction2) runAction(nextAction2);
   });
+
+  // ─── Modo de jogo (gaveta) ───
+  function syncModoUi() {
+    for (const b of ui.modoBtns) {
+      const on = b.dataset.modo === modo;
+      b.classList.toggle('on', on);
+      b.setAttribute('aria-pressed', on ? 'true' : 'false');
+    }
+    if (ui.modoDica) ui.modoDica.textContent = MODO_DICAS[modo];
+  }
+  // Trocar de modo zera a partida (volta à tela inicial), exceto quando o
+  // próprio jogo faz a troca para começar o desafio em seguida.
+  function setModo(novo, { silencioso = false } = {}) {
+    if (novo !== 'facil' && novo !== 'desafio') return;
+    const mudou = novo !== modo;
+    modo = novo;
+    syncModoUi();
+    if (!mudou) return;
+    dlog('info', `Modo de jogo: ${modo === 'facil' ? 'fácil' : 'desafio'}`);
+    if (!silencioso) {
+      Game.abort();
+      showStageIndicator(1);
+    }
+  }
+  for (const b of ui.modoBtns) {
+    b.addEventListener('click', (e) => {
+      e.currentTarget.blur();
+      setModo(b.dataset.modo);
+    });
+  }
+  syncModoUi();
 
   // Atalhos de teclado:
   //   ESC: fecha o picker; senão fecha a gaveta; senão aborta a rodada atual
@@ -435,6 +628,16 @@ export function initGenius() {
   }
   ui.settingSameMelody.addEventListener('change', (e) => {
     sameMelodyMode = e.target.checked;
+  });
+  ui.settingSomJogador.addEventListener('change', (e) => {
+    Game.setPlayerSound(e.target.checked);
+    dlog('info', `Som das notas do jogador: ${e.target.checked ? 'ligado' : 'desligado'}`);
+  });
+  ui.settingTomate.addEventListener('change', (e) => {
+    tomatoMode = e.target.checked;
+    if (tomatoMode) preloadBoo();
+    dlog('info', `Modo tomate: ${tomatoMode ? 'ligado' : 'desligado'}`);
+    if (!tomatoMode) clearTomatoes(true);
   });
   ui.settingConsole.addEventListener('change', (e) => {
     if (e.target.checked) showDebugPanel();

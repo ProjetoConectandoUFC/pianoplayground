@@ -14,7 +14,24 @@
   -moz-osx-font-smoothing: grayscale;
 }
 .tela-notas { position: absolute; inset: 0; overflow: hidden; }
+
+/* Na janela principal as letras ficam no plano mais alto: por cima da barra do
+   topo (z-index 10000), da marca e do status, sem receber cliques. O fundo do
+   tema vai para o <body> (GelatinaApp), para a barra continuar visível embaixo.
+   As letras podem passar da borda do palco em vez de serem cortadas; o motor
+   continua prendendo cada palavra dentro da tela. */
+.gelatina-root { z-index: 10001; pointer-events: none; }
+.gelatina-root .ui-config,
+.gelatina-root .ui-sorteio { pointer-events: auto; }
+.gelatina-root .ui-palco .tela-notas,
+.gelatina-root .ui-palco .tela-notas-palco { overflow: visible; }
 .tela-notas-palco {
   position: absolute; inset: 0; overflow: hidden; z-index: 0; /* letras ficam num plano só */
   pointer-events: none; user-select: none; -webkit-user-select: none;
 }
+
+/* Na janela principal o fundo do tema já está no <body> (GelatinaApp); o palco
+   fica transparente para deixar aparecer os laços da marca, que passam por
+   baixo da barra do topo (src/shared/ui/LacosFundo.tsx). Na projeção a tela
+   continua com a cor do tema e desenha os laços dentro dela. */
+.gelatina-root .ui-palco .tela-notas { background-color: transparent !important; }

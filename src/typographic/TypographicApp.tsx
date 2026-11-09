@@ -317,22 +317,32 @@ const App: React.FC = () => {
         return () => cleanups.forEach((fn) => fn());
     }, [isKeyboardMode, handleNoteOn, handleNoteOff, projectionContainer]);
 
-    // Atalhos do painel de controle: A abre/fecha, ESC fecha.
-    // A tecla A não é usada pelo mapeamento de notas, então vale nos dois modos.
+    // Atalhos do painel de configurações: A abre/fecha, ESC fecha.
+    // A tecla A não faz parte do mapeamento de notas, então vale nos dois modos.
+    // Também funciona com a janela de projeção em foco: o painel abre aqui, na
+    // janela principal, que vem para a frente.
     useEffect(() => {
-        const onKeyDown = (e: KeyboardEvent) => {
+        const criar = (vindoDaProjecao: boolean) => (e: KeyboardEvent) => {
             if (e.ctrlKey || e.metaKey || e.altKey || e.repeat) return;
             if (isTypingTarget(e.target)) return;
             if (e.code === 'KeyA') {
                 e.preventDefault();
                 setIsControlPanelVisible(prev => !prev);
+                if (vindoDaProjecao) window.focus();
             } else if (e.key === 'Escape') {
                 setIsControlPanelVisible(false);
             }
         };
-        window.addEventListener('keydown', onKeyDown);
-        return () => window.removeEventListener('keydown', onKeyDown);
-    }, []);
+        const principal = criar(false);
+        window.addEventListener('keydown', principal);
+        const proj = projectionWindowRef.current;
+        const daProjecao = criar(true);
+        if (proj && !proj.closed) proj.addEventListener('keydown', daProjecao);
+        return () => {
+            window.removeEventListener('keydown', principal);
+            if (proj && !proj.closed) proj.removeEventListener('keydown', daProjecao);
+        };
+    }, [projectionContainer]);
 
     // Ao trocar de modo, limpa notas que possam ter ficado acesas.
     useEffect(() => {

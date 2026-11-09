@@ -1,6 +1,6 @@
-/* Moldura do App: barra do topo (marca, seletor de jogo, modo de entrada e
-   status) e a faixa das mãos. Cores e medidas vêm de src/shared/ui/ui.css,
-   comuns aos três jogos. */
+/* Moldura do App: barra do topo (marca e status da entrada) e a faixa das
+   mãos. Cores e medidas vêm de src/shared/ui/ui.css, comuns aos três jogos.
+   A troca de jogo e o modo MIDI | Teclado ficam na gaveta de configurações. */
 
 /* ---------- Barra do topo ---------- */
 .ui-barra {
@@ -12,22 +12,15 @@
   z-index: 10000;
   box-sizing: border-box;
   padding: 0 24px;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 16px;
-  /* A barra é transparente aos cliques: só os controles recebem o mouse,
-     e o botão de configurações de cada jogo fica livre à esquerda. */
+  /* A barra é transparente aos cliques: só a marca e o status recebem o
+     mouse, e o botão de configurações de cada jogo fica livre à direita. */
   pointer-events: none;
   font-family: var(--ui-font);
   color: var(--ui-ink);
-}
-.ui-barra-centro {
-  position: relative;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  pointer-events: auto;
 }
 /* À esquerda, a marca */
 .ui-barra-esq {
@@ -36,125 +29,61 @@
   min-width: 0;
   pointer-events: auto;
 }
-/* À direita, o status e, por cima do espaço reservado no fim, o botão de
-   configurações de cada jogo (52px do botão + 10px + atalho A) */
+/* À direita, o status; o espaço do fim fica para o botão de configurações
+   de cada jogo (--ui-config-tam), que está por baixo e recebe os cliques. */
 .ui-barra-dir {
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 16px;
   min-width: 0;
-  padding-right: 106px;
-  /* O espaço reservado no fim fica transparente aos cliques: o botão de
-     configurações do jogo está por baixo dele. Só o status recebe o mouse. */
+  padding-right: calc(var(--ui-config-tam) + 18px);
   pointer-events: none;
 }
 .ui-barra-dir > * { pointer-events: auto; }
+/* No Gelatina há mais dois botões (sorteio de fonte e de cores) antes do de configurações */
+.ui-barra[data-view="gelatina"] .ui-barra-dir {
+  padding-right: calc(var(--ui-config-tam) * 3 + 20px + 18px);
+}
 
-/* Marca: a versão azul no tema claro, a creme no escuro */
-.ui-marca { display: block; height: 56px; width: auto; user-select: none; -webkit-user-drag: none; }
+/* Marca do sistema: azul sobre fundo claro, branca sobre a tinta (tema escuro) */
+.ui-marca { display: block; height: var(--ui-marca-h); width: auto; user-select: none; -webkit-user-drag: none; }
 .ui-marca-clara { display: none; }
 :root[data-ui-tema="claro"] .ui-marca-clara { display: block; }
 :root[data-ui-tema="claro"] .ui-marca-escura { display: none; }
 
-/* Pílula do seletor de jogo */
-.ui-pilula {
-  min-width: 280px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  padding: 12px 24px;
-  border-radius: 999px;
-  border: 2px solid var(--ui-edge);
-  background: var(--ui-pill);
-  color: var(--ui-ink);
-  font-family: var(--ui-font);
-  font-size: 15px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background 0.18s ease, border-color 0.18s ease;
-}
-.ui-pilula:hover { background: var(--ui-pill-hover); border-color: var(--ui-edge-hover); }
-.ui-pilula-seta { width: 14px; height: 14px; transition: transform 0.16s ease; }
-.ui-pilula.aberta .ui-pilula-seta { transform: rotate(180deg); }
-
-/* Bolinha com a cor de cada jogo */
-.ui-ponto-jogo {
-  width: 10px;
-  height: 10px;
-  flex: none;
-  border-radius: 50%;
-  box-shadow: 0 0 0 2px var(--ui-pill), 0 0 0 3px var(--ui-line);
-}
-.ui-ponto-jogo[data-jogo="genius"] { background: #fbdf53; }
-.ui-ponto-jogo[data-jogo="typographic"] { background: #f0848f; }
-.ui-ponto-jogo[data-jogo="gelatina"] { background: #43b3b4; }
-
-/* Lista de jogos */
-.ui-menu {
-  position: absolute;
-  top: calc(100% + 10px);
-  left: 0;
-  width: 300px;
-  padding: 6px;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  border-radius: 16px;
-  border: 2px solid var(--ui-edge);
-  background: var(--ui-surface);
-  box-shadow: var(--ui-sombra);
-  animation: ui-menu-entra 0.14s ease-out;
-}
-@keyframes ui-menu-entra {
-  from { opacity: 0; transform: translateY(-4px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-.ui-menu-item {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  width: 100%;
-  padding: 10px 12px;
-  border: 0;
-  border-radius: 10px;
-  background: transparent;
-  color: var(--ui-ink);
-  font: inherit;
-  text-align: left;
-  cursor: pointer;
-}
-.ui-menu-item:hover { background: var(--ui-field); }
-.ui-menu-item.on { background: var(--ui-field); }
-.ui-menu-texto { display: flex; flex-direction: column; gap: 1px; }
-.ui-menu-rotulo { font-size: 14px; font-weight: 600; }
-.ui-menu-dica { font-size: 12px; color: var(--ui-muted); }
-
-/* Status do teclado (MIDI ou teclado do computador) */
+/* Status da entrada, mínimo: ponto verde (ativo) ou vermelho (inativo) e o
+   nome do modo. O texto completo (aparelho, erro) fica na dica do mouse. */
 .ui-status {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 6px 14px;
-  border-radius: 999px;
-  border: 1.5px solid var(--ui-line);
-  color: var(--ui-ink);
-  font-size: 12px;
+  color: var(--ui-muted);
+  font-family: var(--ui-mono);
+  font-size: 13px;
   font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 100%;
+  cursor: default;
 }
-.ui-status-ponto { width: 8px; height: 8px; flex: none; border-radius: 50%; background: var(--ui-muted); }
-.ui-status-ponto.ok { background: var(--ui-ok); }
-.ui-status-ponto.aviso { background: var(--ui-aviso); }
-@media (max-width: 1180px) { .ui-status { display: none; } }
+.ui-status-ponto {
+  width: 10px;
+  height: 10px;
+  flex: none;
+  border-radius: 50%;
+  /* Cores semânticas do sistema (fora da família da marca, de propósito) */
+  background: var(--erro);
+  box-shadow: 0 0 0 3px var(--erro-fundo);
+  transition: background 0.16s ease, box-shadow 0.16s ease;
+}
+.ui-status.ativo .ui-status-ponto {
+  background: var(--ok);
+  box-shadow: 0 0 0 3px var(--ok-fundo);
+}
 
 /* ---------- Faixa das mãos, logo abaixo da barra ----------
    A ilustração vai de uma borda à outra da tela, com os braços ondulados.
-   Os braços foram cortados retos na ponta (faixa-maos.png), então encostam
+   Os braços chegam até as bordas da imagem, então encostam
    nas bordas e parecem continuar para fora da tela. A faixa passa 2px de
    cada lado para não sobrar nenhuma fresta por arredondamento. */
 .ui-faixa {
@@ -167,10 +96,12 @@
   pointer-events: none;
   user-select: none;
 }
-.ui-faixa-img { display: block; width: 100%; height: 100%; -webkit-user-drag: none; }
+/* Largura total e altura automática: o desenho mantém a proporção original */
+.ui-faixa-img { display: block; width: 100%; height: auto; -webkit-user-drag: none; }
 /* Uma ilustração por tema: azul e rosa no escuro, azul-marinho e azul no claro */
 .ui-faixa-clara { display: none; }
 :root[data-ui-tema="claro"] .ui-faixa-clara { display: block; }
 :root[data-ui-tema="claro"] .ui-faixa-escura { display: none; }
 :root.ui-sem-faixa .ui-faixa { display: none; }
-
+/* Só o Genius tem a faixa; nos pianos ela sai para a tela ficar livre */
+:root:not([data-ui-jogo="genius"]) .ui-faixa { display: none; }

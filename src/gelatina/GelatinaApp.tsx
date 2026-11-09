@@ -13,8 +13,9 @@ import { Gelatina } from './services/gelatinaEngine';
 import { useInputMode } from '../shared/useInputMode';
 import { attachKeyboard, isTypingTarget } from '../shared/keyboardInput';
 import { openProjectionWindow, ProjectionWindow } from '../shared/projectionWindow';
-import { BotaoConfig } from '../shared/ui/componentes';
+import { BotaoConfig, BotoesSorteio } from '../shared/ui/componentes';
 import { useTemaUi } from '../shared/ui/temaUi';
+import { LacosFundo } from '../shared/ui/LacosFundo';
 import { publicarStatus } from '../shared/ui/statusEntrada';
 import './gelatina.css';
 
@@ -41,8 +42,29 @@ const carregarConfig = (): AppSettings => {
             fontKey: FONT_OPTIONS.some(f => f.key === salvo.fontKey) ? salvo.fontKey : DEFAULT_SETTINGS.fontKey,
             // preferências de antes do motor em texto: o crescimento volta ao novo padrão, uma vez
             ...(salvo.motorTexto ? {} : { growAmount: DEFAULT_SETTINGS.growAmount, motorTexto: true }),
+            // tamanho inicial menor (densidade 0,8): aplicado uma vez a quem tinha o padrão antigo
+            ...(salvo.tamanhoV2 ? {} : { noteDensity: DEFAULT_SETTINGS.noteDensity, tamanhoV2: true }),
+            // opacidade dos laços do fundo: entre 0 e 1; sem valor guardado, o padrão (20%)
+            // (padrão 10% desde lacosV2: quem tinha o valor da primeira versão, 20%, volta ao padrão uma vez)
+            lacosOpacidade: salvo.lacosV2 && typeof salvo.lacosOpacidade === 'number' && Number.isFinite(salvo.lacosOpacidade)
+                ? Math.min(1, Math.max(0, salvo.lacosOpacidade)) : DEFAULT_SETTINGS.lacosOpacidade,
+            lacosV2: true,
             noteColors: Array.isArray(salvo.noteColors) && salvo.noteColors.length === 7
                 ? salvo.noteColors : DEFAULT_SETTINGS.noteColors,
+            // cores de identidade do Design System Conectando: substituem a paleta
+            // anterior uma vez; depois disso, o que for escolhido no painel fica guardado
+            ...(salvo.coresIdentidade ? {} : {
+                noteColors: DEFAULT_SETTINGS.noteColors,
+                sharpColor: DEFAULT_SETTINGS.sharpColor,
+                coresIdentidade: true,
+            }),
+            // cores de identidade do PDF do Design System (rosa, turquesa, céu,
+            // rosa antigo, laranja, azul médio e roxo): entram uma vez no lugar da
+            // paleta anterior; depois, o que for escolhido no painel fica guardado
+            ...(salvo.coresIdentidadeV2 ? {} : {
+                noteColors: DEFAULT_SETTINGS.noteColors,
+                coresIdentidadeV2: true,
+            }),
         };
     } catch {
         return DEFAULT_SETTINGS;
@@ -52,6 +74,30 @@ const carregarConfig = (): AppSettings => {
 // Piano Gelatina: terceiro modo do Piano Interativo. Vem do projeto
 // "piano-tipografico-gelatina"; adaptado para usar o modo de entrada global
 // (MIDI ou teclado do computador) e o mesmo atalho A do Piano Tipográfico.
+/** Sete cores vivas, bem separadas: matizes espalhados pelo círculo a partir de um
+ *  ponto sorteado, com um pouco de variação, em ordem embaralhada. */
+function paletaAleatoria(): string[] {
+    const hsl = (h: number, s: number, l: number) => {
+        const a = s * Math.min(l, 1 - l);
+        const f = (n: number) => {
+            const k = (n + h / 30) % 12;
+            const c = l - a * Math.max(-1, Math.min(k - 3, 9 - k, 1));
+            return Math.round(255 * c).toString(16).padStart(2, '0');
+        };
+        return `#${f(0)}${f(8)}${f(4)}`.toUpperCase();
+    };
+    const inicio = Math.random() * 360;
+    const cores = Array.from({ length: 7 }, (_, j) => {
+        const h = (inicio + j * (360 / 7) + (Math.random() - 0.5) * 20 + 360) % 360;
+        return hsl(h, 0.55 + Math.random() * 0.25, 0.5 + Math.random() * 0.12);
+    });
+    for (let j = cores.length - 1; j > 0; j--) {
+        const r = Math.floor(Math.random() * (j + 1));
+        [cores[j], cores[r]] = [cores[r], cores[j]];
+    }
+    return cores;
+}
+
 const GelatinaApp: React.FC = () => {
     const [settings, setSettings] = useState<AppSettings>(carregarConfig);
     const [isControlPanelVisible, setIsControlPanelVisible] = useState(false);
@@ -94,6 +140,14 @@ const GelatinaApp: React.FC = () => {
 
     // Pinta o fundo da página com o tema escolhido
     const tema = THEMES[settings.theme];
+
+    // O fundo do tema fica no <body>: assim a barra do topo aparece sobre ele e
+    // as letras (num plano acima da barra) passam por cima dela.
+    useEffect(() => {
+        const antes = document.body.style.backgroundColor;
+        document.body.style.backgroundColor = tema.ground;
+        return () => { document.body.style.backgroundColor = antes; };
+    }, [tema.ground]);
 
     // Avisa o tema atual à moldura comum (barra, faixa, botão e gaveta).
     useTemaUi(settings.theme);
@@ -259,20 +313,30 @@ const GelatinaApp: React.FC = () => {
 
     // Atalhos do painel de configurações: A abre/fecha, ESC fecha.
     // A tecla A não faz parte do mapeamento de notas, então vale nos dois modos.
+    // Também funciona com a janela de projeção em foco: o painel abre aqui, na
+    // janela principal, que vem para a frente.
     useEffect(() => {
-        const onKeyDown = (e: KeyboardEvent) => {
+        const criar = (vindoDaProjecao: boolean) => (e: KeyboardEvent) => {
             if (e.ctrlKey || e.metaKey || e.altKey || e.repeat) return;
             if (isTypingTarget(e.target)) return;
             if (e.code === 'KeyA') {
                 e.preventDefault();
                 setIsControlPanelVisible(v => !v);
+                if (vindoDaProjecao) window.focus();
             } else if (e.key === 'Escape') {
                 setIsControlPanelVisible(false);
             }
         };
-        window.addEventListener('keydown', onKeyDown);
-        return () => window.removeEventListener('keydown', onKeyDown);
-    }, []);
+        const principal = criar(false);
+        window.addEventListener('keydown', principal);
+        const proj = projectionWindowRef.current;
+        const daProjecao = criar(true);
+        if (proj && !proj.closed) proj.addEventListener('keydown', daProjecao);
+        return () => {
+            window.removeEventListener('keydown', principal);
+            if (proj && !proj.closed) proj.removeEventListener('keydown', daProjecao);
+        };
+    }, [projectionContainer]);
 
     // ==========================================
     // Janela de projeção
@@ -296,6 +360,15 @@ const GelatinaApp: React.FC = () => {
 
     const handleSettingsChange = (novo: Partial<AppSettings>) => setSettings(prev => ({ ...prev, ...novo }));
 
+    // Sorteios da barra: uma fonte qualquer da lista (nunca a mesma de agora) e
+    // uma paleta nova de sete cores bem separadas no círculo cromático.
+    const sortearFonte = () => setSettings(prev => {
+        const outras = FONT_OPTIONS.filter(f => f.key !== prev.fontKey);
+        if (!outras.length) return prev;
+        return { ...prev, fontKey: outras[Math.floor(Math.random() * outras.length)].key };
+    });
+    const sortearCores = () => setSettings(prev => ({ ...prev, noteColors: paletaAleatoria() }));
+
     const handleToggleSound = (on: boolean) => {
         setIsSoundOn(on);
         if (on) ligarSom(); else soltarTudo();
@@ -314,7 +387,12 @@ const GelatinaApp: React.FC = () => {
     }, [isKeyboardMode, inputs, selectedInputId, midiStatus]);
 
     return (
-        <div className="gelatina-root" style={{ backgroundColor: tema.ground }}>
+        <>
+        {/* Laços da marca no fundo, como no Genius. Ficam fora do .gelatina-root
+            (que é um plano acima da barra do topo) para passarem por baixo da
+            barra, da marca e do status, como na tela do Genius. */}
+        <LacosFundo tema={settings.theme} opacidade={settings.lacosOpacidade} />
+        <div className="gelatina-root">
             {/* Palco: as notas elásticas, abaixo da barra e da faixa do topo */}
             <div className="ui-palco">
                 <ProjectionScreen settings={settings} onEngine={registrarEngine} />
@@ -322,11 +400,12 @@ const GelatinaApp: React.FC = () => {
 
             {/* Mesma tela espelhada na janela de projeção, quando aberta */}
             {projectionContainer && ReactDOM.createPortal(
-                <ProjectionScreen settings={settings} onEngine={registrarEngineProjecao} />,
+                <ProjectionScreen settings={settings} onEngine={registrarEngineProjecao} comLacos />,
                 projectionContainer,
             )}
 
             {/* Acesso às configurações, no canto esquerdo da barra como nos outros jogos */}
+            <BotoesSorteio onFonte={sortearFonte} onCores={sortearCores} />
             <BotaoConfig onClick={() => setIsControlPanelVisible(v => !v)} />
 
             {isControlPanelVisible && (
@@ -351,6 +430,7 @@ const GelatinaApp: React.FC = () => {
                 />
             )}
         </div>
+        </>
     );
 };
 

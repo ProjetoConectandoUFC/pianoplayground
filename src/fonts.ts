@@ -23,10 +23,13 @@ import '@fontsource/pacifico/latin-400.css';
 import '@fontsource/black-ops-one/latin-400.css';
 
 // ---------- Genius do Piano e interface comum dos três jogos ----------
+// Poppins, a fonte de leitura do Design System Conectando (nada de peso 300 ou menos)
 import '@fontsource/poppins/latin-400.css';
 import '@fontsource/poppins/latin-500.css';
 import '@fontsource/poppins/latin-600.css';
 import '@fontsource/poppins/latin-700.css';
+import '@fontsource/poppins/latin-800.css';
+import '@fontsource/poppins/latin-900.css';
 
 // ---------- Piano Gelatina ----------
 import '@fontsource/modak/latin-400.css';
@@ -44,6 +47,7 @@ import '@fontsource/bungee/latin-400.css';
 import '@fontsource/shrikhand/latin-400.css';
 import '@fontsource/matemasie/latin-400.css';
 // Playfair Display já vem importada acima, no bloco do Tipográfico
-// valores e teclas na interface comum
-import '@fontsource/dm-mono/latin-400.css';
-import '@fontsource/dm-mono/latin-500.css';
+// Função utilitária da interface comum (Design System Conectando): IBM Plex Mono
+import '@fontsource/ibm-plex-mono/latin-400.css';
+import '@fontsource/ibm-plex-mono/latin-500.css';
+import '@fontsource/ibm-plex-mono/latin-600.css';
