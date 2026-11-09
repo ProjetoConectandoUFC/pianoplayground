@@ -39,3 +39,4 @@ Leia antes de mexer em cada jogo:
 - `docs/decisoes/genius-layout-decisoes.md`: Genius (tela, modos fácil e desafio, tomate, telão), laços e cores dos pianos.
 - `docs/decisoes/gelatina-fontes-decisoes.md`: fontes do Gelatina.
 - `docs/decisoes/gelatina-sombra-decisoes.md`: sombra das letras do Gelatina (opcional, desligada por padrão).
+- `docs/decisoes/gelatina-repouso-sem-distorcao.md`: letras do Gelatina sem distorção em repouso (escala igual na largura e na altura).

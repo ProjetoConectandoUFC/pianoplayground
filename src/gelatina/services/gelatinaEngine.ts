@@ -430,11 +430,15 @@ export function createGelatina(host: HTMLElement, opts: GelatinaOptions, relatio
                 stretch = clamp(-l.axv * 0.03 + WOBBLE * e * Math.sin(t * 9 + k * 1.3), -MAX_STRETCH, MAX_STRETCH);
                 skewDeg = clamp(l.axv * 1.6 * (k % 2 ? 1 : -1), -MAX_SKEW, MAX_SKEW);
             }
-            // anglicano: mesma escala nos dois sentidos (nada de letra larga e achatada)
-            // e deformação mais contida, para a letra não parecer gorda
-            const lsu = compact ? 1 + ((l.lsx + l.lsy) / 2 - 1.05) * 0.3 : 0;
-            const lsx = compact ? lsu : l.lsx;
-            const lsy = compact ? lsu : l.lsy;
+            // Em repouso a letra mantém a proporção do desenho da fonte: a mesma escala
+            // na largura e na altura, nos dois sistemas. Antes, no latino, largura e
+            // altura eram sorteadas separadas (0,88 a 1,22) e a letra parada ficava
+            // gorda ou espichada, a ponto de mudar a cara da fonte. O sorteio continua
+            // variando o tamanho de cada letra, sem mexer na proporção.
+            // anglicano: variação de tamanho mais contida, para a letra não parecer gorda
+            const lsu = compact ? 1 + ((l.lsx + l.lsy) / 2 - 1.05) * 0.3 : (l.lsx + l.lsy) / 2;
+            const lsx = lsu;
+            const lsy = lsu;
             if (compact) stretch *= ANG_STRETCH;
             const sy = lsy * (1 + stretch);
             const sx = lsx * (1 - stretch * (compact ? ANG_SQUASH : 0.8));
@@ -524,42 +528,54 @@ export function createGelatina(host: HTMLElement, opts: GelatinaOptions, relatio
         const AW = W * fill, AH = H * fill;
         const X0 = PAD + (W - AW) / 2, Y0 = PAD + (H - AH) / 2;
 
-        const wsum = sc.reduce((a, b) => a + b, 0);
-        const A = wu.reduce((a, b) => a + b, 0) + GAP_X * wsum * 0.75;
-        let avgH = 0;
-        for (let i = 0; i < n; i++) avgH += sc[i] * hu[i];
-        avgH /= wsum;
 
-        let L = Math.round(Math.sqrt((A * AH) / (AW * avgH * 1.05)));
-        L = clamp(L, 1, Math.min(n, 5));
+        // Arranjo de um número de linhas: cada linha enche a largura e, se o conjunto
+        // passar da altura, tudo encolhe por igual (u < 1). Nunca estica só na altura:
+        // antes a palavra era esticada na vertical (sy = sx * kv) para encher a tela,
+        // o que deformava as letras paradas.
+        const arranjo = (L: number) => {
+            const groups = partition(wu.map((w, i) => w + GAP_X * sc[i]), L);
+            const lines = groups.map(([a, b]) => {
+                let sum = 0;
+                for (let i = a; i < b; i++) { sum += wu[i]; if (i < b - 1) sum += gapU(i, i + 1); }
+                const fixed = (b - a - 1) * PAD;
+                const f = Math.max(1e-3, (AW - fixed) / sum);
+                let h = 0;
+                for (let i = a; i < b; i++) h = Math.max(h, f * hu[i]);
+                return { a, b, f, h, sum, fixed };
+            });
+            const natural = lines.reduce((t, l) => t + l.h, 0);
+            const gapY = 0.045 * (natural / L);
+            const kv = Math.max(1e-3, (AH - (L - 1) * PAD) / (natural + gapY * (L - 1)));
+            const u = Math.min(1, kv);
+            // área de tinta ocupada: escolhe o número de linhas que melhor enche a tela
+            let area = 0;
+            lines.forEach(ln => { for (let i = ln.a; i < ln.b; i++) area += (wu[i] * ln.f * u) * (hu[i] * ln.f * u); });
+            return { L, lines, gapY, u, area };
+        };
+        let melhor = arranjo(1);
+        for (let L = 2; L <= Math.min(n, 5); L++) {
+            const c = arranjo(L);
+            if (c.area > melhor.area) melhor = c;
+        }
+        const { lines, gapY, u } = melhor;
 
-        const groups = partition(wu.map((w, i) => w + GAP_X * sc[i]), L);
-        const lines = groups.map(([a, b]) => {
-            let sum = 0;
-            for (let i = a; i < b; i++) { sum += wu[i]; if (i < b - 1) sum += gapU(i, i + 1); }
-            const fixed = (b - a - 1) * PAD;
-            const f = Math.max(1e-3, (AW - fixed) / sum);
-            let h = 0;
-            for (let i = a; i < b; i++) h = Math.max(h, f * hu[i]);
-            return { a, b, f, h };
-        });
-
-        const natural = lines.reduce((t, l) => t + l.h, 0);
-        const gapY = 0.045 * (natural / L);
-        const kv = Math.max(1e-3, (AH - (L - 1) * PAD) / (natural + gapY * (L - 1)));
-
-        let y = Y0;
+        // Sobra de altura (quando nem encolher foi preciso) fica dividida acima e abaixo
+        const alturaTotal = lines.reduce((t, l) => t + l.h * u, 0) + (lines.length - 1) * (gapY * u + PAD);
+        let y = Y0 + Math.max(0, (AH - alturaTotal) / 2);
         lines.forEach((ln, li) => {
-            const lh = ln.h * kv;
+            const lh = ln.h * u;
             const ang = LINE_ROT[li % LINE_ROT.length] * desal;
             const ccx = CW / 2, ccy = y + lh / 2;
             const cos = Math.cos(ang), sin = Math.sin(ang);
-            let x = X0;
+            // linha encolhida fica centralizada na largura
+            const larguraLinha = ln.sum * ln.f * u + ln.fixed;
+            let x = X0 + Math.max(0, (AW - larguraLinha) / 2);
             for (let i = ln.a; i < ln.b; i++) {
                 const s = state[i];
                 const nom = s.nom as Cluster;
-                const sx = ln.f * sc[i] / 100;
-                const sy = sx * kv;
+                const sx = ln.f * u * sc[i] / 100;
+                const sy = sx;
                 const inkW = nom.w * sx;
                 const inkH = (nom.asc + nom.desc) * sy;
                 let wy = y + (lh - inkH) / 2 + Q_DY[i] * desal * lh * 0.5;
@@ -568,9 +584,9 @@ export function createGelatina(host: HTMLElement, opts: GelatinaOptions, relatio
                 const rx = ccx + px * cos - py * sin, ry = ccy + px * sin + py * cos;
                 s.home = { cx: rx, cy: ry, sx, sy, rot: ang + Q_ROT[i] * desal, size: (inkW + inkH) / 2 };
                 s.cur = null;
-                if (i < ln.b - 1) x += inkW + ln.f * gapU(i, i + 1) + PAD;
+                if (i < ln.b - 1) x += inkW + ln.f * u * gapU(i, i + 1) + PAD;
             }
-            y += lh + gapY * kv + PAD;
+            y += lh + gapY * u + PAD;
         });
     }
 
