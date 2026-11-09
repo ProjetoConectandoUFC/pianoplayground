@@ -510,7 +510,7 @@ input.ui-interruptor { -webkit-appearance: none; appearance: none; margin: 0; }
 /* ---------- Laços da marca no fundo (Tipográfico e Gelatina) ----------
    A mesma composição da tela inicial do Genius (genius.css, .genius-laco):
    laco-esquerda espelhado no canto de cima à direita, na altura da tela, e
-   menor (40vh), girado -90°, no canto de baixo à esquerda, com os cortes do
+   menor (70vh), girado -90°, no canto de baixo à esquerda, com os cortes do
    arquivo fora da tela. Componente em src/shared/ui/LacosFundo.tsx; a cor vem
    do arquivo (branco no tema escuro, celeste #62BFFF no claro) e a opacidade,
    do slider "Opacidade dos laços" de cada piano. Fixa na tela: na projeção,
@@ -537,10 +537,21 @@ input.ui-interruptor { -webkit-appearance: none; appearance: none; margin: 0; }
   height: 100vh;
   transform: scaleX(-1);
 }
+/* Canto de baixo à esquerda, grudado no canto. Girado -90°, o arquivo (737 × 714)
+   leva os cortes do topo para a borda esquerda e os da esquerda para o pé; a caixa
+   girada encosta exatamente nas duas bordas da tela, e os cortes somem nelas.
+   Como o arquivo não é quadrado e gira em torno do centro, a caixa girada fica
+   (737 - 714) / 2 = 1,61% da altura deslocada: left e bottom compensam isso.
+   Antes ela descia 17% abaixo da tela para esconder um raspão do traço na borda de
+   baixo do arquivo, e a volta do laço aparecia cortada no pé. */
 .ui-laco-esq {
-  --laco-esq-h: 40vh;
-  left: calc(var(--laco-esq-h) * -0.05);
-  bottom: calc(var(--laco-esq-h) * -0.17);
+  /* 70vh (antes 40vh): pequeno, o recorte do arquivo parecia um pedaço solto;
+     maior, lê como peça de canto e conversa com o laço grande da direita.
+     Em tela em pé, 70vh passaria da largura e encostaria no laço da direita:
+     o limite de 60vw segura isso */
+  --laco-esq-h: min(70vh, 60vw);
+  left: calc(var(--laco-esq-h) * -0.0161);
+  bottom: calc(var(--laco-esq-h) * 0.0161);
   height: var(--laco-esq-h);
   transform: rotate(-90deg);
 }

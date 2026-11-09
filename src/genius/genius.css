@@ -88,11 +88,16 @@
    para a esquerda. Assim a única borda sem recorte do arquivo fica para cima e
    todos os cortes caem fora da tela (esquerda e pé). */
 .genius-laco-esq {
-  --laco-esq-h: 40vh;
-  /* O corte da borda de baixo do arquivo vai para a direita, perto do pé:
-     descer 17% da altura basta para escondê-lo */
-  left: calc(var(--laco-esq-h) * -0.05);
-  bottom: calc(var(--laco-esq-h) * -0.17);
+  /* 70vh (antes 40vh), como no .ui-laco-esq: maior, lê como peça de canto;
+     no máximo 60vw, para não tomar a largura em tela em pé */
+  --laco-esq-h: min(70vh, 60vw);
+  /* Grudado no canto: a caixa girada encosta na borda esquerda e no pé da tela,
+     onde os cortes do arquivo somem. O arquivo (737 × 714) gira em torno do centro,
+     então a caixa girada fica 1,61% da altura deslocada, e left e bottom compensam.
+     Antes ele descia 17% abaixo da tela e a volta do laço aparecia cortada. Mesmo
+     ajuste do .ui-laco-esq (src/shared/ui/ui.css). */
+  left: calc(var(--laco-esq-h) * -0.0161);
+  bottom: calc(var(--laco-esq-h) * 0.0161);
   height: var(--laco-esq-h);
   transform: rotate(-90deg);
 }

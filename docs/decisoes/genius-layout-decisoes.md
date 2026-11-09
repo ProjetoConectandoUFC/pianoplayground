@@ -79,3 +79,11 @@ Decisões aplicadas no código (pianoplayground/src):
 
 - Documento com imagens de todos os assets (em uso e guardados), ícones e fontes: https://claude.ai/artifact/FLYKc4B9F9oS6DEgQ3oEg5 (28/10/2026).
 - Em uso: marca-azul, marca-branca, laco-esquerda (Genius), laco-branco e laco-azul (pianos), maos-rodape, vaia-plateia.mp3 (modo tomate), 5 ícones SVG no código. Guardados sem aparecer: faixas das mãos (ainda importadas, desligadas), logo-conectando azul/creme, laços amarelos, laco-direita, SVGs dos laços, onda-rodape, ufc, fundacao-cetrede, instituto-ufc-virtual.
+
+## Laço de baixo à esquerda grudado no canto (09/11/2026)
+
+- O laço girado do canto de baixo à esquerda aparecia cortado no pé: descia 17% abaixo da tela para esconder um raspão do traço na borda de baixo do arquivo, e a volta do laço saía da tela. Além disso, a posição não considerava que o arquivo (737 × 714) não é quadrado e gira em torno do centro.
+- Agora a caixa girada encosta exatamente na borda esquerda e no pé da tela (left -1,61% e bottom +1,61% da altura do laço, a compensação do giro). Os traços que o arquivo corta saem pelas bordas da tela, como peça de canto, e o raspão que sobra no lado direito é imperceptível (a borda continua arredondada).
+- Mesmo ajuste no Genius (.genius-laco-esq em genius.css) e nos pianos Tipográfico e Gelatina (.ui-laco-esq em ui.css, que vale também para o telão).
+- Só encostar no canto não bastou: o arquivo (e o SVG original) é um recorte, com traços cortados nas bordas, e pequeno (40vh) parecia um pedaço solto. Entre três alternativas mostradas à equipe (como estava, maior no mesmo canto, sem girar no canto de cima), a escolhida foi a maior no mesmo canto: altura min(70vh, 60vw). O limite de 60vw evita que, em tela em pé, ele tome a largura toda e encoste no laço da direita.
+- Conferido no Gelatina: canto exato (0 px) em tela larga (1280x720, laço com 70vh) e em pé (600x900, laço com 60vw). O Genius usa os mesmos valores, mas não foi visto no navegador.
