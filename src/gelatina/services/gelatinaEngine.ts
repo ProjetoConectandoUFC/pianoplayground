@@ -19,8 +19,8 @@
 // Novidades do desenho em texto:
 //  - Fontes variáveis podem mudar de eixo a cada quadro
 //    (font-variation-settings). As "fontes mutáveis" (Kablammo, Shantell Sans,
-//    Tilt Warp, as pixel e as de efeito automático, como Hela, Graduate, Cheee e
-//    Camelion) usam isso como
+//    Tilt Warp, as pixel e as de efeito automático, como Hela e Graduate)
+//    usam isso como
 //    efeito próprio, no lugar de esticar e entortar a letra.
 //  - Um canvas fora da tela continua sendo usado só para MEDIR as letras
 //    (largura e altura da tinta); ele nunca desenha nada visível.

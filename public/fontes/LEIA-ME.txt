@@ -6,8 +6,13 @@ commercial use" (veja LICENCAS.txt):
 
   MatchaCih.woff2    Matcha Cih    (tem acentos)
   BlueWinter.woff2   Blue Winter   (tem acentos)
-  Howdybun.woff2     Howdybun      (sem acentos)
-  AnakGedong.woff2   Anak Gedong   (sem acentos)
+  Howdybun.woff2     Howdybun      (sem acentos, fora do menu desde 09/11/2026)
+  AnakGedong.woff2   Anak Gedong   (sem acentos, fora do menu desde 09/11/2026)
+
+Oi (Kostas Bartsokas), do Google Fonts, SIL OFL 1.1 (OFL-Oi.txt). Subconjunto
+latino do Fontsource (@fontsource/oi 5.3.0), já com ó, é e á próprios:
+
+  Oi.woff2           Oi            (tem acentos, entrou em 09/11/2026)
 
 Fontes variáveis com efeito próprio, licença SIL OFL 1.1:
 
@@ -30,8 +35,12 @@ substituta livre abaixo (declaradas como "PI Comic Sans", "PI Papyrus" e
   Macondo.woff2             Macondo             John Vargas Beltrán (OFL-Macondo.txt), no lugar da Papyrus
   TeXGyreHeros-Bold.woff2   TeX Gyre Heros Bold  GUST e-foundry (GUST-TeXGyreHeros.txt), no lugar da Helvetica Bold
 
-Acentos compostos: nas fontes sem acento, a letra base (o, e, a) continua na
-fonte original e o acento vem de outra fonte do acervo, escolhida comparando
+Acentos compostos: SAÍRAM DO MENU em 09/11/2026. A equipe achou o resultado
+artificial (o acento de outra fonte não parece natural na letra), então as
+quatro fontes abaixo não aparecem mais na lista do Gelatina. Os arquivos
+continuam nesta pasta e o recurso continua no motor, sem uso. Como era:
+nas fontes sem acento, a letra base (o, e, a) continuava na
+fonte original e o acento vinha de outra fonte do acervo, escolhida comparando
 todas as candidatas lado a lado (traço, peso e terminação parecidos):
 
   Anak Gedong   acento da Blue Winter (mesmo autor, Khurasan; gota grossa)
@@ -51,24 +60,21 @@ a partir dos arquivos do repositório google/fonts):
 Fontes mutáveis feitas de estilos estáticos (versões de teste dos autores,
 nas pastas que vieram no download, sem renomear):
 
-  OH no Type Company Trials .../Cheee/     Cheee (demo)     6 estilos: Sticky, Wowie, Tbone,
-                                                           Jimbo, Choy e Oyen
-  OH no Type Company Trials .../Camelion/  Camelion (demo)  Regular a ExtraBold, com itálicos
   renegade_all_trials/RF_Hela TRIAL/       Hela (trial)     pesos 300 a 700
+  OH no Type Company Trials .../Cheee/     Cheee (demo)     fora do menu desde 09/11/2026
+  OH no Type Company Trials .../Camelion/  Camelion (demo)  fora do menu desde 09/11/2026
 
 Não são fontes variáveis: o motor troca o estilo da letra conforme a força do
-toque (efeito 'estilos'). Cheee e Camelion de demonstração não têm acentos; ó,
-é e á saem da fonte reserva. Se as pastas forem renomeadas, atualize os
-@font-face no index.html. A pasta renegade_all_trials/__MACOSX é lixo do zip
+toque (efeito 'estilos'). Cheee e Camelion de demonstração não têm acentos, por
+isso saíram da lista junto com as outras de acento composto. Se a pasta da Hela
+for renomeada, atualize os @font-face no index.html. A pasta renegade_all_trials/__MACOSX é lixo do zip
 do Mac e pode ser apagada.
 
 Fonte mutável com efeito automático (não incluída): GraduateGX.woff2, da Font
 Bureau. Se o arquivo for colocado aqui com esse nome, os eixos são lidos dele no
 build e ela aparece sozinha na lista.
 
-As duas sem acentos não têm ó, é, á. No sistema latino (Dó, Ré, Fá, Lá)
-essas letras saem de uma fonte reserva; no sistema anglicano (C, D, E...)
-ficam perfeitas.
+Todas as fontes que estão hoje no menu do Gelatina têm ó, é e á próprios.
 
 Para acrescentar outra fonte: coloque o .woff2 aqui, declare um @font-face
 no index.html (mesmo padrão das de cima) e inclua a fonte em FONT_OPTIONS,

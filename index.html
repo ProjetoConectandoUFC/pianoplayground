@@ -16,10 +16,8 @@
         url("fontes/MatchaCih.woff2") format("woff2");font-display:swap;}
       @font-face{font-family:"Blue Winter";src:local("Blue Winter"),local("BlueWinter"),
         url("fontes/BlueWinter.woff2") format("woff2");font-display:swap;}
-      @font-face{font-family:"Howdybun";src:local("Howdybun"),
-        url("fontes/Howdybun.woff2") format("woff2");font-display:swap;}
-      @font-face{font-family:"Anak Gedong";src:local("Anak Gedong"),local("AnakGedong"),
-        url("fontes/AnakGedong.woff2") format("woff2");font-display:swap;}
+      /* Howdybun e Anak Gedong saíram do menu em 09/11/2026 (sem acentos; o acento
+         composto ficava artificial). Os arquivos seguem em public/fontes. */
 
       /* Fontes variáveis com efeito próprio ("Fontes mutáveis" na lista do Gelatina).
          Os eixos são animados pelo motor da gelatina: MORF na Kablammo; BNCE, INFM e
@@ -30,23 +28,10 @@
       /* Fontes pixel (teste), SIL OFL 1.1: recebem a suavização (anti-aliasing) no Gelatina */
       @font-face{font-family:"Doto";src:url("fontes/Doto.woff2") format("woff2");font-weight:100 900;font-display:swap;}
       @font-face{font-family:"Pixelify Sans";src:url("fontes/PixelifySans.woff2") format("woff2");font-weight:400 700;font-display:swap;}
-      /* Cheee e Camelion (OH no Type, demo) e Hela (Renegade, trial): fontes estáticas, um
-         estilo por família. O motor da gelatina troca de estilo ao tocar (efeito 'estilos').
-         Os arquivos ficam nas pastas de teste que vieram dos autores, dentro de public/fontes. */
-      @font-face{font-family:"Cheee Sticky";src:url("fontes/OH no Type Company Trials b747c74f-f760-4268-99d1-811535e961c3/Cheee/CheeeDemo-Sticky.otf") format("opentype");font-display:block;}
-      @font-face{font-family:"Cheee Wowie";src:url("fontes/OH no Type Company Trials b747c74f-f760-4268-99d1-811535e961c3/Cheee/CheeeDemo-Wowie.otf") format("opentype");font-display:block;}
-      @font-face{font-family:"Cheee Tbone";src:url("fontes/OH no Type Company Trials b747c74f-f760-4268-99d1-811535e961c3/Cheee/CheeeDemo-Tbone.otf") format("opentype");font-display:block;}
-      @font-face{font-family:"Cheee Jimbo";src:url("fontes/OH no Type Company Trials b747c74f-f760-4268-99d1-811535e961c3/Cheee/CheeeDemo-Jimbo.otf") format("opentype");font-display:block;}
-      @font-face{font-family:"Cheee Choy";src:url("fontes/OH no Type Company Trials b747c74f-f760-4268-99d1-811535e961c3/Cheee/CheeeDemo-Choy.otf") format("opentype");font-display:block;}
-      @font-face{font-family:"Cheee Oyen";src:url("fontes/OH no Type Company Trials b747c74f-f760-4268-99d1-811535e961c3/Cheee/CheeeDemo-Oyen.otf") format("opentype");font-display:block;}
-      @font-face{font-family:"Camelion Regular";src:url("fontes/OH no Type Company Trials b747c74f-f760-4268-99d1-811535e961c3/Camelion/CamelionDemo-Regular.otf") format("opentype");font-display:block;}
-      @font-face{font-family:"Camelion Medium";src:url("fontes/OH no Type Company Trials b747c74f-f760-4268-99d1-811535e961c3/Camelion/CamelionDemo-Medium.otf") format("opentype");font-display:block;}
-      @font-face{font-family:"Camelion Bold";src:url("fontes/OH no Type Company Trials b747c74f-f760-4268-99d1-811535e961c3/Camelion/CamelionDemo-Bold.otf") format("opentype");font-display:block;}
-      @font-face{font-family:"Camelion ExtraBold";src:url("fontes/OH no Type Company Trials b747c74f-f760-4268-99d1-811535e961c3/Camelion/CamelionDemo-ExtraBold.otf") format("opentype");font-display:block;}
-      @font-face{font-family:"Camelion Italic";src:url("fontes/OH no Type Company Trials b747c74f-f760-4268-99d1-811535e961c3/Camelion/CamelionDemo-Italic.otf") format("opentype");font-display:block;}
-      @font-face{font-family:"Camelion MediumItalic";src:url("fontes/OH no Type Company Trials b747c74f-f760-4268-99d1-811535e961c3/Camelion/CamelionDemo-MediumItalic.otf") format("opentype");font-display:block;}
-      @font-face{font-family:"Camelion BoldItalic";src:url("fontes/OH no Type Company Trials b747c74f-f760-4268-99d1-811535e961c3/Camelion/CamelionDemo-BoldItalic.otf") format("opentype");font-display:block;}
-      @font-face{font-family:"Camelion ExtraBoldItalic";src:url("fontes/OH no Type Company Trials b747c74f-f760-4268-99d1-811535e961c3/Camelion/CamelionDemo-ExtraBoldItalic.otf") format("opentype");font-display:block;}
+      /* Hela (Renegade, trial): fonte estática, um estilo por família. O motor da gelatina
+         troca de estilo ao tocar (efeito 'estilos'). Os arquivos ficam na pasta de teste que
+         veio do autor, dentro de public/fontes. Cheee e Camelion (OH no Type, demo) saíram
+         do menu em 09/11/2026; as pastas delas continuam lá, sem uso. */
       @font-face{font-family:"Hela 300";src:url("fontes/renegade_all_trials/RF_Hela TRIAL/RFHelaTRIAL-300.otf") format("opentype");font-display:block;}
       @font-face{font-family:"Hela 350";src:url("fontes/renegade_all_trials/RF_Hela TRIAL/RFHelaTRIAL-350.otf") format("opentype");font-display:block;}
       @font-face{font-family:"Hela 400";src:url("fontes/renegade_all_trials/RF_Hela TRIAL/RFHelaTRIAL-400.otf") format("opentype");font-display:block;}
@@ -78,6 +63,8 @@
         url("fontes/Caprasimo.woff2") format("woff2");font-display:swap;}
       @font-face{font-family:"Berkshire Swash";src:local("Berkshire Swash"),local("BerkshireSwash-Regular"),
         url("fontes/BerkshireSwash.woff2") format("woff2");font-display:swap;}
+      @font-face{font-family:"Oi";src:local("Oi"),local("Oi-Regular"),
+        url("fontes/Oi.woff2") format("woff2");font-display:swap;}
     </style>
   </head>
   <body>

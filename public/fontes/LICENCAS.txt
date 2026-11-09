@@ -48,6 +48,11 @@ convertido de .otf para woff2, sem alterar o desenho nem o nome.
 Graduate (não incluída)
 Versão variável da Font Bureau, sem download público.
 
+Oi
+Licença SIL Open Font License 1.1 (OFL-Oi.txt). Autor: Kostas Bartsokas
+(The Oi Project Authors, github.com/kosbarts/Oi). Arquivo do subconjunto latino
+distribuído pelo Fontsource (@fontsource/oi 5.3.0).
+
 Isometra, Righteous, Caprasimo e Berkshire Swash
 Licença SIL Open Font License 1.1 (textos completos nos arquivos OFL-*.txt
 correspondentes). Isometra: Ben Dunkle (The Isometra Project Authors).

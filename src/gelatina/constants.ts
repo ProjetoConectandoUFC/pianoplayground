@@ -127,7 +127,9 @@ export interface FontOption {
     estilos?: { familias: string[]; alternas?: string[] };
     /** Fontes sem acentos: de qual fonte do acervo vem o acento (escolhido por
      *  comparação visual, ver public/fontes/LEIA-ME.txt). A letra base continua
-     *  na fonte original e o motor compõe o acento por cima. */
+     *  na fonte original e o motor compõe o acento por cima. Nenhuma fonte da
+     *  lista usa isso desde 09/11/2026 (as de acento composto saíram do menu);
+     *  o recurso fica no motor para uma fonte futura, se preciso. */
     acento?: { familia: string; peso: number };
     /** Efeito 'auto': nome do arquivo em public/fontes. Os eixos são lidos dele no build
      *  e a fonte só aparece na lista se o arquivo estiver lá. */
@@ -143,8 +145,6 @@ export interface FontOption {
 
 const TODAS_AS_FONTES: FontOption[] = [
     { key: 'alfa',         name: 'Alfa Slab One',     family: '"Alfa Slab One"',    weight: 400 },
-    { key: 'anakgedong',   name: 'Anak Gedong',       family: '"Anak Gedong"',      weight: 400, arquivo: true, accents: false,
-      acento: { familia: 'Blue Winter', peso: 400 } },
     { key: 'bagel',        name: 'Bagel Fat One',     family: '"Bagel Fat One"',    weight: 400 },
     { key: 'baloo',        name: 'Baloo 2',           family: '"Baloo 2"',          weight: 800 },
     { key: 'berkshire',    name: 'Berkshire Swash',   family: '"Berkshire Swash"',  weight: 400, arquivo: true },
@@ -155,8 +155,6 @@ const TODAS_AS_FONTES: FontOption[] = [
     { key: 'comicsans',    name: 'Comic Sans',        family: '"PI Comic Sans"',    weight: 400, arquivo: true },
     { key: 'cherry',       name: 'Cherry Bomb One',   family: '"Cherry Bomb One"',  weight: 400 },
     { key: 'helvetica',    name: 'Helvetica',         family: '"PI Helvetica"',     weight: 400, arquivo: true },
-    { key: 'howdybun',     name: 'Howdybun',          family: '"Howdybun"',         weight: 400, arquivo: true, accents: false,
-      acento: { familia: 'Baloo 2', peso: 800 } },
     { key: 'isometra',     name: 'Isometra',          family: '"Isometra"',         weight: 400, arquivo: true },
     {
         key: 'kablammo', name: 'Kablammo', family: '"Kablammo"', weight: 400, arquivo: true, effect: 'kablammo',
@@ -167,6 +165,7 @@ const TODAS_AS_FONTES: FontOption[] = [
     { key: 'matemasie',    name: 'Matemasie',         family: '"Matemasie"',        weight: 400 },
     { key: 'mochiy',       name: 'Mochiy Pop P One',  family: '"Mochiy Pop P One"', weight: 400 },
     { key: 'modak',        name: 'Modak',             family: '"Modak"',            weight: 400 },
+    { key: 'oi',           name: 'Oi',                family: '"Oi"',               weight: 400, arquivo: true },
     { key: 'papyrus',      name: 'Papyrus',           family: '"PI Papyrus"',       weight: 400, arquivo: true },
     { key: 'playfair',     name: 'Playfair Display',  family: '"Playfair Display"', weight: 400 },
     { key: 'righteous',    name: 'Righteous',         family: '"Righteous"',        weight: 400, arquivo: true },
@@ -183,24 +182,14 @@ const TODAS_AS_FONTES: FontOption[] = [
     // Fontes mutáveis com efeito automático: basta o arquivo estar em public/fontes
     // com este nome (e o @font-face no index.html) para elas entrarem na lista.
     { key: 'graduate', name: 'Graduate', family: '"Graduate"', weight: 400, arquivo: true, effect: 'auto', arquivoNome: 'GraduateGX.woff2' },
-    // Fontes mutáveis feitas de estilos estáticos (versões de teste/trial que estão
-    // em public/fontes, veja LICENCAS.txt). A letra troca de estilo ao tocar.
-    {
-        key: 'cheee', name: 'Cheee (demo)', family: '"Cheee Sticky"', weight: 400, arquivo: true, effect: 'estilos', accents: false,
-        acento: { familia: 'Caprasimo', peso: 400 },
-        estilos: { familias: ['Cheee Sticky', 'Cheee Wowie', 'Cheee Tbone', 'Cheee Jimbo', 'Cheee Choy', 'Cheee Oyen'] },
-        effectHint: 'Efeito próprio: ao tocar, as letras incham como massa de pão, passando por 6 estilos da Cheee. Versão de demonstração: os acentos vêm de outra fonte do acervo.',
-    },
+    // Fontes mutáveis feitas de estilos estáticos (versão trial que está em
+    // public/fontes, veja LICENCAS.txt). A letra troca de estilo ao tocar.
+    // Cheee e Camelion (demo) saíram em 09/11/2026: não têm acentos e o acento
+    // composto de outra fonte ficava artificial. Os arquivos seguem em public/fontes.
     {
         key: 'hela', name: 'Hela (trial)', family: '"Hela 300"', weight: 400, arquivo: true, effect: 'estilos',
         estilos: { familias: ['Hela 300', 'Hela 350', 'Hela 400', 'Hela 500', 'Hela 600', 'Hela 700'] },
         effectHint: 'Efeito próprio: ao tocar, as letras engordam peso a peso (Hela 300 a 700), cada letra no seu tempo.',
-    },
-    {
-        key: 'camelion', name: 'Camelion (demo)', family: '"Camelion Regular"', weight: 400, arquivo: true, effect: 'estilos', accents: false,
-        acento: { familia: 'Poppins', peso: 700 },
-        estilos: { familias: ['Camelion Regular', 'Camelion Medium', 'Camelion Bold', 'Camelion ExtraBold'], alternas: ['Camelion Italic', 'Camelion MediumItalic', 'Camelion BoldItalic', 'Camelion ExtraBoldItalic'] },
-        effectHint: 'Efeito próprio: ao tocar, as letras engordam e, segurando a tecla, balançam entre o reto e o itálico. Versão de demonstração: os acentos vêm de outra fonte do acervo.',
     },
     // Fontes pixel (teste): letras de pontos ou quadradinhos, no desenho original,
     // com um efeito de eixos contínuo, sem trocas bruscas de desenho.
