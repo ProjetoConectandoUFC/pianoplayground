@@ -75,6 +75,22 @@ export interface GelatinaOptions {
     randomness: number;
     /** Tamanho da nota pressionada, em relação ao tamanho inativo */
     grow: number;
+    /** Sombra das letras; null ou ausente = sem sombra (o padrão do app) */
+    sombra?: SombraOpcoes | null;
+}
+
+/** Ajustes da sombra das letras */
+export interface SombraOpcoes {
+    /** Cor em HEX; null segue a cor de contorno do tema (ink) */
+    cor: string | null;
+    /** Opacidade (0 a 1) */
+    opacidade: number;
+    /** Distância em fração da altura da letra; SHADOW (0,013) reproduz a sombra fixa de antes */
+    distancia: number;
+    /** Desfoque em fração da altura da letra; 0 = chapada, como pede o Design System */
+    difusao: number;
+    /** Para onde a sombra aponta, em graus: 0 = direita, 90 = baixo */
+    angulo: number;
 }
 
 // ---------- constantes de movimento (as mesmas do Laboratório Gelatina) ----------
@@ -756,7 +772,13 @@ export function createGelatina(host: HTMLElement, opts: GelatinaOptions, relatio
 
         const k = 1 - Math.exp(-(reduced ? 40 : 11) * dt);
         const order = state.map((_, i) => i).sort((a, b) => state[a].a - state[b].a);
-        const inkStr = rgbStr(INK);
+        // Sombra: calculada uma vez por quadro. Sem sombra, as letras ficam sem text-shadow
+        // e o confinamento não reserva espaço para ela.
+        const sb = o.sombra ?? null;
+        const sbCor = sb?.cor ? hexToRgb(sb.cor) : INK;
+        const sbStr = sb ? `rgba(${sbCor[0] | 0},${sbCor[1] | 0},${sbCor[2] | 0},${clamp(sb.opacidade, 0, 1).toFixed(3)})` : '';
+        const sbAng = ((sb?.angulo ?? 45) * Math.PI) / 180;
+        const sbCos = Math.cos(sbAng), sbSin = Math.sin(sbAng);
 
         order.forEach((i, rank) => {
             const s = state[i], hm = s.home, cl = s.cl;
@@ -781,7 +803,12 @@ export function createGelatina(host: HTMLElement, opts: GelatinaOptions, relatio
 
             const g = Math.max(0.2, s.grow);
             const popY = g, popX = g;
-            const sd = clamp(inkH * SHADOW * g, 1.5, 12);
+            // Comprimento da sombra: a conta da sombra fixa de antes (limitada entre 1,5 e
+            // 12 px), escalada pela distância escolhida. O fator raiz de 2 faz o padrão
+            // (0,013 a 45 graus) cair exatamente no deslocamento antigo, sd em x e sd em y.
+            const sd = sb ? clamp(inkH * SHADOW * g, 1.5, 12) * (sb.distancia / SHADOW) * Math.SQRT2 : 0;
+            const desfoque = sb ? inkH * Math.max(0, sb.difusao) * g : 0;
+            const margemSombra = sd + desfoque;
 
             // confinamento: nada escapa da margem
             const ca = Math.abs(Math.cos(s.cur.rot)), sa = Math.abs(Math.sin(s.cur.rot));
@@ -789,7 +816,7 @@ export function createGelatina(host: HTMLElement, opts: GelatinaOptions, relatio
             // da caixa medida; a folga garante que nada saia da tela
             const folga = o.effect ? 1.16 : 1.08;
             const hw0 = inkW * popX / 2 * folga, hh0 = inkH * popY / 2 * folga;
-            const bw0 = hw0 * ca + hh0 * sa + sd, bh0 = hw0 * sa + hh0 * ca + sd;
+            const bw0 = hw0 * ca + hh0 * sa + margemSombra, bh0 = hw0 * sa + hh0 * ca + margemSombra;
             const room = Math.min(
                 1,
                 (CW - 2 * PAD) / Math.max(1, 2 * bw0),
@@ -801,7 +828,13 @@ export function createGelatina(host: HTMLElement, opts: GelatinaOptions, relatio
 
             const sxTot = Math.max(1e-4, s.cur.sx * popX * room);
             const syTot = Math.max(1e-4, s.cur.sy * popY * room);
-            const ox = sd / sxTot, oy = sd / syTot;
+            // A sombra é desenhada no espaço da letra, que está girado e escalado: o vetor
+            // da tela é girado de volta pela rotação da palavra e dividido pela escala,
+            // para o ângulo escolhido valer na tela e a distância não crescer com a letra.
+            const vx = sd * sbCos, vy = sd * sbSin;
+            const cr = Math.cos(s.cur.rot), sr = Math.sin(s.cur.rot);
+            const ox = (vx * cr + vy * sr) / sxTot, oy = (-vx * sr + vy * cr) / syTot;
+            const blurBase = desfoque / Math.sqrt(sxTot * syTot);
 
             // palavra: mesma sequência de transformações do desenho no canvas
             s.el.style.zIndex = String(rank);
@@ -816,8 +849,10 @@ export function createGelatina(host: HTMLElement, opts: GelatinaOptions, relatio
                 if (s.sh > 0.01) c = mix(c, SHARP_COL, s.sh * 0.92);
                 const el = l.el;
                 el.style.color = rgbStr(c);
-                // contorno: sombra deslocada, compensada pela escala da letra
-                el.style.textShadow = `${(ox / gl.sx).toFixed(2)}px ${(oy / gl.sy).toFixed(2)}px 0 ${inkStr}`;
+                // sombra deslocada, compensada pela escala da letra (ou nenhuma, se desligada)
+                el.style.textShadow = sb
+                    ? `${(ox / gl.sx).toFixed(2)}px ${(oy / gl.sy).toFixed(2)}px ${(blurBase / Math.sqrt(gl.sx * gl.sy)).toFixed(2)}px ${sbStr}`
+                    : 'none';
                 el.style.transform =
                     `translate(${(gl.cx + gl.skx).toFixed(2)}px, ${gl.byTop.toFixed(2)}px) rotate(${f3(gl.rotw)}rad) ` +
                     `matrix(1, 0, ${f3(-gl.skew)}, 1, 0, 0) scale(${f3(gl.sx)}, ${f3(gl.sy)}) ` +

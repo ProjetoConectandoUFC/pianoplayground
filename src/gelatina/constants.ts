@@ -278,6 +278,12 @@ export const KNOB_MAPPINGS: { [key: string]: string } = {
 // Configurações padrão
 // ==========================================
 
+/** Distância padrão da sombra, em fração da altura da letra: a mesma da sombra fixa de antes */
+export const SOMBRA_DISTANCIA_PADRAO = 0.013;
+/** Limites dos deslizantes da sombra (também usados ao ler o que ficou guardado) */
+export const SOMBRA_DISTANCIA_MAX = 0.08;
+export const SOMBRA_DIFUSAO_MAX = 0.1;
+
 export const DEFAULT_SETTINGS: AppSettings = {
     fontKey: 'modak',
     theme: 'claro',
@@ -294,6 +300,15 @@ export const DEFAULT_SETTINGS: AppSettings = {
     coresIdentidade: true,
     coresIdentidadeV2: true,
     lacosV2: true,
+    // Sombra das letras: desligada ao abrir. Ao ligar, os valores abaixo repetem a
+    // sombra fixa de antes (chapada, na cor do tema, para baixo e à direita).
+    sombraAtiva: false,
+    sombraCor: '',
+    sombraOpacidade: 1,
+    sombraDistancia: SOMBRA_DISTANCIA_PADRAO,
+    sombraDifusao: 0,
+    sombraAngulo: 45,
+    sombraV1: true,
 };
 
 /** Chave usada para lembrar as preferências entre sessões */

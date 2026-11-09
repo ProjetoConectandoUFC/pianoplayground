@@ -3,6 +3,7 @@ import { AppSettings, KnobValues, MidiDevice, NoteSystem } from '../types';
 import {
     AKAI_MPK_MINI_KNOBS, FONT_OPTIONS, KNOB_MAPPINGS, NOTE_NAME_SYSTEMS,
     fontOf, fontSpecOf, fontLacksAccents, FontOption,
+    SOMBRA_DIFUSAO_MAX, SOMBRA_DISTANCIA_MAX, THEMES,
 } from '../constants';
 import {
     BotaoProjecao, Campo, Deslizante, Dica, Gaveta, Interruptor, MapaTeclas,
@@ -142,6 +143,68 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
                     onChange={v => onSettingsChange({ lacosOpacidade: v })}
                 />
                 <Dica>Os laços da marca no fundo, como na tela do Genius: brancos no tema escuro, celeste no claro. 0% os esconde.</Dica>
+
+                {/* Sombra das letras: desligada por padrão. Os ajustes só aparecem com ela
+                    ligada, para a gaveta não crescer à toa. */}
+                <Interruptor
+                    rotulo="Sombra"
+                    dica="Uma sombra atrás das letras, na tela e no telão."
+                    ligado={settings.sombraAtiva}
+                    onChange={v => onSettingsChange({ sombraAtiva: v })}
+                />
+                {settings.sombraAtiva && (
+                    <>
+                        <div>
+                            <span className="ui-rotulo">Cor da sombra</span>
+                            <div className="ui-linha">
+                                <label className="ui-cor-item">
+                                    <input
+                                        type="color"
+                                        className="ui-cor"
+                                        value={settings.sombraCor || THEMES[settings.theme].ink}
+                                        onChange={e => onSettingsChange({ sombraCor: e.target.value })}
+                                        aria-label="Cor da sombra"
+                                    />
+                                    {settings.sombraCor ? 'escolhida' : 'do tema'}
+                                </label>
+                                {settings.sombraCor && (
+                                    <button className="ui-btn-secundario" onClick={() => onSettingsChange({ sombraCor: '' })}>
+                                        Usar a cor do tema
+                                    </button>
+                                )}
+                            </div>
+                        </div>
+                        <Deslizante
+                            id="gel-sombra-opacidade" rotulo="Opacidade da sombra" valor={settings.sombraOpacidade}
+                            min={0} max={1} passo={0.01}
+                            formato={v => `${Math.round(v * 100)}%`}
+                            onChange={v => onSettingsChange({ sombraOpacidade: v })}
+                        />
+                        <Deslizante
+                            id="gel-sombra-distancia" rotulo="Distância" valor={settings.sombraDistancia}
+                            min={0} max={SOMBRA_DISTANCIA_MAX} passo={0.001}
+                            formato={v => `${(v * 100).toFixed(1).replace('.', ',')}% da letra`}
+                            onChange={v => onSettingsChange({ sombraDistancia: v })}
+                        />
+                        <Deslizante
+                            id="gel-sombra-difusao" rotulo="Difusão" valor={settings.sombraDifusao}
+                            min={0} max={SOMBRA_DIFUSAO_MAX} passo={0.002}
+                            formato={v => v === 0 ? 'chapada' : `${(v * 100).toFixed(1).replace('.', ',')}% da letra`}
+                            onChange={v => onSettingsChange({ sombraDifusao: v })}
+                        />
+                        <Deslizante
+                            id="gel-sombra-angulo" rotulo="Ângulo" valor={settings.sombraAngulo}
+                            min={0} max={360} passo={5}
+                            formato={v => `${Math.round(v)}°`}
+                            onChange={v => onSettingsChange({ sombraAngulo: v })}
+                        />
+                        <Dica>
+                            0° aponta para a direita e 90° para baixo. A distância e a difusão crescem
+                            junto com a nota tocada. Difusão em 0 deixa a sombra chapada, como no
+                            Design System Conectando.
+                        </Dica>
+                    </>
+                )}
 
                 <Campo rotulo="Sistema de notas" htmlFor="gel-sistema">
                     <select

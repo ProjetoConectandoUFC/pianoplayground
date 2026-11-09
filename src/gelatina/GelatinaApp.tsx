@@ -4,6 +4,7 @@ import { AppSettings, KnobValues, MidiDevice } from './types';
 import {
     AKAI_MPK_MINI_KNOBS, DEFAULT_SETTINGS, FONT_OPTIONS,
     NATURAL_BY_PITCH_CLASS, SHARP_BY_PITCH_CLASS, STORAGE_KEY, THEMES,
+    SOMBRA_DIFUSAO_MAX, SOMBRA_DISTANCIA_MAX,
 } from './constants';
 import { listenToMidiDevice, requestMidiAccess } from './services/midiService';
 import { ligarSom, soltar, soltarTudo, tocar } from './services/somService';
@@ -29,6 +30,10 @@ const DEMO_SEQ: number[][] = [
     [67], [60, 67], [64], [60, 64, 67],
 ];
 const DEMO_STEP = 620;
+
+/** Número guardado dentro da faixa; qualquer outra coisa vira o padrão */
+const numeroEntre = (v: unknown, min: number, max: number, padrao: number): number =>
+    typeof v === 'number' && Number.isFinite(v) ? Math.min(max, Math.max(min, v)) : padrao;
 
 /** Lê as preferências guardadas, ignorando qualquer coisa estranha */
 const carregarConfig = (): AppSettings => {
@@ -65,6 +70,17 @@ const carregarConfig = (): AppSettings => {
                 noteColors: DEFAULT_SETTINGS.noteColors,
                 coresIdentidadeV2: true,
             }),
+            // Ajustes da sombra: números fora da faixa (ou ausentes) voltam ao padrão
+            sombraAtiva: salvo.sombraAtiva === true,
+            sombraCor: typeof salvo.sombraCor === 'string' && /^#[0-9a-f]{6}$/i.test(salvo.sombraCor)
+                ? salvo.sombraCor : DEFAULT_SETTINGS.sombraCor,
+            sombraOpacidade: numeroEntre(salvo.sombraOpacidade, 0, 1, DEFAULT_SETTINGS.sombraOpacidade),
+            sombraDistancia: numeroEntre(salvo.sombraDistancia, 0, SOMBRA_DISTANCIA_MAX, DEFAULT_SETTINGS.sombraDistancia),
+            sombraDifusao: numeroEntre(salvo.sombraDifusao, 0, SOMBRA_DIFUSAO_MAX, DEFAULT_SETTINGS.sombraDifusao),
+            sombraAngulo: numeroEntre(salvo.sombraAngulo, 0, 360, DEFAULT_SETTINGS.sombraAngulo),
+            // Antes da sombra configurável, a sombra era fixa e sempre ligada. Quem vem
+            // dessa versão começa com ela desligada, como o padrão novo, uma vez.
+            ...(salvo.sombraV1 ? {} : { sombraAtiva: false, sombraV1: true }),
         };
     } catch {
         return DEFAULT_SETTINGS;

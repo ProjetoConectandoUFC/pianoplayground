@@ -34,6 +34,18 @@ export interface AppSettings {
     growAmount: number;
     /** Opacidade dos laços da marca no fundo (0 a 1; 0 esconde) */
     lacosOpacidade: number;
+    /** Sombra das letras ligada. Começa desligada; os ajustes abaixo só valem com ela ligada. */
+    sombraAtiva: boolean;
+    /** Cor da sombra em HEX; vazio segue a cor de contorno do tema (muda com claro/escuro) */
+    sombraCor: string;
+    /** Opacidade da sombra (0 a 1) */
+    sombraOpacidade: number;
+    /** Distância da sombra, em fração da altura da letra (cresce junto com a nota tocada) */
+    sombraDistancia: number;
+    /** Difusão (desfoque) da sombra, em fração da altura da letra; 0 = sombra chapada */
+    sombraDifusao: number;
+    /** Ângulo para onde a sombra aponta, em graus: 0 = direita, 90 = baixo */
+    sombraAngulo: number;
     /** Marca as preferências já ajustadas ao motor em texto (crescimento padrão 1,45) */
     motorTexto?: boolean;
     /** Marca que o tamanho inicial menor (densidade 0,8) já foi aplicado */
@@ -44,6 +56,8 @@ export interface AppSettings {
     lacosV2?: boolean;
     /** Marca que as cores de identidade do PDF (rosa, turquesa, céu...) já foram aplicadas uma vez */
     coresIdentidadeV2?: boolean;
+    /** Marca que a sombra configurável já foi aplicada uma vez (antes era fixa e sempre ligada) */
+    sombraV1?: boolean;
 }
 
 export interface KnobValues {
