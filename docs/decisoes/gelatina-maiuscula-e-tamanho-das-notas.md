@@ -32,3 +32,13 @@
   - Hela (efeito 'estilos'): a largura das letras era medida no estilo mais forte (Hela 700), mas em repouso aparece o Hela 300, com M mais largo e i mais fino; o M encostava no i. Agora a largura vem do estilo de repouso, e a altura continua vindo do mais forte.
 - Maiúscula: o alvo da altura da inicial em relação à minúscula sobe de 1,32 até 1,52 quando a fonte tem minúsculas quase da altura das maiúsculas, com teto de +50%. Modak: inicial +21% (antes +13%); Oi: +36% (antes +22%); Bungee, Hela, Kablammo e Luckiest: +50%. Fontes comuns não mudam.
 - Conferido no navegador: as 29 fontes lado a lado. Nas itálicas (Shrikhand, Berkshire), o espaço de tinta a tinta parece um pouco mais aberto por causa da inclinação. tsc e build sem erros.
+## Grafia das notas e espaçamento natural das fontes (11/11/2026)
+- Checagem das 29 fontes do menu com Dó, Ré, Mi, Fá, Sol, Lá, Si:
+  - Rótulos certos no código (src/gelatina/constants.ts) e nenhuma letra caindo em fonte reserva: todas têm D, ó, R, é, M, i, F, á, S, o, l, L próprios.
+  - Quatro fontes só têm maiúsculas: Bungee, Hela, Kablammo e Luckiest Guy. Nelas a "minúscula" é a maiúscula, e as notas aparecem como MI, SOL, SI; a inicial maior (reforço de maiúscula) é a única diferença possível. Na Kablammo o I e o L decorados ficam difíceis de ler ("ME", "tá") em qualquer valor do eixo MORF.
+  - Nas demais, só o "o" repete o desenho do "O", o que é normal.
+  - Decisão da equipe (11/11/2026): as quatro fontes só de maiúsculas continuam no menu como estão.
+- Espaço entre letras: em vez do espaço fixo de 7% (de tinta a tinta), o motor usa o espaçamento da própria fonte, como num editor de texto: margem depois da letra anterior, kerning do par e margem antes da letra, cada parte na escala da sua letra. O espaço fixo abria buracos ("M i") nas fontes de letras justas e nas itálicas. GAP_LETRA só vale quando falta a medida (acento composto, sem uso hoje). No Hela, a medida vem do estilo de repouso (Hela 300).
+- Letras da mesma palavra agora ficam na mesma linha de base e sem giro próprio (rot0 e dy0 sem uso). Com o espaçamento natural, esse balanço encavalava as letras das fontes justas (Oi, Modak, Luckiest Guy, Matcha). O desalinhamento continua entre as notas, e a deformação ao tocar não mudou.
+- A Oi foi desenhada com as letras encostando: escrita como texto comum, fica igual ao que o motor mostra agora.
+- Conferido: as 29 fontes lado a lado no navegador, comparadas com o texto comum da fonte; toque no Mi deformando como antes. tsc e build sem erros.

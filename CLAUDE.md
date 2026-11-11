@@ -40,4 +40,4 @@ Leia antes de mexer em cada jogo:
 - `docs/decisoes/gelatina-fontes-decisoes.md`: fontes do Gelatina.
 - `docs/decisoes/gelatina-sombra-decisoes.md`: sombra das letras do Gelatina (opcional, desligada por padrão).
 - `docs/decisoes/gelatina-repouso-sem-distorcao.md`: letras do Gelatina sem distorção em repouso (escala igual na largura e na altura).
-- `docs/decisoes/gelatina-maiuscula-e-tamanho-das-notas.md`: maiúscula inicial reforçada por fonte, tamanho equilibrado entre as notas, divisão em linhas fixa pelo formato da tela e espaços padronizados entre letras e notas.
+- `docs/decisoes/gelatina-maiuscula-e-tamanho-das-notas.md`: maiúscula inicial reforçada por fonte, tamanho equilibrado entre as notas, divisão em linhas fixa pelo formato da tela, espaço entre notas padronizado, espaçamento natural entre letras e as fontes só de maiúsculas.

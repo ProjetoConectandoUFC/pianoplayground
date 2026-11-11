@@ -135,7 +135,7 @@ const Q_GAP  = [-0.04, 0.05, -0.06, 0.03, -0.05, 0.04, 0.00];
 const Q_ROT  = [-0.016, 0.022, -0.010, 0.018, -0.020, 0.012, -0.014];
 const LINE_ROT = [-0.010, 0.008, -0.006, 0.011, -0.007];
 // Espaços padronizados, em fração do tamanho da fonte (de tinta a tinta)
-const GAP_LETRA = 0.07;   // entre as letras de uma palavra
+const GAP_LETRA = 0.07;   // entre letras, só quando falta a medida da fonte (acento composto)
 const GAP_NOTA = 0.22;    // entre notas vizinhas e entre linhas
 // Desalinhamento vertical das palavras (Q_DY), em fração da altura da linha (antes 0,5)
 const DY_NOTA = 0.3;
@@ -166,6 +166,10 @@ function seeded(seed: number) {
 
 interface Letra {
     ch: string; left: number; w: number; asc: number; desc: number;
+    /** Espaçamento natural da fonte, em px a FS: margem antes da tinta, margem depois
+     *  da tinta e o ajuste de par (kerning) com a letra anterior. null = sem medida
+     *  (acento composto), aí vale o espaço fixo GAP_LETRA. */
+    nat: { antes: number; depois: number; par: number } | null;
     lsx: number; lsy: number; dy0: number; rot0: number; gap: number;
     tint: number; ph: number; ph2: number; spd: number; side: number;
     // mola da letra (0 repouso, 1 tocada), com atraso em onda. Deforma a letra
@@ -393,13 +397,29 @@ export function createGelatina(host: HTMLElement, opts: GelatinaOptions, relatio
                 // Medida pelo mais forte, no Hela o M de repouso (mais largo) encostava no
                 // i, e o i fino de repouso ficava solto numa caixa larga.
                 let mh: TextMetrics = mm;
+                const fonteRepouso = o.estilos?.familias.length
+                    ? `${o.weight} ${FS}px "${o.estilos.familias[0]}", ${o.family}` : o.fontSpec;
                 if (o.estilos?.familias.length && !comp) {
-                    meter.font = `${o.weight} ${FS}px "${o.estilos.familias[0]}", ${o.family}`;
+                    meter.font = fonteRepouso;
                     mh = meter.measureText(ch);
                     meter.font = o.fontSpec;
                 }
                 const left = comp ? comp.left : (mh.actualBoundingBoxLeft ?? 0);
                 const right = mh.actualBoundingBoxRight ?? mh.width;
+                // Espaçamento natural, como a fonte foi desenhada: margem antes da tinta
+                // (left é a distância da origem até a tinta, positiva para a esquerda),
+                // margem depois (avanço menos o fim da tinta) e o kerning do par com a
+                // letra anterior (largura do par menos a soma das duas larguras).
+                let nat: Letra['nat'] = null;
+                if (!comp) {
+                    meter.font = fonteRepouso;
+                    const anterior = k > 0 ? Array.from(s.label)[k - 1] : '';
+                    const par = anterior
+                        ? meter.measureText(anterior + ch).width - meter.measureText(anterior).width - mh.width
+                        : 0;
+                    nat = { antes: -left, depois: mh.width - right, par };
+                    meter.font = o.fontSpec;
+                }
                 const prev = old[k];
                 const el = doc.createElement('span');
                 el.textContent = comp ? comp.base : ch;
@@ -410,7 +430,7 @@ export function createGelatina(host: HTMLElement, opts: GelatinaOptions, relatio
                 if (comp) el.appendChild(comp.el);
                 s.el.appendChild(el);
                 return {
-                    ch, left,
+                    ch, left, nat,
                     w: comp ? comp.w : left + right,
                     asc: comp ? comp.asc : (mm.actualBoundingBoxAscent ?? 72),
                     desc: comp ? comp.desc : (mm.actualBoundingBoxDescent ?? 0),
@@ -418,7 +438,7 @@ export function createGelatina(host: HTMLElement, opts: GelatinaOptions, relatio
                     lsy: 0.88 + r() * 0.34,
                     dy0: (r() - 0.5) * 20,
                     rot0: (r() - 0.5) * 0.09,
-                    // sem uso desde o espaço fixo (GAP_LETRA); o sorteio fica para não
+                    // gap, dy0 e rot0 sem uso (espaço natural da fonte, letras alinhadas); o sorteio fica para não
                     // mudar a sequência dos valores seguintes (cor, fase, velocidade)
                     gap: 0.012 + r() * 0.022,
                     tint: r() * 0.14,
@@ -459,7 +479,6 @@ export function createGelatina(host: HTMLElement, opts: GelatinaOptions, relatio
         const L = s.letters;
         const still = neutral || !!o.effect || reduced;
         const compact = isCompact();
-        const desal = 0.35 + 0.65 * o.randomness;   // desalinho próprio das letras
         let cursor = 0, sxAnterior = 1;
         let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
 
@@ -492,10 +511,14 @@ export function createGelatina(host: HTMLElement, opts: GelatinaOptions, relatio
             const sy = lsy * (1 + stretch);
             const sx = lsx * (1 - stretch * (compact ? ANG_SQUASH : 0.8));
             const skew = -Math.tan(skewDeg * Math.PI / 180);
-            const rotw = l.rot0 * desal;
+            // Letras da palavra na mesma linha de base e sem giro próprio, como texto:
+            // com o espaçamento natural da fonte, o balanço de cada letra (rot0, dy0)
+            // encavalava as letras das fontes justas (Oi, Modak, Luckiest). O
+            // desalinhamento continua entre as notas (posição e giro da palavra).
+            const rotw = 0;
             // centro da tinta, acima da linha de base: a letra estica e entorta em torno dele
             const half = (l.asc - l.desc) / 2;
-            const dy = l.dy0 * desal + lsy * half * stretch;
+            const dy = lsy * half * stretch;
             const skx = -skew * half * sy;
 
             // bordas da letra, medidas nos quatro cantos já deformados.
@@ -522,11 +545,17 @@ export function createGelatina(host: HTMLElement, opts: GelatinaOptions, relatio
                 if (nx2 > nhi) nhi = nx2;
             }
 
-            // Espaço entre letras igual em todas: GAP_LETRA do tamanho da fonte, de tinta
-            // a tinta. Antes era sorteado por letra (1,2% a 3,4%) e umas ficavam coladas.
-            // Acompanha a média das duas letras vizinhas: depois da maiúscula ampliada
-            // o espaço cresce junto, senão a minúscula parecia grudada nela.
-            const gap = k ? GAP_LETRA * FS * (sx + sxAnterior) / 2 : 0;
+            // Espaço entre letras: o da própria fonte, como num editor de texto (margem
+            // depois da letra anterior + kerning do par + margem antes desta), cada parte
+            // na escala da sua letra. Assim a palavra fica "Mi", e não "M i": um espaço
+            // fixo igual para todas (GAP_LETRA, 7%) abria buracos nas fontes de letras
+            // justas e nas itálicas. GAP_LETRA só vale quando não há medida (acento
+            // composto). Antes ainda, o espaço era sorteado e umas letras ficavam coladas.
+            const ant = k ? L[k - 1] : null;
+            const gap = !ant ? 0
+                : ant.nat && l.nat
+                    ? ant.nat.depois * sxAnterior + (l.nat.par + l.nat.antes) * sx
+                    : GAP_LETRA * FS * (sx + sxAnterior) / 2;
             sxAnterior = sx;
             const cx = cursor + gap - nlo;
             cursor = cx + nhi;
