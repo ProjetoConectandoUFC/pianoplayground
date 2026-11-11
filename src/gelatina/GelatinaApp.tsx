@@ -4,7 +4,7 @@ import { AppSettings, KnobValues, MidiDevice } from './types';
 import {
     AKAI_MPK_MINI_KNOBS, DEFAULT_SETTINGS, FONT_OPTIONS,
     NATURAL_BY_PITCH_CLASS, SHARP_BY_PITCH_CLASS, STORAGE_KEY, THEMES,
-    SOMBRA_DIFUSAO_MAX, SOMBRA_DISTANCIA_MAX,
+    SOMBRA_DIFUSAO_MAX, SOMBRA_DISTANCIA_MAX, ANGULO_NOTAS_MAX,
 } from './constants';
 import { listenToMidiDevice, requestMidiAccess } from './services/midiService';
 import { ligarSom, soltar, soltarTudo, tocar } from './services/somService';
@@ -78,6 +78,10 @@ const carregarConfig = (): AppSettings => {
             sombraDistancia: numeroEntre(salvo.sombraDistancia, 0, SOMBRA_DISTANCIA_MAX, DEFAULT_SETTINGS.sombraDistancia),
             sombraDifusao: numeroEntre(salvo.sombraDifusao, 0, SOMBRA_DIFUSAO_MAX, DEFAULT_SETTINGS.sombraDifusao),
             sombraAngulo: numeroEntre(salvo.sombraAngulo, 0, 360, DEFAULT_SETTINGS.sombraAngulo),
+            // Inclinação das notas: só inteiros de -8 a 8. Valor guardado fora disso é
+            // limitado e arredondado; ausente (preferências de antes) vira 0, sem inclinação.
+            anguloNotas: Math.round(numeroEntre(salvo.anguloNotas, -ANGULO_NOTAS_MAX, ANGULO_NOTAS_MAX, DEFAULT_SETTINGS.anguloNotas)),
+            anguloModo: salvo.anguloModo === 'individual' ? 'individual' : 'todas',
             // Antes da sombra configurável, a sombra era fixa e sempre ligada. Quem vem
             // dessa versão começa com ela desligada, como o padrão novo, uma vez.
             ...(salvo.sombraV1 ? {} : { sombraAtiva: false, sombraV1: true }),

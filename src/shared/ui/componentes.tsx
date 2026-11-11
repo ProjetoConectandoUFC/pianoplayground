@@ -199,7 +199,13 @@ export const Interruptor: React.FC<{ rotulo: string; dica?: string; ligado: bool
 export const Deslizante: React.FC<{
     id: string; rotulo: string; valor: number; min: number; max: number; passo: number;
     formato: (v: number) => string; onChange: (v: number) => void;
-}> = ({ id, rotulo, valor, min, max, passo, formato, onChange }) => (
+    /** Opcional: valores marcados embaixo da trilha, igualmente espaçados (de min a max).
+     *  Útil quando o deslizante só aceita poucas posições, para mostrar quais são. */
+    marcas?: number[];
+    /** Texto de cada marca; sem ele, usa o mesmo formato do valor. Com muitas marcas,
+     *  um texto mais curto (só o número) evita que elas se encostem. */
+    rotuloMarca?: (v: number) => string;
+}> = ({ id, rotulo, valor, min, max, passo, formato, onChange, marcas, rotuloMarca }) => (
     <div>
         <div className="ui-linha">
             <label className="ui-rotulo" htmlFor={id}>{rotulo}</label>
@@ -215,6 +221,13 @@ export const Deslizante: React.FC<{
             value={valor}
             onChange={(e) => onChange(parseFloat(e.target.value))}
         />
+        {marcas && (
+            <div className="ui-range-marcas" aria-hidden="true">
+                {marcas.map((m) => (
+                    <span key={m} className={m === valor ? 'on' : undefined}>{(rotuloMarca ?? formato)(m)}</span>
+                ))}
+            </div>
+        )}
     </div>
 );
 

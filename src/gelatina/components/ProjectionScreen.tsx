@@ -40,6 +40,8 @@ export const optionsFromSettings = (settings: AppSettings): GelatinaOptions => {
         spacing: settings.noteSpacing,
         randomness: settings.noteRandomness,
         grow: settings.growAmount,
+        anguloGraus: settings.anguloNotas,
+        anguloIndividual: settings.anguloModo === 'individual',
         // Sombra desligada vira null: o motor tira o text-shadow das letras.
         // A mesma tradução vale para a tela principal e para o telão.
         sombra: settings.sombraAtiva ? {

@@ -75,6 +75,12 @@ export interface GelatinaOptions {
     randomness: number;
     /** Tamanho da nota pressionada, em relação ao tamanho inativo */
     grow: number;
+    /** Inclinação extra de cada palavra, em graus (positivo = sobe para a direita).
+     *  Soma-se à rotação do desalinhamento; ausente ou 0 = como sempre foi. */
+    anguloGraus?: number;
+    /** true: cada nota recebe a sua inclinação (FATOR_INCLINACAO), alternando o lado;
+     *  false ou ausente: todas no mesmo ângulo */
+    anguloIndividual?: boolean;
     /** Sombra das letras; null ou ausente = sem sombra (o padrão do app) */
     sombra?: SombraOpcoes | null;
 }
@@ -134,6 +140,11 @@ const Q_DY   = [0.05, -0.11, 0.12, -0.06, 0.10, -0.13, 0.03];
 const Q_GAP  = [-0.04, 0.05, -0.06, 0.03, -0.05, 0.04, 0.00];
 const Q_ROT  = [-0.016, 0.022, -0.010, 0.018, -0.020, 0.012, -0.014];
 const LINE_ROT = [-0.010, 0.008, -0.006, 0.011, -0.007];
+// Inclinação individual: fração do ângulo escolhido para cada nota (Dó a Si). Fixa, e não
+// sorteada, para a tela e o telão ficarem iguais e o desenho não mudar a cada abertura.
+// O lado alterna entre vizinhas (uma sobe, a outra desce) e o tamanho varia, para parecer
+// solto; a maior fica com o ângulo inteiro, então o deslizante continua sendo o limite.
+const FATOR_INCLINACAO = [1, -0.75, 0.5, -1, 0.75, -0.5, 0.875];
 // Espaços padronizados, em fração do tamanho da fonte (de tinta a tinta)
 const GAP_LETRA = 0.07;   // entre letras, só quando falta a medida da fonte (acento composto)
 const GAP_NOTA = 0.22;    // entre notas vizinhas e entre linhas
@@ -879,13 +890,22 @@ export function createGelatina(host: HTMLElement, opts: GelatinaOptions, relatio
         const sbStr = sb ? `rgba(${sbCor[0] | 0},${sbCor[1] | 0},${sbCor[2] | 0},${clamp(sb.opacidade, 0, 1).toFixed(3)})` : '';
         const sbAng = ((sb?.angulo ?? 45) * Math.PI) / 180;
         const sbCos = Math.cos(sbAng), sbSin = Math.sin(sbAng);
+        // Inclinação de todas as notas (deslizante "Inclinação das notas"), em radianos.
+        // O sinal é invertido porque, na tela, rotação positiva é no sentido horário; assim
+        // +2° faz a palavra subir para a direita, como o ângulo que se aprende na escola.
+        const inclinacao = (-(o.anguloGraus ?? 0) * Math.PI) / 180;
 
         order.forEach((i, rank) => {
             const s = state[i], hm = s.home, cl = s.cl;
             if (!hm || !cl) return;
             const t = {
                 cx: hm.cx + s.dx, cy: hm.cy + s.dy,
-                sx: hm.sx, sy: hm.sy, rot: hm.rot,
+                // A inclinação escolhida entra aqui, no alvo de cada quadro, e não nos
+                // lugares fixos: cada palavra gira no próprio centro, o arranjo não é
+                // refeito e a mudança no deslizante chega suave, pela mesma mola da rotação.
+                // O confinamento abaixo já considera a caixa girada, então nada sai da tela.
+                sx: hm.sx, sy: hm.sy,
+                rot: hm.rot + inclinacao * (o.anguloIndividual ? FATOR_INCLINACAO[i % FATOR_INCLINACAO.length] : 1),
             };
             if (!s.cur) s.cur = { ...t };
             else {

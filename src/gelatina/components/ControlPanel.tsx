@@ -1,15 +1,18 @@
 import React, { useEffect, useState } from 'react';
-import { AppSettings, KnobValues, MidiDevice, NoteSystem } from '../types';
+import { AnguloModo, AppSettings, KnobValues, MidiDevice, NoteSystem } from '../types';
 import {
     AKAI_MPK_MINI_KNOBS, FONT_OPTIONS, KNOB_MAPPINGS, NOTE_NAME_SYSTEMS,
     fontOf, fontSpecOf, fontLacksAccents, FontOption,
-    SOMBRA_DIFUSAO_MAX, SOMBRA_DISTANCIA_MAX, THEMES,
+    SOMBRA_DIFUSAO_MAX, SOMBRA_DISTANCIA_MAX, THEMES, ANGULO_NOTAS_MAX,
 } from '../constants';
 import {
     BotaoProjecao, Campo, Deslizante, Dica, Gaveta, Interruptor, MapaTeclas,
     MedidorKnob, Secao, SeletorTema,
 } from '../../shared/ui/componentes';
 
+
+/** Todas as posições do deslizante de inclinação, de -8 a 8, escritas embaixo dele */
+const MARCAS_INCLINACAO = Array.from({ length: 2 * ANGULO_NOTAS_MAX + 1 }, (_, i) => i - ANGULO_NOTAS_MAX);
 
 /** Categorias da lista de fontes: as fontes de sempre e as mutáveis */
 const GRUPOS_FONTES: { rotulo: string; filtro: (f: FontOption) => boolean }[] = [
@@ -315,6 +318,33 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
                     formato={v => `${Math.round(v * 100)}%`}
                     onChange={v => onSettingsChange({ noteRandomness: v })}
                 />
+                {/* Inclinação: passo 1 trava o deslizante nos graus inteiros de -8 a 8. Começa
+                    no meio (0°), que é o arranjo de sempre. As marcas mostram só o número,
+                    porque com 17 posições o símbolo de grau faria uma encostar na outra. */}
+                <Deslizante
+                    id="gel-inclinacao" rotulo="Inclinação das notas" valor={settings.anguloNotas}
+                    min={-ANGULO_NOTAS_MAX} max={ANGULO_NOTAS_MAX} passo={1}
+                    formato={v => `${v < 0 ? '−' : ''}${Math.abs(v)}°`}
+                    marcas={MARCAS_INCLINACAO}
+                    rotuloMarca={v => `${v < 0 ? '−' : ''}${Math.abs(v)}`}
+                    onChange={v => onSettingsChange({ anguloNotas: Math.round(v) })}
+                />
+                {/* Duas opções só: um seletor de duas posições, no mesmo estilo do tema */}
+                <div>
+                    <span className="ui-rotulo">A inclinação vale para</span>
+                    <div className="ui-segmentado" role="group" aria-label="Como a inclinação afeta as notas">
+                        {([['todas', 'Todas iguais'], ['individual', 'Cada nota']] as [AnguloModo, string][]).map(([m, txt]) => (
+                            <button
+                                key={m}
+                                className={settings.anguloModo === m ? 'ui-segmentado-opcao on' : 'ui-segmentado-opcao'}
+                                aria-pressed={settings.anguloModo === m}
+                                onClick={() => onSettingsChange({ anguloModo: m })}
+                            >
+                                {txt}
+                            </button>
+                        ))}
+                    </div>
+                </div>
                 <Deslizante
                     id="gel-cresc" rotulo="Crescimento da nota" valor={settings.growAmount}
                     min={1.2} max={3} passo={0.05}
@@ -322,8 +352,10 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
                     onChange={v => onSettingsChange({ growAmount: v })}
                 />
                 <Dica>
-                    A nota tocada cresce no próprio lugar com um pulo. As relacionadas a ela encolhem um pouco e as
-                    demais ficam como estão.
+                    A inclinação gira as notas no próprio centro: com valores positivos as
+                    palavras sobem para a direita; com negativos, descem. Em "Cada nota", cada
+                    uma ganha a sua inclinação, alternando o lado, até o ângulo escolhido. A nota tocada cresce no próprio lugar com
+                    um pulo. As relacionadas a ela encolhem um pouco e as demais ficam como estão.
                 </Dica>
                 <button className="ui-btn-secundario" onClick={onResetSettings}>Voltar ao padrão</button>
             </Secao>

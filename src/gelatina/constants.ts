@@ -283,6 +283,9 @@ export const SOMBRA_DISTANCIA_PADRAO = 0.013;
 /** Limites dos deslizantes da sombra (também usados ao ler o que ficou guardado) */
 export const SOMBRA_DISTANCIA_MAX = 0.08;
 export const SOMBRA_DIFUSAO_MAX = 0.1;
+/** Limite da inclinação das notas, em graus para cada lado, travado em inteiros.
+ *  Primeiro era ±2 (toque sutil); a equipe pediu até ±8 para um efeito mais visível. */
+export const ANGULO_NOTAS_MAX = 8;
 
 export const DEFAULT_SETTINGS: AppSettings = {
     fontKey: 'modak',
@@ -309,6 +312,10 @@ export const DEFAULT_SETTINGS: AppSettings = {
     sombraDifusao: 0,
     sombraAngulo: 45,
     sombraV1: true,
+    // Inclinação das notas: 0 mantém o arranjo de sempre
+    anguloNotas: 0,
+    // Todas inclinam igual; 'individual' dá a cada nota a sua inclinação
+    anguloModo: 'todas',
 };
 
 /** Chave usada para lembrar as preferências entre sessões */

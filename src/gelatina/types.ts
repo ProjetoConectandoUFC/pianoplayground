@@ -13,6 +13,9 @@ export type ThemeName = 'claro' | 'escuro';
 /** Sistema de nomenclatura das notas exibidas na tela. */
 export type NoteSystem = 'anglican' | 'latin';
 
+/** Como a inclinação afeta as notas: todas iguais ou cada uma com a sua. */
+export type AnguloModo = 'todas' | 'individual';
+
 export interface AppSettings {
     /** Chave da fonte escolhida, conforme FONT_OPTIONS em constants.ts */
     fontKey: string;
@@ -46,6 +49,11 @@ export interface AppSettings {
     sombraDifusao: number;
     /** Ângulo para onde a sombra aponta, em graus: 0 = direita, 90 = baixo */
     sombraAngulo: number;
+    /** Inclinação das notas, em graus inteiros de -8 a 8; 0 = como antes (sem inclinação) */
+    anguloNotas: number;
+    /** Como a inclinação se aplica: 'todas' no mesmo ângulo, ou 'individual' (cada nota
+     *  com a sua, alternando o lado, até o ângulo escolhido) */
+    anguloModo: AnguloModo;
     /** Marca as preferências já ajustadas ao motor em texto (crescimento padrão 1,45) */
     motorTexto?: boolean;
     /** Marca que o tamanho inicial menor (densidade 0,8) já foi aplicado */
