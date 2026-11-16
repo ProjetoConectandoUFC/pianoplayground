@@ -5,7 +5,6 @@ import './genius.css';
 // Importados pelo Vite para funcionar também no Electron empacotado (file://).
 // (catálogo das imagens em src/assets/LEIA-ME.md)
 import lacoEsquerdaUrl from '../assets/genius/laco-esquerda.png';
-import maosRodapeUrl from '../assets/moldura/maos-rodape.png';
 import { useTemaUi } from '../shared/ui/temaUi';
 import { SecaoJogo, BotaoProjecao } from '../shared/ui/componentes';
 import { openProjectionWindow, ProjectionWindow } from '../shared/projectionWindow';
@@ -132,8 +131,7 @@ const GENIUS_MARKUP = `
       <div id="piano" class="piano" aria-label="Teclado MPK Mini virtual"></div>
     </section>
 
-    <!-- Rodapé: o traço com as mãos se encontrando (motivo da "conexão") -->
-    <div class="genius-maos" aria-hidden="true"><img class="genius-maos-img" src="${maosRodapeUrl}" alt="" draggable="false" /></div>
+    <!-- Sem rodapé: o traço das mãos (maos-rodape.png) saiu em 16/11/2026, a pedido da equipe -->
 
     <div id="countdown" class="countdown hidden" aria-hidden="true"></div>
 

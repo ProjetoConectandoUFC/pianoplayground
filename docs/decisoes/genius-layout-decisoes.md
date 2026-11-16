@@ -8,7 +8,7 @@ Decisões aplicadas no código (pianoplayground/src):
 - Marca Conectando: mesmo tamanho (46px) nos três modos; o tamanho maior do mockup foi descartado.
 - Piano: moldura azul-escuro #035386, teclas brancas creme #fcfaf1, pretas título #001320; demonstração amarela #fde31f. Toque do jogador: ver "Modos de jogo e cor do jogador" abaixo (antes coral #e34a39).
 - Slider "Inclinação do piano" (gaveta > Aparência): 0% a 100%, mapeado para 0° a 70°. Padrão 75% (52,5°), que reproduz o mockup. Salvo em localStorage "genius-inclinacao"; quem tinha o interruptor antigo desligado começa em 0%.
-- Faixa das mãos do topo desligada (MOSTRAR_FAIXA = false). As mãos ficam no rodapé: src/assets/moldura/maos-rodape.png (912 × 276, branco).
+- Faixa das mãos do topo desligada (MOSTRAR_FAIXA = false). As mãos ficaram no rodapé: src/assets/moldura/maos-rodape.png (912 × 276, branco); rodapé retirado em 16/11/2026 (ver abaixo).
 - Rodapé das mãos (28/10/2026): 20px de folga do pé da tela (--maos-respiro em .genius-maos, genius.css). O contêiner cresce os mesmos 20px, então o traço não chega mais perto do piano.
 - Laços do fundo: laco-esquerda.png (branco 20%) usado duas vezes. Espelhado no canto superior direito, na altura da tela; e menor (40vh), girado -90°, no canto inferior esquerdo, com os cortes do arquivo fora da tela. laco-direita.png saiu porque o desenho é recortado nas quatro bordas e o corte aparecia. Os amarelos não são usados.
 - Pílula do estágio aparece acima do título já na tela inicial; mensagem de pronto: "Ouça a melodia e repita no teclado."
@@ -78,7 +78,7 @@ Decisões aplicadas no código (pianoplayground/src):
 # Catálogo de elementos gráficos
 
 - Documento com imagens de todos os assets (em uso e guardados), ícones e fontes: https://claude.ai/artifact/FLYKc4B9F9oS6DEgQ3oEg5 (28/10/2026).
-- Em uso: marca-azul, marca-branca, laco-esquerda (Genius), laco-branco e laco-azul (pianos), maos-rodape, vaia-plateia.mp3 (modo tomate), 5 ícones SVG no código. Guardados sem aparecer: faixas das mãos (ainda importadas, desligadas), logo-conectando azul/creme, laços amarelos, laco-direita, SVGs dos laços, onda-rodape, ufc, fundacao-cetrede, instituto-ufc-virtual.
+- Em uso: marca-azul, marca-branca, laco-esquerda (Genius), laco-branco e laco-azul (pianos), vaia-plateia.mp3 (modo tomate), 5 ícones SVG no código. Guardados sem aparecer: maos-rodape (desde 16/11/2026), faixas das mãos (ainda importadas, desligadas), logo-conectando azul/creme, laços amarelos, laco-direita, SVGs dos laços, onda-rodape, ufc, fundacao-cetrede, instituto-ufc-virtual.
 
 ## Laço de baixo à esquerda grudado no canto (09/11/2026)
 
@@ -87,3 +87,11 @@ Decisões aplicadas no código (pianoplayground/src):
 - Mesmo ajuste no Genius (.genius-laco-esq em genius.css) e nos pianos Tipográfico e Gelatina (.ui-laco-esq em ui.css, que vale também para o telão).
 - Só encostar no canto não bastou: o arquivo (e o SVG original) é um recorte, com traços cortados nas bordas, e pequeno (40vh) parecia um pedaço solto. Entre três alternativas mostradas à equipe (como estava, maior no mesmo canto, sem girar no canto de cima), a escolhida foi a maior no mesmo canto: altura min(70vh, 60vw). O limite de 60vw evita que, em tela em pé, ele tome a largura toda e encoste no laço da direita.
 - Conferido no Gelatina: canto exato (0 px) em tela larga (1280x720, laço com 70vh) e em pé (600x900, laço com 60vw). O Genius usa os mesmos valores, mas não foi visto no navegador.
+## Texto centralizado e sem rodapé (16/11/2026)
+
+- Pedido da equipe: o texto da tela um pouco mais centralizado e o rodapé apagado.
+- Rodapé das mãos (maos-rodape.png, .genius-maos) retirado do markup (GeniusView.tsx) e do CSS. O arquivo continua em src/assets/moldura, guardado sem uso (LEIA-ME.md).
+- Texto (pílula, título, mensagem, nome da melodia e botão): centralizado na altura livre entre a barra do topo e o piano (justify-content: center em .stage). Antes começava fixo a 11,6% da altura, colado no alto.
+- Piano: sem o rodapé, a folga de baixo passou de 2,6vh para 7vh, para ele não descer até o pé da tela.
+- Conferido no navegador: 1488x927 (texto de 210 a 429 px, centro igual ao da faixa livre, 68 a 571; piano termina a 65 px do pé), 1280x720 e 1920x1080, com o piano inteiro na tela. tsc e build sem erros.
+- Telão: é espelho do mesmo markup com o mesmo CSS, então muda junto; não foi aberto lado a lado.

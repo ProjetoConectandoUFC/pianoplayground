@@ -15,7 +15,7 @@ import faixaEscuraUrl from '../../assets/moldura/faixa-maos.png';
 import faixaClaraUrl from '../../assets/moldura/faixa-maos-clara.png';
 
 // Desligada: no layout novo do Genius as mãos se encontram no rodapé
-// (src/assets/moldura/maos-rodape.png, em src/genius/GeniusView.tsx), não mais na faixa do topo.
+// (src/assets/moldura/maos-rodape.png); esse rodapé também saiu em 16/11/2026.
 export const MOSTRAR_FAIXA = false;
 
 // Grava a proporção (largura ÷ altura) da imagem carregada numa variável do

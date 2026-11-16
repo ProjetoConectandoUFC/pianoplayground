@@ -27,8 +27,8 @@ recolorir, distorcer nem aplicar sombra.
 
 | Arquivo | O que é | Onde aparece |
 |---|---|---|
-| `faixa-maos.png` | Faixa das mãos azul e rosa (1974 × 128) | Desligada (`MOSTRAR_FAIXA = false` em `src/shared/ui/FaixaMaos.tsx`): no layout novo do Genius as mãos ficam no rodapé (`maos-rodape.png`) |
-| `maos-rodape.png` | Traço branco com as mãos se cumprimentando (912 × 276, fundo transparente) | Rodapé do Genius, centralizado · `src/genius/GeniusView.tsx` |
+| `faixa-maos.png` | Faixa das mãos azul e rosa (1974 × 128) | Desligada (`MOSTRAR_FAIXA = false` em `src/shared/ui/FaixaMaos.tsx`): no layout de 26/10/2026 as mãos foram para o rodapé do Genius (`maos-rodape.png`), que também saiu em 16/11/2026 |
+| `maos-rodape.png` | Traço branco com as mãos se cumprimentando (912 × 276, fundo transparente) | Guardado, sem uso: era o rodapé do Genius, retirado em 16/11/2026 |
 | `faixa-maos-clara.png` | Faixa das mãos azul-marinho e azul (1912 × 128) | Desligada, como a anterior; guardada como original |
 
 ## genius/

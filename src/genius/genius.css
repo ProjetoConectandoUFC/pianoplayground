@@ -129,10 +129,11 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: flex-start;
+  /* Bloco de texto centralizado na altura livre entre a barra e o piano (16/11/2026).
+     Antes começava fixo a 11,6% da altura, colado no alto, como no layout de 26/10. */
+  justify-content: center;
   gap: clamp(8px, 1.7vh, 22px);
-  /* A pílula do estágio começa a 11,6% da altura, como no layout aprovado */
-  padding: max(12px, calc(11.6vh - var(--ui-header-h))) 24px 12px;
+  padding: 12px 24px;
   text-align: center;
 }
 /* Título display do sistema: Poppins 800, amarelo sobre o fundo escuro */
@@ -213,7 +214,9 @@
 /* ─── Piano (estrutura original; só cores e efeitos mudam) ─── */
 .piano-wrap {
   flex: none;
-  padding: 0 16px 2.6vh;
+  /* Sem o rodapé das mãos (retirado em 16/11/2026), o piano desce até perto do pé da
+     tela; 7vh de folga (antes 2,6vh, com o rodapé abaixo) para ele não ficar colado. */
+  padding: 0 16px 7vh;
   display: flex;
   justify-content: center;
   /* O piano inclina para trás pela borda de baixo; o ponto de fuga fica lá em cima */
@@ -750,30 +753,6 @@
 /* As letras do teclado ficam um pouco maiores para compensar o encurtamento */
 .genius-root[data-perspectiva="sim"] .key.white .key-label { font-size: 20px; bottom: 16px; }
 .genius-root[data-perspectiva="sim"] .key.black .key-label { font-size: 15px; bottom: 12px; }
-
-/* ─── Rodapé: traço com as mãos se encontrando ─── */
-.genius-maos {
-  --maos-respiro: 20px; /* folga entre o traço das mãos e o pé da tela */
-  position: relative;
-  flex: none;
-  /* Espaço do traço das mãos (a parte de cima do arquivo é transparente),
-     mais a folga do pé, para o traço não chegar mais perto do piano */
-  height: calc(100vh * 146 / 927 + var(--maos-respiro));
-  pointer-events: none;
-}
-/* maos-rodape.png (912 × 276): no layout de referência fica em tamanho
-   natural e centralizado; sobe 20px (--maos-respiro) para não ficar colado
-   no pé da tela */
-.genius-maos-img {
-  position: absolute;
-  left: 50%;
-  bottom: var(--maos-respiro);
-  height: calc(100vh * 276 / 927);
-  width: auto;
-  transform: translateX(-50%);
-  user-select: none;
-  -webkit-user-drag: none;
-}
 
 /* ─── Gaveta: amostras da cor do jogador ───
    A gaveta mora no <body> (fora do .genius-root), por isso sem escopo. */
