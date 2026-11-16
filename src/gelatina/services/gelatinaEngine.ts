@@ -81,6 +81,10 @@ export interface GelatinaOptions {
     /** true: cada nota recebe a sua inclinação (FATOR_INCLINACAO), alternando o lado;
      *  false ou ausente: todas no mesmo ângulo */
     anguloIndividual?: boolean;
+    /** Curva das linhas: as notas seguem uma onda na tela (0 a 1; 0 ou ausente = linha reta) */
+    curvaLinhas?: number;
+    /** Quantas vezes as sete notas aparecem na tela (1 a COPIAS_MAX; ausente = 1) */
+    copias?: number;
     /** Sombra das letras; null ou ausente = sem sombra (o padrão do app) */
     sombra?: SombraOpcoes | null;
 }
@@ -151,6 +155,25 @@ const GAP_NOTA = 0.22;    // entre notas vizinhas e entre linhas
 // Desalinhamento vertical das palavras (Q_DY), em fração da altura da linha (antes 0,5)
 const DY_NOTA = 0.3;
 
+// ---------- curva das linhas (16/11/2026) ----------
+// Pedido da equipe: as linhas retas pareciam chapadas. As notas podem seguir uma onda que
+// atravessa a tela; fixa (sem sorteio), para a tela e o telão ficarem iguais. A palavra
+// é um bloco só: a curva move e gira a palavra inteira, nunca as letras uma a uma (a
+// onda letra a letra foi testada e rejeitada pela equipe no mesmo dia).
+// A onda depende da posição na tela (não da posição na linha), então as linhas correm
+// paralelas, como fitas, e não se cruzam; cada linha só desloca um pouco a fase.
+const CURVA_ALT = 0.42;   // altura da onda com 100%, em fração da altura da linha
+const CURVA_COMPR = 1.0;  // comprimento de uma onda inteira, em larguras da área das notas
+const CURVA_FASE = 0.7;   // deslocamento da fase de uma linha para a seguinte, em radianos
+const CURVA_GIRO = 0.85;  // quanto a palavra acompanha a subida da curva (1 = toda)
+const CURVA_FOLGA = 0.35; // folga extra entre linhas com 100%, em fração da altura da linha
+// Cópias das notas: no máximo 6 vezes as sete (42 palavras). Começou em 4; ampliado para
+// mudanças mais expressivas, ainda legível no telão em 16:9.
+export const COPIAS_MAX = 6;
+// Limites que o motor aceita (os da gaveta, em constants.ts LIMITES, ficam dentro deles)
+const CURVA_MAX = 2;
+const ESPACAMENTO_MAX = 0.12;
+
 const mix = (a: RGB, b: RGB, t: number): RGB =>
     [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t];
 const clamp = (v: number, a: number, b: number) => (v < a ? a : v > b ? b : v);
@@ -197,10 +220,16 @@ interface Glifo {
 
 interface Cluster { g: Glifo[]; w: number; asc: number; desc: number; }
 
-interface Home { cx: number; cy: number; sx: number; sy: number; rot: number; size: number; }
+interface Home {
+    cx: number; cy: number; sx: number; sy: number; rot: number; size: number;
+    /** Lugar, escala e tamanho que o arranjo calculou, antes do encaixe (ver encaixar) */
+    cx0?: number; cy0?: number; sx0?: number; sy0?: number; size0?: number;
+}
 
 interface Nota {
     label: string;
+    /** Nota da escala que esta palavra representa (0 = Dó ... 6 = Si); as cópias repetem */
+    nota: number;
     hue: RGB; rest: RGB; live: RGB;
     holds: number; sharpHolds: number;
     a: number; v: number; sh: number;
@@ -253,15 +282,25 @@ export function createGelatina(host: HTMLElement, opts: GelatinaOptions, relatio
         LINK = o.labels.map((_, j) => o.labels.map((__, i) => (relations[j] || []).indexOf(i) >= 0));
     };
 
-    const state: Nota[] = o.labels.map((label, i) => {
+    // Uma palavra por nota e por cópia: com 2 cópias são 14 palavras (Dó a Si, duas vezes),
+    // em sequência. Cada palavra guarda a nota da escala que representa (nota), e tocar
+    // essa nota anima todas as cópias juntas.
+    const numCopias = () => Math.round(clamp(o.copias ?? 1, 1, COPIAS_MAX));
+    let state: Nota[] = [];
+    const criarNotas = () => {
+        for (const s of state) s.el.remove();
+        const n = o.labels.length;
+        state = Array.from({ length: n * numCopias() }, (_, i) => novaNota(o.labels[i % n], i % n));
+    };
+    const novaNota = (label: string, nota: number): Nota => {
         const el = doc.createElement('div');
         Object.assign(el.style, {
             position: 'absolute', left: '0', top: '0', transformOrigin: '0 0',
         } as CSSStyleDeclaration);
         stage.appendChild(el);
         return {
-            label,
-            hue: hexToRgb(o.colors[i] || '#888888'),
+            label, nota,
+            hue: hexToRgb(o.colors[nota] || '#888888'),
             rest: [0, 0, 0], live: [0, 0, 0],
             holds: 0, sharpHolds: 0,
             a: 0, v: 0, sh: 0,
@@ -270,7 +309,8 @@ export function createGelatina(host: HTMLElement, opts: GelatinaOptions, relatio
             letters: [], nom: null, home: null, cl: null, cur: null,
             el,
         } as Nota;
-    });
+    };
+    criarNotas();
 
     let W = 0, H = 0, CW = 0, CH = 0, PAD = 10;
     let clock = 0, last = 0, raf = 0, vivo = true;
@@ -278,8 +318,8 @@ export function createGelatina(host: HTMLElement, opts: GelatinaOptions, relatio
     let reforcoMaiuscula = 1;
 
     const refreshColors = () => {
-        state.forEach((s, i) => {
-            s.hue = hexToRgb(o.colors[i] || '#888888');
+        state.forEach(s => {
+            s.hue = hexToRgb(o.colors[s.nota] || '#888888');
             s.rest = mix(s.hue, GROUND, o.wash);
             s.live = s.hue;
         });
@@ -397,7 +437,7 @@ export function createGelatina(host: HTMLElement, opts: GelatinaOptions, relatio
         state.forEach((s, i) => {
             const r = seeded(9173 + i * 1277);
             const old = s.letters;
-            s.label = o.labels[i];
+            s.label = o.labels[s.nota];
             s.el.textContent = '';
             s.letters = Array.from(s.label).map((ch, k) => {
                 const comp = comporAcento(ch);
@@ -595,6 +635,31 @@ export function createGelatina(host: HTMLElement, opts: GelatinaOptions, relatio
         return grupos;
     }
 
+    // ---------- cópias sem colunas ----------
+    // Com as notas repetidas em sequência, uma linha de 7 (ou 14) palavras faz cada linha
+    // começar no Dó: as cópias de cada nota ficam empilhadas em colunas e a tela vira uma
+    // tabela, bem diferente das outras opções (em 2× a sequência escorrega de uma linha
+    // para a outra). A equipe pediu que todas ficassem parecidas, então esses arranjos são
+    // descartados. Se nenhum sobrar (não acontece com 2 a 6 cópias), vale a lista inteira.
+    function semColunas<T>(opcoes: T[], tamanhos: (x: T) => number[]): T[] {
+        const notas = o.labels.length;
+        const boas = opcoes.filter(x => tamanhos(x).every(t => t % notas !== 0));
+        return boas.length ? boas : opcoes;
+    }
+
+    // ---------- curva das linhas ----------
+    // Deslocamento vertical e giro de uma palavra cujo centro está em x, na linha li de
+    // altura lh. A onda depende de x na tela (comprimento CURVA_COMPR da área das notas),
+    // então palavras empilhadas em linhas vizinhas sobem e descem juntas.
+    function curvaEm(x: number, li: number, lh: number, AW: number, curva: number) {
+        if (!curva) return { dy: 0, rot: 0 };
+        const A = CURVA_ALT * curva * lh;
+        const k = (2 * Math.PI) / Math.max(1, AW * CURVA_COMPR);
+        const t = (x - CW / 2) * k + li * CURVA_FASE;
+        // seno: no centro da tela a curva passa pelo meio, subindo para a direita
+        return { dy: -A * Math.sin(t), rot: Math.atan(-A * k * Math.cos(t)) * CURVA_GIRO };
+    }
+
     // ---------- lugares fixos ----------
     function buildHomes() {
         for (const s of state) s.nom = cluster(s, 0, 0, true);
@@ -604,12 +669,13 @@ export function createGelatina(host: HTMLElement, opts: GelatinaOptions, relatio
         // Diferença de tamanho entre as notas: antes ia de 0,84 (Si) a 1,20 (Fá), e o Dó
         // saía bem maior que o Si. Agora é uma fração disso, ligada ao desalinhamento:
         // no máximo (100%) fica entre 0,94 e 1,07; em 0% todas têm o mesmo tamanho.
-        const sc = Q_SIZE.slice(0, n).map(q => 1 + (q - 1) * VAR_TAMANHO_NOTA * desal);
+        const sc = state.map((_, i) => Q_SIZE[i % Q_SIZE.length]).map(q => 1 + (q - 1) * VAR_TAMANHO_NOTA * desal);
         const wu = state.map((s, i) => sc[i] * (s.nom as Cluster).w / 100);
         const hu = state.map((s, i) => sc[i] * ((s.nom as Cluster).asc + (s.nom as Cluster).desc) / 100);
         // Espaço entre notas igual para todas (GAP_NOTA do tamanho da fonte). Antes variava
         // de nota para nota (Q_GAP) e umas quase encostavam nas vizinhas.
         const gapU = (i: number, j: number) => GAP_NOTA * (sc[i] + sc[j]) / 2;
+        const curva = clamp(o.curvaLinhas ?? 0, 0, CURVA_MAX);
 
         // a densidade define quanto da área disponível o conjunto ocupa
         const fill = 0.45 + 0.55 * clamp(o.density, 0.05, 1);
@@ -642,7 +708,10 @@ export function createGelatina(host: HTMLElement, opts: GelatinaOptions, relatio
             // 2 × DY_NOTA × maior Q_DY da altura da linha). Antes era 4,5% da altura da
             // linha, e o desalinhamento comia parte disso.
             const folgaDy = 2 * DY_NOTA * Math.max(...Q_DY.map(Math.abs)) * desal * (natural / L);
-            const gapY = f * GAP_NOTA + folgaDy;
+            // Com a curva, as linhas paralelas ainda se aproximam um pouco (fase deslocada e
+            // palavras tombadas): uma folga proporcional à curva evita que encostem.
+            const folgaCurva = CURVA_FOLGA * curva * (natural / L);
+            const gapY = f * GAP_NOTA + folgaDy + folgaCurva;
             const kv = Math.max(1e-3, (AH - (L - 1) * PAD) / (natural + gapY * (L - 1)));
             const u = Math.min(1, kv);
             return { L, lines, gapY, u };
@@ -653,7 +722,15 @@ export function createGelatina(host: HTMLElement, opts: GelatinaOptions, relatio
         // da medida das 29 fontes: em 16:9 o 4+3 perde só ~9% de tamanho para o melhor
         // arranjo; abaixo de 1,6 o 3+2+2 vence em quase todas; em pé, 2+2+2+1.
         const formato = AW / Math.max(1, AH);
-        const { lines, gapY, u } = arranjo(Math.min(n, formato >= 1.6 ? 2 : formato >= 1.05 ? 3 : 4));
+        // Com cópias (14, 21 ou 28 palavras), a regra fixa de 7 notas não serve: o motor testa
+        // de 1 linha até uma por palavra e fica com o arranjo de letras maiores, que é o que
+        // melhor ocupa a tela. Sem cópias, vale a regra fixa de sempre.
+        // Fora as linhas com múltiplo de 7 palavras (ver semColunas).
+        const escolhido = n <= o.labels.length
+            ? arranjo(Math.min(n, formato >= 1.6 ? 2 : formato >= 1.05 ? 3 : 4))
+            : semColunas(Array.from({ length: n }, (_, k) => arranjo(k + 1)), a => a.lines.map(l => l.b - l.a))
+                .reduce((m, a) => (a.lines[0].f * a.u > m.lines[0].f * m.u ? a : m));
+        const { lines, gapY, u } = escolhido;
 
         // Sobra de altura (quando nem encolher foi preciso) fica dividida acima e abaixo
         const alturaTotal = lines.reduce((t, l) => t + l.h * u, 0) + (lines.length - 1) * (gapY * u + PAD);
@@ -673,11 +750,14 @@ export function createGelatina(host: HTMLElement, opts: GelatinaOptions, relatio
                 const sy = sx;
                 const inkW = nom.w * sx;
                 const inkH = (nom.asc + nom.desc) * sy;
-                let wy = y + (lh - inkH) / 2 + Q_DY[i] * desal * lh * DY_NOTA;
+                let wy = y + (lh - inkH) / 2 + Q_DY[i % Q_DY.length] * desal * lh * DY_NOTA;
                 wy = clamp(wy, PAD, Math.max(PAD, CH - PAD - inkH));
                 const px = x + inkW / 2 - ccx, py = wy + inkH / 2 - ccy;
                 const rx = ccx + px * cos - py * sin, ry = ccy + px * sin + py * cos;
-                s.home = { cx: rx, cy: ry, sx, sy, rot: ang + Q_ROT[i] * desal, size: (inkW + inkH) / 2 };
+                // Curva das linhas: a palavra sobe ou desce conforme a onda no seu ponto da
+                // tela e gira acompanhando a subida, como uma fita (ver curvaEm).
+                const cv = curvaEm(rx, li, lh, AW, curva);
+                s.home = { cx: rx, cy: ry + cv.dy, sx, sy, rot: ang + Q_ROT[i % Q_ROT.length] * desal + cv.rot, size: (inkW + inkH) / 2 };
                 s.cur = null;
                 if (i < ln.b - 1) x += inkW + ln.f * u * gapU(i, i + 1) + PAD;
             }
@@ -695,28 +775,29 @@ export function createGelatina(host: HTMLElement, opts: GelatinaOptions, relatio
         for (const s of state) s.nom = cluster(s, 0, 0, true);
         const n = state.length;
         const desal = o.randomness;
-        const sc = Q_SIZE.slice(0, n).map(q => 1 + (q - 1) * ANG_SIZE_VAR);
+        const sc = state.map((_, i) => Q_SIZE[i % Q_SIZE.length]).map(q => 1 + (q - 1) * ANG_SIZE_VAR);
 
         const fill = (0.45 + 0.55 * clamp(o.density, 0.05, 1)) * ANG_FILL;
         const AW = W * fill, AH = H * fill;
         const X0 = PAD + (W - AW) / 2, Y0 = PAD + (H - AH) / 2;
 
-        const L = CW >= CH * 0.9 ? 2 : (CW >= CH * 0.55 ? 3 : 4);
-        const groups: number[][] = [];
-        let start = 0;
-        for (let li = 0; li < L; li++) {
-            const cnt = Math.ceil((n - start) / (L - li));
-            groups.push([start, start + cnt]);
-            start += cnt;
-        }
-        const maxPer = Math.max(...groups.map(([a, b]) => b - a));
-        const cellW = AW / maxPer, cellH = AH / L;
-
-        let f = Infinity;
-        state.forEach((s, i) => {
-            const nm = s.nom as Cluster;
-            f = Math.min(f, cellW * ANG_CELL_W / Math.max(1, nm.w * sc[i]), cellH * ANG_CELL_H / Math.max(1, (nm.asc + nm.desc) * sc[i]));
-        });
+        // Grade com L linhas: células iguais e uma escala única, a da letra que mais limita
+        const grade = (L: number) => {
+            const groups = gruposFixos(n, L);
+            const maxPer = Math.max(...groups.map(([a, b]) => b - a));
+            const cellW = AW / maxPer, cellH = AH / L;
+            let f = Infinity;
+            state.forEach((s, i) => {
+                const nm = s.nom as Cluster;
+                f = Math.min(f, cellW * ANG_CELL_W / Math.max(1, nm.w * sc[i]), cellH * ANG_CELL_H / Math.max(1, (nm.asc + nm.desc) * sc[i]));
+            });
+            return { groups, cellW, cellH, f };
+        };
+        // Sem cópias, a regra fixa de sempre; com cópias, a grade de letras maiores
+        const { groups, cellW, cellH, f } = n <= o.labels.length
+            ? grade(CW >= CH * 0.9 ? 2 : (CW >= CH * 0.55 ? 3 : 4))
+            : semColunas(Array.from({ length: n }, (_, k) => grade(k + 1)), g => g.groups.map(([a, b]) => b - a))
+                .reduce((m, g) => (g.f > m.f ? g : m));
 
         groups.forEach(([a, b], li) => {
             const cnt = b - a;
@@ -728,21 +809,117 @@ export function createGelatina(host: HTMLElement, opts: GelatinaOptions, relatio
                 const nm = s.nom as Cluster;
                 const sx = f * sc[i], sy = sx;
                 const inkW = nm.w * sx, inkH = (nm.asc + nm.desc) * sy;
-                const cx = x0 + cellW * (i - a + 0.5) + Q_GAP[i] * desal * cellW * 0.6;
-                const cy = cy0 + Q_DY[i] * desal * cellH * 0.35;
-                s.home = { cx, cy, sx, sy, rot: ang + Q_ROT[i] * desal * 1.5, size: (inkW + inkH) / 2 };
+                const cx = x0 + cellW * (i - a + 0.5) + Q_GAP[i % Q_GAP.length] * desal * cellW * 0.6;
+                const cy = cy0 + Q_DY[i % Q_DY.length] * desal * cellH * 0.35;
+                // Curva das linhas também no anglicano; a célula já tem folga de sobra (ANG_CELL_H)
+                const cv = curvaEm(cx, li, inkH, AW, clamp(o.curvaLinhas ?? 0, 0, CURVA_MAX));
+                s.home = { cx, cy: cy + cv.dy, sx, sy, rot: ang + Q_ROT[i % Q_ROT.length] * desal * 1.5 + cv.rot, size: (inkW + inkH) / 2 };
                 s.cur = null;
             }
         });
     }
 
-    const homes = () => (isCompact() ? buildHomesCompact() : buildHomes());
+    const homes = () => {
+        if (isCompact()) buildHomesCompact(); else buildHomes();
+        for (const s of state) {
+            const h = s.home;
+            if (h) { h.cx0 = h.cx; h.cy0 = h.cy; h.sx0 = h.sx; h.sy0 = h.sy; h.size0 = h.size; }
+        }
+        encaixar();
+    };
+
+    // Inclinação da nota i (deslizante "Inclinação das notas"), em radianos. O sinal é
+    // invertido porque, na tela, rotação positiva é no sentido horário; assim +2° faz a
+    // palavra subir para a direita, como o ângulo que se aprende na escola.
+    const inclinacaoDe = (i: number) => {
+        const graus = o.anguloGraus ?? 0;
+        if (!graus) return 0;
+        const fator = o.anguloIndividual ? FATOR_INCLINACAO[i % FATOR_INCLINACAO.length] : 1;
+        return (-graus * Math.PI / 180) * fator;
+    };
+
+    // ---------- encaixe: nada sobreposto, nada para fora ----------
+    // O arranjo põe as palavras em linhas sem contar o giro (inclinação, curva,
+    // desalinhamento). Com giros fortes e fontes largas (Bungee a 15°, curva em 200%...),
+    // a caixa girada de uma palavra invadia a da vizinha ou passava da margem, e o
+    // confinamento do quadro só a empurrava para dentro, por cima de outra. Aqui, com as
+    // notas em repouso, cada palavra vira um retângulo girado (com a mesma folga do
+    // confinamento), e o encaixe resolve em duas etapas, as duas por igual para todas:
+    //  1. Sobreposição: se algum par se cruza, as palavras encolhem em torno do próprio
+    //     centro até se separarem (os lugares ficam, as folgas entre elas crescem).
+    //  2. Margem: se alguma passa da margem, o conjunto inteiro (lugares e tamanhos)
+    //     se aproxima do centro da tela. Isso não cria sobreposição nova, porque é a
+    //     mesma figura em escala menor.
+    // Uma etapa só não bastava: encolher em torno do próprio centro não traz para dentro
+    // uma palavra com o centro perto da borda, e tudo ficava minúsculo. Vale para a tela
+    // e o telão.
+    function encaixar() {
+        const folga = o.effect ? 1.16 : 1.08;
+        const caixas = state.map((s, i) => {
+            const h = s.home, nm = s.nom;
+            if (!h || !nm || h.sx0 === undefined || h.sy0 === undefined || h.cx0 === undefined || h.cy0 === undefined) return null;
+            const a = h.rot + inclinacaoDe(i);
+            return {
+                h, cx: h.cx0, cy: h.cy0, c: Math.cos(a), s: Math.sin(a),
+                hw: nm.w * h.sx0 / 2 * folga, hh: (nm.asc + nm.desc) * h.sy0 / 2 * folga,
+            };
+        });
+        type Caixa = NonNullable<(typeof caixas)[number]>;
+        const lista = caixas.filter((c): c is Caixa => !!c);
+        // Raio da projeção de uma caixa num eixo (nx, ny)
+        const raio = (b: Caixa, k: number, nx: number, ny: number) =>
+            k * (b.hw * Math.abs(b.c * nx + b.s * ny) + b.hh * Math.abs(-b.s * nx + b.c * ny));
+        // Teorema do eixo separador: duas caixas giradas não se cruzam se existe um eixo
+        // (um dos lados de uma delas) em que as projeções ficam separadas
+        const cruzam = (A: Caixa, B: Caixa, k: number) => {
+            const dx = B.cx - A.cx, dy = B.cy - A.cy;
+            const eixos = [[A.c, A.s], [-A.s, A.c], [B.c, B.s], [-B.s, B.c]];
+            return eixos.every(([nx, ny]) => Math.abs(dx * nx + dy * ny) < raio(A, k, nx, ny) + raio(B, k, nx, ny));
+        };
+        // Maior valor em [piso, 1] que passa no teste (busca binária; o teste é monótono)
+        const maior = (ok: (k: number) => boolean, piso: number) => {
+            if (ok(1)) return 1;
+            let lo = piso, hi = 1;
+            for (let it = 0; it < 16; it++) {
+                const m = (lo + hi) / 2;
+                if (ok(m)) lo = m; else hi = m;
+            }
+            return lo;
+        };
+        // 1. encolhimento de cada palavra até nenhum par se cruzar
+        const separadas = (k: number) => {
+            for (let p = 0; p < lista.length; p++)
+                for (let q = p + 1; q < lista.length; q++)
+                    if (cruzam(lista[p], lista[q], k)) return false;
+            return true;
+        };
+        const kp = maior(separadas, 0.3);
+        // 2. aproximação do conjunto ao centro da tela até tudo caber na margem
+        const mx = CW / 2, my = CH / 2;
+        const dentro = (z: number) => {
+            for (const b of lista) {
+                const cx = mx + (b.cx - mx) * z, cy = my + (b.cy - my) * z;
+                const bw = raio(b, kp * z, 1, 0), bh = raio(b, kp * z, 0, 1);
+                if (cx - bw < PAD || cx + bw > CW - PAD || cy - bh < PAD || cy + bh > CH - PAD) return false;
+            }
+            return true;
+        };
+        const z = maior(dentro, 0.2);
+        for (const b of lista) {
+            const h = b.h;
+            h.cx = mx + (b.cx - mx) * z;
+            h.cy = my + (b.cy - my) * z;
+            h.sx = (h.sx0 as number) * kp * z;
+            h.sy = (h.sy0 as number) * kp * z;
+            h.size = (h.size0 as number) * kp * z;
+        }
+    }
 
     function resize() {
         const rect = stage.getBoundingClientRect();
         CW = Math.max(1, Math.round(rect.width || stage.clientWidth || 1));
         CH = Math.max(1, Math.round(rect.height || stage.clientHeight || 1));
-        PAD = Math.max(4, Math.round(clamp(o.spacing, 0, 0.08) * Math.min(CW, CH)));
+        PAD = Math.max(4, Math.round(clamp(o.spacing, 0, ESPACAMENTO_MAX) * Math.min(CW, CH)));
         W = CW - PAD * 2;
         H = CH - PAD * 2;
         measure();
@@ -759,7 +936,7 @@ export function createGelatina(host: HTMLElement, opts: GelatinaOptions, relatio
                 const aj = clamp(state[j].a, 0, 1);
                 if (aj < 0.01) continue;
 
-                if (LINK[j] && LINK[j][i] && state[j].holds > 0) squeeze = Math.min(squeeze, SHRINK);
+                if (LINK[state[j].nota]?.[s.nota] && state[j].holds > 0) squeeze = Math.min(squeeze, SHRINK);
 
                 const gj = 1 + (o.grow - 1) * aj;
                 const hj = state[j].home, hi = s.home;
@@ -773,7 +950,9 @@ export function createGelatina(host: HTMLElement, opts: GelatinaOptions, relatio
                 dx += hx / d * push;
                 dy += hy / d * push;
             }
-            const cap = 0.10 * Math.min(CW, CH);
+            // Limite do empurrão: 10% da tela até crescimento 3×; acima disso (até 4×) cresce
+            // junto, para as vizinhas conseguirem abrir espaço para a nota bem maior.
+            const cap = 0.10 * Math.min(CW, CH) * Math.max(1, (o.grow - 1) / 2);
             const dd = Math.hypot(dx, dy);
             if (dd > cap) { dx = dx / dd * cap; dy = dy / dd * cap; }
             s.dx = dx; s.dy = dy;
@@ -893,8 +1072,6 @@ export function createGelatina(host: HTMLElement, opts: GelatinaOptions, relatio
         // Inclinação de todas as notas (deslizante "Inclinação das notas"), em radianos.
         // O sinal é invertido porque, na tela, rotação positiva é no sentido horário; assim
         // +2° faz a palavra subir para a direita, como o ângulo que se aprende na escola.
-        const inclinacao = (-(o.anguloGraus ?? 0) * Math.PI) / 180;
-
         order.forEach((i, rank) => {
             const s = state[i], hm = s.home, cl = s.cl;
             if (!hm || !cl) return;
@@ -905,7 +1082,7 @@ export function createGelatina(host: HTMLElement, opts: GelatinaOptions, relatio
                 // refeito e a mudança no deslizante chega suave, pela mesma mola da rotação.
                 // O confinamento abaixo já considera a caixa girada, então nada sai da tela.
                 sx: hm.sx, sy: hm.sy,
-                rot: hm.rot + inclinacao * (o.anguloIndividual ? FATOR_INCLINACAO[i % FATOR_INCLINACAO.length] : 1),
+                rot: hm.rot + inclinacaoDe(i),
             };
             if (!s.cur) s.cur = { ...t };
             else {
@@ -998,9 +1175,12 @@ export function createGelatina(host: HTMLElement, opts: GelatinaOptions, relatio
             GROUND = hexToRgb(o.ground);
             INK = hexToRgb(o.ink);
             SHARP_COL = hexToRgb(o.sharpColor);
+            // Mudou o número de cópias: as palavras são refeitas (as notas seguradas soltam)
+            const mudouCopias = (antes.copias ?? 1) !== (o.copias ?? 1);
+            if (mudouCopias) criarNotas();
             buildLinks();
             refreshColors();
-            const mudouTexto = antes.fontSpec !== o.fontSpec || antes.family !== o.family
+            const mudouTexto = mudouCopias || antes.fontSpec !== o.fontSpec || antes.family !== o.family
                 || antes.acento?.familia !== o.acento?.familia
                 || (antes.axes ?? []).map(x => x.tag).join() !== (o.axes ?? []).map(x => x.tag).join()
                 || antes.labels.join('|') !== o.labels.join('|') || antes.effect !== o.effect
@@ -1008,29 +1188,38 @@ export function createGelatina(host: HTMLElement, opts: GelatinaOptions, relatio
             const mudouArranjo = mudouTexto
                 || antes.density !== o.density
                 || antes.spacing !== o.spacing
-                || antes.randomness !== o.randomness;
+                || antes.randomness !== o.randomness
+                || antes.curvaLinhas !== o.curvaLinhas;
             if (mudouTexto) { measure(); homes(); }
             else if (mudouArranjo) { resize(); }
+            // A inclinação não mexe nos lugares, mas muda o giro das caixas: refaz só o
+            // encaixe (a escala chega suave pela mola, sem pular)
+            else if ((antes.anguloGraus ?? 0) !== (o.anguloGraus ?? 0)
+                || !!antes.anguloIndividual !== !!o.anguloIndividual
+                || !!antes.effect !== !!o.effect) { encaixar(); }
         },
+        // idx é a nota da escala (0 = Dó): o toque vale para todas as cópias dela
         noteOn(idx, sharp, velocity) {
-            const s = state[idx];
-            if (!s) return;
-            if (s.holds === 0) s.hitAt = clock;
-            s.holds++;
-            s.vel = clamp(velocity / 127, 0.15, 1);
-            if (sharp) s.sharpHolds++;
-            if (!reduced) {
-                // o toque empurra as molas: as letras achatam e a palavra dá um pulo
-                s.letters.forEach(l => { l.axv += KICK * s.vel; });
-                s.gv += WORD_KICK * s.vel * Math.max(0.1, o.grow - 1);
+            for (const s of state) {
+                if (s.nota !== idx) continue;
+                if (s.holds === 0) s.hitAt = clock;
+                s.holds++;
+                s.vel = clamp(velocity / 127, 0.15, 1);
+                if (sharp) s.sharpHolds++;
+                if (!reduced) {
+                    // o toque empurra as molas: as letras achatam e a palavra dá um pulo
+                    s.letters.forEach(l => { l.axv += KICK * s.vel; });
+                    s.gv += WORD_KICK * s.vel * Math.max(0.1, o.grow - 1);
+                }
             }
         },
         noteOff(idx, sharp) {
-            const s = state[idx];
-            if (!s) return;
-            s.holds = Math.max(0, s.holds - 1);
-            if (s.holds === 0) s.relAt = clock;
-            if (sharp) s.sharpHolds = Math.max(0, s.sharpHolds - 1);
+            for (const s of state) {
+                if (s.nota !== idx) continue;
+                s.holds = Math.max(0, s.holds - 1);
+                if (s.holds === 0) s.relAt = clock;
+                if (sharp) s.sharpHolds = Math.max(0, s.sharpHolds - 1);
+            }
         },
         allOff() {
             for (const s of state) {

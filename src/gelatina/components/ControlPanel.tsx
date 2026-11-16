@@ -3,16 +3,19 @@ import { AnguloModo, AppSettings, KnobValues, MidiDevice, NoteSystem } from '../
 import {
     AKAI_MPK_MINI_KNOBS, FONT_OPTIONS, KNOB_MAPPINGS, NOTE_NAME_SYSTEMS,
     fontOf, fontSpecOf, fontLacksAccents, FontOption,
-    SOMBRA_DIFUSAO_MAX, SOMBRA_DISTANCIA_MAX, THEMES, ANGULO_NOTAS_MAX,
+    SOMBRA_DIFUSAO_MAX, SOMBRA_DISTANCIA_MAX, THEMES, ANGULO_NOTAS_MAX, LIMITES,
 } from '../constants';
+import { COPIAS_MAX } from '../services/gelatinaEngine';
 import {
     BotaoProjecao, Campo, Deslizante, Dica, Gaveta, Interruptor, MapaTeclas,
     MedidorKnob, Secao, SeletorTema,
 } from '../../shared/ui/componentes';
 
 
-/** Todas as posições do deslizante de inclinação, de -8 a 8, escritas embaixo dele */
-const MARCAS_INCLINACAO = Array.from({ length: 2 * ANGULO_NOTAS_MAX + 1 }, (_, i) => i - ANGULO_NOTAS_MAX);
+/** Marcas do deslizante de inclinação, de 5 em 5 graus (-15, -10... 15). Com ±15 são 31
+ *  posições; escrever todas faria os números se encostarem. O deslizante segue travado
+ *  nos inteiros. */
+const MARCAS_INCLINACAO = Array.from({ length: 2 * ANGULO_NOTAS_MAX / 5 + 1 }, (_, i) => i * 5 - ANGULO_NOTAS_MAX);
 
 /** Categorias da lista de fontes: as fontes de sempre e as mutáveis */
 const GRUPOS_FONTES: { rotulo: string; filtro: (f: FontOption) => boolean }[] = [
@@ -302,25 +305,55 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
             <Secao titulo="Arranjo na tela">
                 <Deslizante
                     id="gel-densidade" rotulo="Densidade" valor={settings.noteDensity}
-                    min={0.3} max={1} passo={0.01}
+                    min={LIMITES.densidadeMin} max={LIMITES.densidadeMax} passo={0.01}
                     formato={v => `${Math.round(v * 100)}%`}
                     onChange={v => onSettingsChange({ noteDensity: v })}
                 />
                 <Deslizante
                     id="gel-espaco" rotulo="Espaçamento" valor={settings.noteSpacing}
-                    min={0} max={0.06} passo={0.002}
+                    min={0} max={LIMITES.espacamentoMax} passo={0.002}
                     formato={v => `${(v * 100).toFixed(1).replace('.', ',')}% da tela`}
                     onChange={v => onSettingsChange({ noteSpacing: v })}
                 />
                 <Deslizante
                     id="gel-desalinho" rotulo="Desalinhamento" valor={settings.noteRandomness}
-                    min={0} max={1} passo={0.02}
+                    min={0} max={LIMITES.desalinhamentoMax} passo={0.02}
                     formato={v => `${Math.round(v * 100)}%`}
                     onChange={v => onSettingsChange({ noteRandomness: v })}
                 />
-                {/* Inclinação: passo 1 trava o deslizante nos graus inteiros de -8 a 8. Começa
-                    no meio (0°), que é o arranjo de sempre. As marcas mostram só o número,
-                    porque com 17 posições o símbolo de grau faria uma encostar na outra. */}
+                {/* Curva das linhas: começa reta (0). Move e gira cada palavra inteira, sem
+                    mexer nas letras dela. */}
+                <Deslizante
+                    id="gel-curva-linhas" rotulo="Curva das linhas" valor={settings.curvaLinhas}
+                    min={0} max={LIMITES.curvaMax} passo={0.02}
+                    formato={v => v === 0 ? 'retas' : `${Math.round(v * 100)}%`}
+                    onChange={v => onSettingsChange({ curvaLinhas: v })}
+                />
+                {/* Cópias das notas: poucas opções, então seletor de posições como o da inclinação.
+                    Com 6 opções, o texto fica curto (2×) para caber na largura da gaveta. */}
+                <div>
+                    <span className="ui-rotulo">Notas na tela</span>
+                    <div className="ui-segmentado" role="group" aria-label="Quantas vezes cada nota aparece na tela">
+                        {Array.from({ length: COPIAS_MAX }, (_, k) => k + 1).map(c => (
+                            <button
+                                key={c}
+                                className={settings.copiasNotas === c ? 'ui-segmentado-opcao on' : 'ui-segmentado-opcao'}
+                                aria-pressed={settings.copiasNotas === c}
+                                onClick={() => onSettingsChange({ copiasNotas: c })}
+                            >
+                                {`${c}×`}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+                <Dica>
+                    Curva das linhas faz as notas seguirem uma onda pela tela; em 0 as linhas
+                    ficam retas. Em "Notas na tela", cada nota se repete e as palavras se
+                    distribuem para ocupar melhor a tela. Tocar uma nota anima todas as cópias dela.
+                </Dica>
+                {/* Inclinação: passo 1 trava o deslizante nos graus inteiros de -15 a 15. Começa
+                    no meio (0°), que é o arranjo de sempre. As marcas, de 5 em 5, mostram só
+                    o número, sem o símbolo de grau, para não se encostarem. */}
                 <Deslizante
                     id="gel-inclinacao" rotulo="Inclinação das notas" valor={settings.anguloNotas}
                     min={-ANGULO_NOTAS_MAX} max={ANGULO_NOTAS_MAX} passo={1}
@@ -347,7 +380,7 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
                 </div>
                 <Deslizante
                     id="gel-cresc" rotulo="Crescimento da nota" valor={settings.growAmount}
-                    min={1.2} max={3} passo={0.05}
+                    min={LIMITES.crescimentoMin} max={LIMITES.crescimentoMax} passo={0.05}
                     formato={v => `${v.toFixed(2).replace('.', ',')}×`}
                     onChange={v => onSettingsChange({ growAmount: v })}
                 />

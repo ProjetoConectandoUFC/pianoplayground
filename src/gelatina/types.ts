@@ -54,6 +54,11 @@ export interface AppSettings {
     /** Como a inclinação se aplica: 'todas' no mesmo ângulo, ou 'individual' (cada nota
      *  com a sua, alternando o lado, até o ângulo escolhido) */
     anguloModo: AnguloModo;
+    /** Curva das linhas: as notas seguem uma onda na tela em vez de uma linha reta
+     *  (0 a 1; 0 = retas, o padrão) */
+    curvaLinhas: number;
+    /** Quantas vezes as sete notas aparecem na tela (1 a 4; 1 = uma vez cada, o padrão) */
+    copiasNotas: number;
     /** Marca as preferências já ajustadas ao motor em texto (crescimento padrão 1,45) */
     motorTexto?: boolean;
     /** Marca que o tamanho inicial menor (densidade 0,8) já foi aplicado */
@@ -66,6 +71,8 @@ export interface AppSettings {
     coresIdentidadeV2?: boolean;
     /** Marca que a sombra configurável já foi aplicada uma vez (antes era fixa e sempre ligada) */
     sombraV1?: boolean;
+    /** Marca que a curva das linhas já voltou uma vez ao padrão reto (a primeira versão abria curvada) */
+    linhasRetasV1?: boolean;
 }
 
 export interface KnobValues {

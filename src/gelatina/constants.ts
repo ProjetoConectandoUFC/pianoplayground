@@ -281,11 +281,25 @@ export const KNOB_MAPPINGS: { [key: string]: string } = {
 /** Distância padrão da sombra, em fração da altura da letra: a mesma da sombra fixa de antes */
 export const SOMBRA_DISTANCIA_PADRAO = 0.013;
 /** Limites dos deslizantes da sombra (também usados ao ler o que ficou guardado) */
-export const SOMBRA_DISTANCIA_MAX = 0.08;
-export const SOMBRA_DIFUSAO_MAX = 0.1;
+// Ampliados em 16/11/2026 (antes 0,08 e 0,1) para sombras mais expressivas
+export const SOMBRA_DISTANCIA_MAX = 0.2;
+export const SOMBRA_DIFUSAO_MAX = 0.25;
 /** Limite da inclinação das notas, em graus para cada lado, travado em inteiros.
- *  Primeiro era ±2 (toque sutil); a equipe pediu até ±8 para um efeito mais visível. */
-export const ANGULO_NOTAS_MAX = 8;
+ *  Primeiro era ±2 (toque sutil); depois ±8; desde 16/11/2026, ±15 para mudanças mais expressivas. */
+export const ANGULO_NOTAS_MAX = 15;
+
+/** Extremos dos deslizantes do arranjo, usados pela gaveta, pelos knobs do MPK Mini e pelo
+ *  motor. Ampliados em 16/11/2026 para permitir mudanças mais expressivas; os padrões
+ *  (DEFAULT_SETTINGS) não mudaram. Entre parênteses, os limites anteriores. */
+export const LIMITES = {
+    densidadeMin: 0.1,       // (0,3) conjunto bem pequeno no meio da tela
+    densidadeMax: 1,         // (1) 100% já é a tela inteira
+    espacamentoMax: 0.12,    // (0,06) margem e folga entre notas, em fração da tela
+    desalinhamentoMax: 2,    // (1) 200%: dobra tamanho, altura e giro de cada nota
+    crescimentoMin: 1,       // (1,2) 1× = a nota tocada não cresce, só pula e acende
+    crescimentoMax: 4,       // (3)
+    curvaMax: 2,             // (1) onda com o dobro da altura
+};
 
 export const DEFAULT_SETTINGS: AppSettings = {
     fontKey: 'modak',
@@ -316,6 +330,11 @@ export const DEFAULT_SETTINGS: AppSettings = {
     anguloNotas: 0,
     // Todas inclinam igual; 'individual' dá a cada nota a sua inclinação
     anguloModo: 'todas',
+    // Curva das linhas: começa reta (0); quem quiser, curva na gaveta
+    curvaLinhas: 0,
+    linhasRetasV1: true,
+    // Cópias das notas: cada nota aparece uma vez, como sempre
+    copiasNotas: 1,
 };
 
 /** Chave usada para lembrar as preferências entre sessões */

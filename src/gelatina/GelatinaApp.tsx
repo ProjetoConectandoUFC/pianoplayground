@@ -4,8 +4,9 @@ import { AppSettings, KnobValues, MidiDevice } from './types';
 import {
     AKAI_MPK_MINI_KNOBS, DEFAULT_SETTINGS, FONT_OPTIONS,
     NATURAL_BY_PITCH_CLASS, SHARP_BY_PITCH_CLASS, STORAGE_KEY, THEMES,
-    SOMBRA_DIFUSAO_MAX, SOMBRA_DISTANCIA_MAX, ANGULO_NOTAS_MAX,
+    SOMBRA_DIFUSAO_MAX, SOMBRA_DISTANCIA_MAX, ANGULO_NOTAS_MAX, LIMITES,
 } from './constants';
+import { COPIAS_MAX } from './services/gelatinaEngine';
 import { listenToMidiDevice, requestMidiAccess } from './services/midiService';
 import { ligarSom, soltar, soltarTudo, tocar } from './services/somService';
 import { ControlPanel } from './components/ControlPanel';
@@ -41,6 +42,10 @@ const carregarConfig = (): AppSettings => {
         const cru = localStorage.getItem(STORAGE_KEY);
         if (!cru) return DEFAULT_SETTINGS;
         const salvo = JSON.parse(cru);
+        // Espaço e onda nas letras foram testados e retirados no mesmo dia (16/11/2026):
+        // as chaves somem das preferências guardadas.
+        delete salvo.espacoLetras;
+        delete salvo.ondaLetras;
         return {
             ...DEFAULT_SETTINGS,
             ...salvo,
@@ -82,6 +87,13 @@ const carregarConfig = (): AppSettings => {
             // limitado e arredondado; ausente (preferências de antes) vira 0, sem inclinação.
             anguloNotas: Math.round(numeroEntre(salvo.anguloNotas, -ANGULO_NOTAS_MAX, ANGULO_NOTAS_MAX, DEFAULT_SETTINGS.anguloNotas)),
             anguloModo: salvo.anguloModo === 'individual' ? 'individual' : 'todas',
+            // Curva das linhas (0 a 1) e cópias das notas (inteiro de 1 a 4): fora da faixa
+            // é limitado; ausente vira o padrão (retas, uma cópia).
+            curvaLinhas: numeroEntre(salvo.curvaLinhas, 0, LIMITES.curvaMax, DEFAULT_SETTINGS.curvaLinhas),
+            copiasNotas: Math.round(numeroEntre(salvo.copiasNotas, 1, COPIAS_MAX, DEFAULT_SETTINGS.copiasNotas)),
+            // A primeira versão da curva abria curvada (50% e 75%); o padrão passou a ser reto.
+            // Quem guardou aquele valor volta às linhas retas, uma vez.
+            ...(salvo.linhasRetasV1 ? {} : { curvaLinhas: DEFAULT_SETTINGS.curvaLinhas, linhasRetasV1: true }),
             // Antes da sombra configurável, a sombra era fixa e sempre ligada. Quem vem
             // dessa versão começa com ela desligada, como o padrão novo, uma vez.
             ...(salvo.sombraV1 ? {} : { sombraAtiva: false, sombraV1: true }),
@@ -280,10 +292,12 @@ const GelatinaApp: React.FC = () => {
     const handleControlChange = useCallback((cc: number, value: number) => {
         setKnobValues(prev => ({ ...prev, [cc]: value }));
         const f = value / 127;
-        if (cc === AKAI_MPK_MINI_KNOBS.K1) setSettings(s => ({ ...s, growAmount: 1.2 + f * 1.8 }));
-        else if (cc === AKAI_MPK_MINI_KNOBS.K2) setSettings(s => ({ ...s, noteDensity: 0.3 + f * 0.7 }));
-        else if (cc === AKAI_MPK_MINI_KNOBS.K3) setSettings(s => ({ ...s, noteSpacing: f * 0.06 }));
-        else if (cc === AKAI_MPK_MINI_KNOBS.K4) setSettings(s => ({ ...s, noteRandomness: f }));
+        // Cada knob percorre a faixa inteira do deslizante correspondente (LIMITES)
+        const faixa = (min: number, max: number) => min + f * (max - min);
+        if (cc === AKAI_MPK_MINI_KNOBS.K1) setSettings(s => ({ ...s, growAmount: faixa(LIMITES.crescimentoMin, LIMITES.crescimentoMax) }));
+        else if (cc === AKAI_MPK_MINI_KNOBS.K2) setSettings(s => ({ ...s, noteDensity: faixa(LIMITES.densidadeMin, LIMITES.densidadeMax) }));
+        else if (cc === AKAI_MPK_MINI_KNOBS.K3) setSettings(s => ({ ...s, noteSpacing: faixa(0, LIMITES.espacamentoMax) }));
+        else if (cc === AKAI_MPK_MINI_KNOBS.K4) setSettings(s => ({ ...s, noteRandomness: faixa(0, LIMITES.desalinhamentoMax) }));
     }, []);
 
     useEffect(() => {
