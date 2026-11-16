@@ -217,6 +217,10 @@
   /* Sem o rodapé das mãos (retirado em 16/11/2026), o piano desce até perto do pé da
      tela; 7vh de folga (antes 2,6vh, com o rodapé abaixo) para ele não ficar colado. */
   padding: 0 16px 7vh;
+  /* Slider "Tamanho do piano" (--piano-tamanho, 0 a 1): a folga dos lados some junto,
+     para em 100% o piano encostar nas bordas da tela */
+  padding-left: calc(16px * (1 - var(--piano-tamanho, 0)));
+  padding-right: calc(16px * (1 - var(--piano-tamanho, 0)));
   display: flex;
   justify-content: center;
   /* O piano inclina para trás pela borda de baixo; o ponto de fuga fica lá em cima */
@@ -224,11 +228,16 @@
   perspective-origin: 50% 0%;
 }
 /* Até 1500px de largura (5 : 1); em janelas menores ocupa a largura toda.
-   A inclinação vem do slider (--inclinacao); em 0° fica chapado na tela. */
+   A inclinação vem do slider (--inclinacao); em 0° fica chapado na tela.
+   O slider "Tamanho do piano" (--piano-tamanho, 0 a 1) aumenta a largura: 0 é o tamanho
+   de sempre (o mínimo), 1 é a largura da tela inteira, com a borda de baixo (a mais larga,
+   já que o piano inclina para trás) encostando nos lados. As teclas são posicionadas em %,
+   então acompanham. No telão, 100vw é a largura da janela do telão. */
 .piano {
   position: relative;
   flex: none;
-  width: min(1500px, calc(100vw - 32px));
+  --piano-base: min(1500px, calc(100vw - 32px));
+  width: calc(var(--piano-base) + (100vw - var(--piano-base)) * var(--piano-tamanho, 0));
   aspect-ratio: 5 / 1;
   background: var(--moldura);
   border-radius: 8px;

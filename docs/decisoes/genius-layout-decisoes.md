@@ -95,3 +95,11 @@ Decisões aplicadas no código (pianoplayground/src):
 - Piano: sem o rodapé, a folga de baixo passou de 2,6vh para 7vh, para ele não descer até o pé da tela.
 - Conferido no navegador: 1488x927 (texto de 210 a 429 px, centro igual ao da faixa livre, 68 a 571; piano termina a 65 px do pé), 1280x720 e 1920x1080, com o piano inteiro na tela. tsc e build sem erros.
 - Telão: é espelho do mesmo markup com o mesmo CSS, então muda junto; não foi aberto lado a lado.
+
+## Tamanho do piano (16/11/2026)
+
+- Pedido da equipe: um deslizante para aumentar o piano. O mínimo é o tamanho de sempre e o máximo é o piano encostando nas bordas da tela.
+- Deslizante "Tamanho do piano" na gaveta > Aparência, de 0% a 100%, padrão 0% (o piano como era). Guardado em localStorage (`genius-tamanho-piano`).
+- Vai para o .genius-root como `--piano-tamanho` (0 a 1). No CSS, a largura do .piano vai de min(1500px, 100vw - 32px) (antes, fixo) até 100vw, e a folga de 16px dos lados do .piano-wrap some junto. As teclas são posicionadas em %, então acompanham. Como o piano inclina para trás pela borda de baixo, é essa borda (a mais larga) que encosta nos lados.
+- Telão: a variável fica no .genius-root, que o espelho copia; lá, 100vw é a largura da janela do telão. Não foi aberto lado a lado.
+- Conferido no navegador: em 1920x1080, 0% = piano de 210 a 1710 px (igual a antes), 50% = 105 a 1815, 100% = 0 a 1920. Em 1280x720 com o piano chapado (inclinação 0%) e 100%, o piano (414 a 670 px) não alcança o botão (termina em 335) e não há rolagem lateral.

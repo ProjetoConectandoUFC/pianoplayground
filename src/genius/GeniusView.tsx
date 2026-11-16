@@ -109,6 +109,14 @@ const GENIUS_MARKUP = `
         </div>
         <div>
           <div class="ui-linha">
+            <label class="ui-rotulo" for="setting-tamanho-piano">Tamanho do piano</label>
+            <span id="setting-tamanho-piano-valor" class="ui-valor">0%</span>
+          </div>
+          <input type="range" id="setting-tamanho-piano" class="ui-range" min="0" max="100" step="1" value="0" />
+          <p class="ui-dica">0% é o tamanho de sempre; 100% aumenta o piano até ele encostar nas bordas da tela.</p>
+        </div>
+        <div>
+          <div class="ui-linha">
             <span class="ui-rotulo">Cor da resposta do jogador</span>
             <span id="setting-cor-jogador-nome" class="ui-valor">Turquesa</span>
           </div>
@@ -201,6 +209,19 @@ const inclinacaoSalva = (): number => {
   return INCLINACAO_PADRAO;
 };
 
+// Tamanho do piano, em % (0 = tamanho de sempre, o mínimo; 100 = largura da tela inteira),
+// lembrado entre execuções. Pedido da equipe (16/11/2026) para o piano aparecer maior no telão.
+const CHAVE_TAMANHO_PIANO = 'genius-tamanho-piano';
+const tamanhoPianoSalvo = (): number => {
+  try {
+    const salvo = window.localStorage.getItem(CHAVE_TAMANHO_PIANO);
+    if (salvo !== null && salvo !== '' && Number.isFinite(Number(salvo))) {
+      return Math.min(100, Math.max(0, Number(salvo)));
+    }
+  } catch { /* ignora */ }
+  return 0;
+};
+
 // Cor da resposta do jogador: só as cores padrão do Piano Gelatina (as sete
 // cores de identidade do Design System, src/gelatina/constants.ts), sem roda
 // de cores. O padrão é o turquesa (o ciano da paleta). `tinta` é a cor da
@@ -289,6 +310,27 @@ const GeniusView: React.FC<Props> = ({ active }) => {
       slider.addEventListener('input', onInclinacao);
     }
 
+    // Slider "Tamanho do piano": vai para o .genius-root como --piano-tamanho (0 a 1); o
+    // CSS (.piano em genius.css) aumenta a largura. Por ser variável no .genius-root, o
+    // espelho do telão copia junto.
+    const sliderTamanho = document.getElementById('setting-tamanho-piano') as HTMLInputElement | null;
+    const valorTamanho = document.getElementById('setting-tamanho-piano-valor');
+    const aplicarTamanho = (pct: number) => {
+      const t = Math.min(100, Math.max(0, pct)) / 100;
+      raiz?.style.setProperty('--piano-tamanho', t.toFixed(3));
+      if (valorTamanho) valorTamanho.textContent = `${Math.round(t * 100)}%`;
+    };
+    const onTamanho = () => {
+      const pct = Number(sliderTamanho?.value ?? 0);
+      aplicarTamanho(pct);
+      try { window.localStorage.setItem(CHAVE_TAMANHO_PIANO, String(pct)); } catch { /* ignora */ }
+    };
+    if (sliderTamanho) {
+      sliderTamanho.value = String(tamanhoPianoSalvo());
+      aplicarTamanho(Number(sliderTamanho.value));
+      sliderTamanho.addEventListener('input', onTamanho);
+    }
+
     // Cor da resposta do jogador: amostras clicáveis. A cor vai para o
     // .genius-root como --player (tecla, partículas) e --player-tinta (letra).
     const grade = document.getElementById('setting-cor-jogador');
@@ -323,6 +365,7 @@ const GeniusView: React.FC<Props> = ({ active }) => {
     return () => {
       btnFechar?.removeEventListener('click', fechar);
       slider?.removeEventListener('input', onInclinacao);
+      sliderTamanho?.removeEventListener('input', onTamanho);
       grade?.removeEventListener('click', onCor);
     };
   }, []);
