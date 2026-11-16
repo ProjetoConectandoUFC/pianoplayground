@@ -73,6 +73,8 @@ export interface AppSettings {
     sombraV1?: boolean;
     /** Marca que a curva das linhas já voltou uma vez ao padrão reto (a primeira versão abria curvada) */
     linhasRetasV1?: boolean;
+    /** Marca que a densidade já foi uma vez para o padrão novo (100%) */
+    densidadeCheiaV1?: boolean;
 }
 
 export interface KnobValues {

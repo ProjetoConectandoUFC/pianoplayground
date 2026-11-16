@@ -167,6 +167,7 @@ const CURVA_COMPR = 1.0;  // comprimento de uma onda inteira, em larguras da ár
 const CURVA_FASE = 0.7;   // deslocamento da fase de uma linha para a seguinte, em radianos
 const CURVA_GIRO = 0.85;  // quanto a palavra acompanha a subida da curva (1 = toda)
 const CURVA_FOLGA = 0.35; // folga extra entre linhas com 100%, em fração da altura da linha
+const ESPALHAR_MAX = 1.3; // quanto o encaixe pode afastar as palavras na largura (ver encaixar)
 // Cópias das notas: no máximo 6 vezes as sete (42 palavras). Começou em 4; ampliado para
 // mudanças mais expressivas, ainda legível no telão em 16:9.
 export const COPIAS_MAX = 6;
@@ -726,12 +727,17 @@ export function createGelatina(host: HTMLElement, opts: GelatinaOptions, relatio
         // de 1 linha até uma por palavra e fica com o arranjo de letras maiores, que é o que
         // melhor ocupa a tela. Sem cópias, vale a regra fixa de sempre.
         // Fora as linhas com múltiplo de 7 palavras (ver semColunas).
-        const escolhido = n <= o.labels.length
-            ? arranjo(Math.min(n, formato >= 1.6 ? 2 : formato >= 1.05 ? 3 : 4))
-            : semColunas(Array.from({ length: n }, (_, k) => arranjo(k + 1)), a => a.lines.map(l => l.b - l.a))
-                .reduce((m, a) => (a.lines[0].f * a.u > m.lines[0].f * m.u ? a : m));
-        const { lines, gapY, u } = escolhido;
+        // Com cópias, cada candidato é comparado já depois do encaixe (ver melhorDepoisDoEncaixe):
+        // a inclinação e a curva fazem um arranjo de muitas linhas estourar na altura e
+        // encolher, deixando faixas vazias dos lados.
+        if (n <= o.labels.length) {
+            posicionar(arranjo(Math.min(n, formato >= 1.6 ? 2 : formato >= 1.05 ? 3 : 4)));
+        } else {
+            const candidatos = semColunas(Array.from({ length: n }, (_, k) => arranjo(k + 1)), a => a.lines.map(l => l.b - l.a));
+            melhorDepoisDoEncaixe(candidatos, a => a.lines[0].f * a.u, posicionar);
+        }
 
+        function posicionar({ lines, gapY, u }: ReturnType<typeof arranjo>) {
         // Sobra de altura (quando nem encolher foi preciso) fica dividida acima e abaixo
         const alturaTotal = lines.reduce((t, l) => t + l.h * u, 0) + (lines.length - 1) * (gapY * u + PAD);
         let y = Y0 + Math.max(0, (AH - alturaTotal) / 2);
@@ -763,6 +769,32 @@ export function createGelatina(host: HTMLElement, opts: GelatinaOptions, relatio
             }
             y += lh + gapY * u + PAD;
         });
+        }
+    }
+
+    // Guarda o lugar calculado pelo arranjo (antes do encaixe), de onde o encaixe parte
+    function fixarBase() {
+        for (const s of state) {
+            const h = s.home;
+            if (h) { h.cx0 = h.cx; h.cy0 = h.cy; h.sx0 = h.sx; h.sy0 = h.sy; h.size0 = h.size; }
+        }
+    }
+
+    // Com cópias, entre os arranjos possíveis (número de linhas), fica o que dá letras maiores
+    // depois do encaixe, e não antes: a escala do arranjo não sabe da inclinação nem da curva.
+    // Os candidatos muito piores antes do encaixe nem são testados (o encaixe só encolhe).
+    function melhorDepoisDoEncaixe<T>(candidatos: T[], escalaAntes: (c: T) => number, posicionar: (c: T) => void) {
+        const ordenados = [...candidatos].sort((a, b) => escalaAntes(b) - escalaAntes(a));
+        let melhor = ordenados[0], melhorEscala = -1;
+        for (const c of ordenados) {
+            if (escalaAntes(c) <= melhorEscala) break;
+            posicionar(c);
+            fixarBase();
+            const r = encaixar();
+            const escala = escalaAntes(c) * r;
+            if (escala > melhorEscala) { melhorEscala = escala; melhor = c; }
+        }
+        posicionar(melhor);
     }
 
     const isCompact = () => o.noteSystem === 'anglican';
@@ -794,11 +826,13 @@ export function createGelatina(host: HTMLElement, opts: GelatinaOptions, relatio
             return { groups, cellW, cellH, f };
         };
         // Sem cópias, a regra fixa de sempre; com cópias, a grade de letras maiores
-        const { groups, cellW, cellH, f } = n <= o.labels.length
-            ? grade(CW >= CH * 0.9 ? 2 : (CW >= CH * 0.55 ? 3 : 4))
-            : semColunas(Array.from({ length: n }, (_, k) => grade(k + 1)), g => g.groups.map(([a, b]) => b - a))
-                .reduce((m, g) => (g.f > m.f ? g : m));
+        // Com cópias, a grade de letras maiores depois do encaixe (como no latino)
+        if (n <= o.labels.length) posicionar(grade(CW >= CH * 0.9 ? 2 : (CW >= CH * 0.55 ? 3 : 4)));
+        else melhorDepoisDoEncaixe(
+            semColunas(Array.from({ length: n }, (_, k) => grade(k + 1)), g => g.groups.map(([a, b]) => b - a)),
+            g => g.f, posicionar);
 
+        function posicionar({ groups, cellW, cellH, f }: ReturnType<typeof grade>) {
         groups.forEach(([a, b], li) => {
             const cnt = b - a;
             const x0 = X0 + (AW - cellW * cnt) / 2;
@@ -817,14 +851,12 @@ export function createGelatina(host: HTMLElement, opts: GelatinaOptions, relatio
                 s.cur = null;
             }
         });
+        }
     }
 
     const homes = () => {
         if (isCompact()) buildHomesCompact(); else buildHomes();
-        for (const s of state) {
-            const h = s.home;
-            if (h) { h.cx0 = h.cx; h.cy0 = h.cy; h.sx0 = h.sx; h.sy0 = h.sy; h.size0 = h.size; }
-        }
+        fixarBase();
         encaixar();
     };
 
@@ -838,22 +870,29 @@ export function createGelatina(host: HTMLElement, opts: GelatinaOptions, relatio
         return (-graus * Math.PI / 180) * fator;
     };
 
-    // ---------- encaixe: nada sobreposto, nada para fora ----------
+    // ---------- encaixe: nada sobreposto, nada para fora, tela bem ocupada ----------
     // O arranjo põe as palavras em linhas sem contar o giro (inclinação, curva,
     // desalinhamento). Com giros fortes e fontes largas (Bungee a 15°, curva em 200%...),
     // a caixa girada de uma palavra invadia a da vizinha ou passava da margem, e o
     // confinamento do quadro só a empurrava para dentro, por cima de outra. Aqui, com as
     // notas em repouso, cada palavra vira um retângulo girado (com a mesma folga do
-    // confinamento), e o encaixe resolve em duas etapas, as duas por igual para todas:
-    //  1. Sobreposição: se algum par se cruza, as palavras encolhem em torno do próprio
-    //     centro até se separarem (os lugares ficam, as folgas entre elas crescem).
-    //  2. Margem: se alguma passa da margem, o conjunto inteiro (lugares e tamanhos)
-    //     se aproxima do centro da tela. Isso não cria sobreposição nova, porque é a
-    //     mesma figura em escala menor.
-    // Uma etapa só não bastava: encolher em torno do próprio centro não traz para dentro
-    // uma palavra com o centro perto da borda, e tudo ficava minúsculo. Vale para a tela
-    // e o telão.
-    function encaixar() {
+    // confinamento), e o encaixe procura o maior tamanho de palavra (s, igual para todas)
+    // em que nada se cruza nem passa da margem. Para cada s, os lugares podem se afastar
+    // do centro da tela ou se aproximar dele, na largura (zx) e na altura (zy) em separado.
+    //
+    // Primeira versão (16/11/2026): as palavras encolhiam em torno do próprio centro até
+    // se separarem, e depois o conjunto inteiro se aproximava do centro, com uma escala só
+    // para largura e altura. Funcionava, mas deixava espaços em branco nos testes: quando só
+    // a altura estourava (curva e inclinação somam altura às linhas), a largura encolhia
+    // junto; e quando duas palavras se cruzavam, todas encolhiam, mesmo com espaço livre
+    // para afastá-las. Agora, antes de encolher, o encaixe afasta as palavras até a borda
+    // da área da densidade (no máximo ESPALHAR_MAX vezes, para a linha não virar palavras
+    // soltas), e só encolhe o que ainda faltar.
+    //
+    // Se o arranjo já cabe sem cruzamentos, nada muda: o padrão fica exatamente como era.
+    // Devolve o tamanho final das palavras em relação ao arranjo (1 = sem encolher).
+    // Vale para a tela e o telão.
+    function encaixar(): number {
         const folga = o.effect ? 1.16 : 1.08;
         const caixas = state.map((s, i) => {
             const h = s.home, nm = s.nom;
@@ -866,53 +905,103 @@ export function createGelatina(host: HTMLElement, opts: GelatinaOptions, relatio
         });
         type Caixa = NonNullable<(typeof caixas)[number]>;
         const lista = caixas.filter((c): c is Caixa => !!c);
-        // Raio da projeção de uma caixa num eixo (nx, ny)
+        // Centro de onde os lugares se afastam ou se aproximam; vai sempre para o centro da
+        // tela. Começa no próprio centro da tela (arranjo como foi montado).
+        let mx = CW / 2, my = CH / 2;
+        const tx = CW / 2, ty = CH / 2;
+        // Raio da projeção de uma caixa num eixo (nx, ny), no tamanho k
         const raio = (b: Caixa, k: number, nx: number, ny: number) =>
             k * (b.hw * Math.abs(b.c * nx + b.s * ny) + b.hh * Math.abs(-b.s * nx + b.c * ny));
         // Teorema do eixo separador: duas caixas giradas não se cruzam se existe um eixo
-        // (um dos lados de uma delas) em que as projeções ficam separadas
-        const cruzam = (A: Caixa, B: Caixa, k: number) => {
-            const dx = B.cx - A.cx, dy = B.cy - A.cy;
+        // (um dos lados de uma delas) em que as projeções ficam separadas. zx e zy levam os
+        // centros para longe (>1) ou para perto (<1) do centro da tela.
+        const cruzam = (A: Caixa, B: Caixa, k: number, zx: number, zy: number) => {
+            const dx = (B.cx - A.cx) * zx, dy = (B.cy - A.cy) * zy;
             const eixos = [[A.c, A.s], [-A.s, A.c], [B.c, B.s], [-B.s, B.c]];
             return eixos.every(([nx, ny]) => Math.abs(dx * nx + dy * ny) < raio(A, k, nx, ny) + raio(B, k, nx, ny));
         };
-        // Maior valor em [piso, 1] que passa no teste (busca binária; o teste é monótono)
-        const maior = (ok: (k: number) => boolean, piso: number) => {
-            if (ok(1)) return 1;
-            let lo = piso, hi = 1;
+        const separadas = (k: number, zx: number, zy: number) => {
+            for (let p = 0; p < lista.length; p++)
+                for (let q = p + 1; q < lista.length; q++)
+                    if (cruzam(lista[p], lista[q], k, zx, zy)) return false;
+            return true;
+        };
+        // Todas as palavras entre ini e fim no eixo (0 = largura, 1 = altura)?
+        const cabe = (k: number, z: number, eixo: 0 | 1, ini: number, fim: number) => {
+            for (const b of lista) {
+                const c = eixo ? ty + (b.cy - my) * z : tx + (b.cx - mx) * z;
+                const r = eixo ? raio(b, k, 0, 1) : raio(b, k, 1, 0);
+                if (c - r < ini || c + r > fim) return false;
+            }
+            return true;
+        };
+        // Maior valor em [lo, hi] que passa no teste (busca binária; o teste é monótono).
+        // Se nem lo passa, devolve lo.
+        const maior = (ok: (v: number) => boolean, lo: number, hi: number) => {
+            if (ok(hi)) return hi;
             for (let it = 0; it < 16; it++) {
                 const m = (lo + hi) / 2;
                 if (ok(m)) lo = m; else hi = m;
             }
             return lo;
         };
-        // 1. encolhimento de cada palavra até nenhum par se cruzar
-        const separadas = (k: number) => {
-            for (let p = 0; p < lista.length; p++)
-                for (let q = p + 1; q < lista.length; q++)
-                    if (cruzam(lista[p], lista[q], k)) return false;
-            return true;
+        // Área da densidade (onde o arranjo foi montado): é até ela que as palavras podem
+        // se afastar. Aproximar só vai até a margem (PAD), como o confinamento.
+        const fill = (0.45 + 0.55 * clamp(o.density, 0.05, 1)) * (isCompact() ? ANG_FILL : 1);
+        const areaX = PAD + W * (1 - fill) / 2, areaY = PAD + H * (1 - fill) / 2;
+        // Quanto os lugares podem se afastar (ou precisam se aproximar) num eixo, com
+        // palavras do tamanho k
+        const afastamento = (k: number, eixo: 0 | 1) => {
+            const ini = eixo ? areaY : areaX, fim = (eixo ? CH : CW) - ini;
+            if (cabe(k, 1, eixo, ini, fim)) return maior(z => cabe(k, z, eixo, ini, fim), 1, ESPALHAR_MAX);
+            return maior(z => cabe(k, z, eixo, PAD, (eixo ? CH : CW) - PAD), 0, 1);
         };
-        const kp = maior(separadas, 0.3);
-        // 2. aproximação do conjunto ao centro da tela até tudo caber na margem
-        const mx = CW / 2, my = CH / 2;
-        const dentro = (z: number) => {
+        // Para um tamanho s, tenta o afastamento máximo nas duas direções; se assim alguma
+        // palavra encostar em outra (linhas tortas que se aproximam quando só a largura
+        // abre), tenta o mesmo afastamento nas duas
+        const tentar = (s: number) => {
+            const zx = afastamento(s, 0), zy = afastamento(s, 1);
+            const dentro = cabe(s, zx, 0, PAD, CW - PAD) && cabe(s, zy, 1, PAD, CH - PAD);
+            if (!dentro) return null;
+            if (separadas(s, zx, zy)) return { s, zx, zy };
+            const z = Math.min(zx, zy);
+            if (separadas(s, z, z)) return { s, zx: z, zy: z };
+            return null;
+        };
+
+        let r = cabe(1, 1, 0, PAD, CW - PAD) && cabe(1, 1, 1, PAD, CH - PAD) && separadas(1, 1, 1)
+            ? { s: 1, zx: 1, zy: 1 }
+            : null;
+        if (!r) {
+            // O encaixe vai agir: o conjunto passa a ser centralizado na tela. A curva e o
+            // desalinhamento podem deixá-lo torto para um lado (em 200%, as primeiras notas
+            // descem à esquerda e as últimas sobem à direita), e afastar a partir do centro da
+            // tela deixaria o outro lado vazio.
+            let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
             for (const b of lista) {
-                const cx = mx + (b.cx - mx) * z, cy = my + (b.cy - my) * z;
-                const bw = raio(b, kp * z, 1, 0), bh = raio(b, kp * z, 0, 1);
-                if (cx - bw < PAD || cx + bw > CW - PAD || cy - bh < PAD || cy + bh > CH - PAD) return false;
+                const rx = raio(b, 1, 1, 0), ry = raio(b, 1, 0, 1);
+                x0 = Math.min(x0, b.cx - rx); x1 = Math.max(x1, b.cx + rx);
+                y0 = Math.min(y0, b.cy - ry); y1 = Math.max(y1, b.cy + ry);
             }
-            return true;
-        };
-        const z = maior(dentro, 0.2);
+            if (lista.length) { mx = (x0 + x1) / 2; my = (y0 + y1) / 2; }
+            const s = maior(v => !!tentar(v), 0.15, 1);
+            r = tentar(s);
+        }
+        // Garantia: se a busca não achar um encaixe válido, o conjunto inteiro encolhe por
+        // igual em direção ao centro até caber (sem testar cruzamentos)
+        if (!r) {
+            const z = maior(v => cabe(v, v, 0, PAD, CW - PAD) && cabe(v, v, 1, PAD, CH - PAD), 0.15, 1);
+            r = { s: z, zx: z, zy: z };
+        }
         for (const b of lista) {
             const h = b.h;
-            h.cx = mx + (b.cx - mx) * z;
-            h.cy = my + (b.cy - my) * z;
-            h.sx = (h.sx0 as number) * kp * z;
-            h.sy = (h.sy0 as number) * kp * z;
-            h.size = (h.size0 as number) * kp * z;
+            h.cx = tx + (b.cx - mx) * r.zx;
+            h.cy = ty + (b.cy - my) * r.zy;
+            h.sx = (h.sx0 as number) * r.s;
+            h.sy = (h.sy0 as number) * r.s;
+            h.size = (h.size0 as number) * r.s;
         }
+        return r.s;
     }
 
     function resize() {

@@ -94,6 +94,9 @@ const carregarConfig = (): AppSettings => {
             // A primeira versão da curva abria curvada (50% e 75%); o padrão passou a ser reto.
             // Quem guardou aquele valor volta às linhas retas, uma vez.
             ...(salvo.linhasRetasV1 ? {} : { curvaLinhas: DEFAULT_SETTINGS.curvaLinhas, linhasRetasV1: true }),
+            // O padrão da densidade passou de 80% para 100% (notas ocupando a área toda).
+            // Quem guardou o valor anterior vai para o novo, uma vez; depois o deslizante manda.
+            ...(salvo.densidadeCheiaV1 ? {} : { noteDensity: DEFAULT_SETTINGS.noteDensity, densidadeCheiaV1: true }),
             // Antes da sombra configurável, a sombra era fixa e sempre ligada. Quem vem
             // dessa versão começa com ela desligada, como o padrão novo, uma vez.
             ...(salvo.sombraV1 ? {} : { sombraAtiva: false, sombraV1: true }),

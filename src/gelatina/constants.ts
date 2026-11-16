@@ -307,7 +307,8 @@ export const DEFAULT_SETTINGS: AppSettings = {
     noteSystem: 'latin',
     noteColors: NOTE_HIGHLIGHT_COLORS,
     sharpColor: BRAND.tinta,
-    noteDensity: 0.8,
+    // Densidade 100% (as notas ocupam a área toda) desde 16/11/2026; antes 0,8
+    noteDensity: 1,
     noteSpacing: 0.02,
     noteRandomness: 0.8,
     growAmount: 1.45,
@@ -333,6 +334,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
     // Curva das linhas: começa reta (0); quem quiser, curva na gaveta
     curvaLinhas: 0,
     linhasRetasV1: true,
+    densidadeCheiaV1: true,
     // Cópias das notas: cada nota aparece uma vez, como sempre
     copiasNotas: 1,
 };

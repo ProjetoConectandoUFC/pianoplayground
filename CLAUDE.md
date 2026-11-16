@@ -36,10 +36,10 @@ Repositório: github.com/ProjetoConectandoUFC/pianoplayground (branch de trabalh
 
 Leia antes de mexer em cada jogo:
 
-- `docs/decisoes/genius-layout-decisoes.md`: Genius (tela, modos fácil e desafio, tomate, telão), laços e cores dos pianos.
+- `docs/decisoes/genius-layout-decisoes.md`: Genius (tela, modos fácil e desafio, tomate, telão, tamanho do piano), laços e cores dos pianos.
 - `docs/decisoes/gelatina-fontes-decisoes.md`: fontes do Gelatina.
 - `docs/decisoes/gelatina-sombra-decisoes.md`: sombra das letras do Gelatina (opcional, desligada por padrão).
 - `docs/decisoes/gelatina-repouso-sem-distorcao.md`: letras do Gelatina sem distorção em repouso (escala igual na largura e na altura).
 - `docs/decisoes/gelatina-maiuscula-e-tamanho-das-notas.md`: maiúscula inicial reforçada por fonte, tamanho equilibrado entre as notas, divisão em linhas fixa pelo formato da tela, espaço entre notas padronizado, espaçamento natural entre letras e as fontes só de maiúsculas.
 - `docs/decisoes/gelatina-inclinacao-das-notas.md`: inclinação das notas (-15° a 15° desde 16/11, travada em inteiros; todas iguais ou cada nota com a sua).
-- `docs/decisoes/gelatina-expressao-do-arranjo.md`: curva das linhas (padrão reto), notas repetidas pela tela (1 a 6 vezes) e extremos ampliados dos ajustes (LIMITES). A palavra de cada nota é um bloco só: mexer nas letras uma a uma foi testado e rejeitado.
+- `docs/decisoes/gelatina-expressao-do-arranjo.md`: curva das linhas (padrão reto), notas repetidas pela tela (1 a 6 vezes) e extremos ampliados dos ajustes (LIMITES), o encaixe sem sobreposição que afasta antes de encolher, para preencher a tela, e a densidade padrão em 100%. A palavra de cada nota é um bloco só: mexer nas letras uma a uma foi testado e rejeitado.

@@ -109,3 +109,35 @@ expressivo, com os parâmetros ajustáveis.
 - Limite: vale para as notas paradas. Ao tocar, a nota que cresce ainda pode passar por
   cima das vizinhas (fica na frente), como sempre foi, principalmente com crescimento alto
   e muitas cópias.
+
+## Encaixe que preenche a tela (16/11/2026)
+- Problema: nos testes, o encaixe deixava espaços em branco. Ele encolhia tudo por igual
+  (lugares e tamanhos, largura e altura juntas), então quando só a altura estourava a
+  largura encolhia junto e sobravam faixas dos lados. E quando um único par de palavras se
+  cruzava, todas encolhiam, mesmo com espaço livre para afastá-las. Exemplo: em 1183x905,
+  Modak com 4×, curva 200%, desalinhamento 194% e -10° em "Cada nota", as notas ocupavam
+  só 66% da largura.
+- Correção (`encaixar` no motor): o encaixe procura o maior tamanho de palavra, igual para
+  todas, em que nada se cruza nem passa da margem. Para cada tamanho, os lugares podem se
+  afastar do centro até a borda da área da densidade, ou se aproximar dele até a margem,
+  na largura e na altura em separado. Afastar tem limite de 1,3 vez (`ESPALHAR_MAX`) para
+  a linha não virar palavras soltas. Quando o encaixe age, o conjunto também é
+  centralizado na tela (a curva e o desalinhamento podiam deixá-lo torto para um lado).
+- Com cópias, o número de linhas passou a ser escolhido depois do encaixe
+  (`melhorDepoisDoEncaixe`): vale o arranjo de letras maiores já contando a inclinação e
+  a curva, e não só o de antes delas.
+- Se o arranjo já cabe sem cruzamentos, nada muda: o padrão ficou idêntico, conferido
+  letra por letra na tela antes e depois.
+- Conferido no navegador: o exemplo acima passou a ocupar 95% da largura, com letras
+  cerca de 16% maiores; Bungee com 15° em "Cada nota", curva e desalinhamento em 200%
+  (maior e centralizada); Bungee em tela em pé (600x900) com 2×. tsc e build sem erros.
+- Não mudou: no anglicano, os vãos entre as letras vêm da grade (cada letra ocupa 70% da
+  largura da sua célula), e a grade ficou como era. Também não conferido: o telão aberto
+  lado a lado (usa o mesmo motor).
+
+## Densidade padrão em 100% (16/11/2026)
+- Pedido da equipe: o Gelatina abre com densidade 100% (antes 80%), as notas ocupando a área
+  toda. O deslizante continua de 10% a 100%.
+- Quem tinha preferências guardadas vai para 100% uma vez (flag `densidadeCheiaV1`); depois
+  o valor escolhido no deslizante fica. Conferido no navegador: 80% guardado abre em 100%; 50%
+  escolhido depois continua 50%.
