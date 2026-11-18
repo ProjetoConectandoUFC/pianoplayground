@@ -24,7 +24,11 @@ export const listenToMidiDevice = (
 
     // Processa a mensagem crua recebida do hardware MIDI e direciona para a ação correta
     const onMidiMessage = (event: MIDIMessageEvent) => {
-        const [command, note, velocity] = event.data;
+        const [status, note, velocity] = event.data;
+        // Os 4 bits altos dizem o comando e os 4 baixos, o canal. Comparar o byte
+        // inteiro com 144 só aceitava o canal 1: um MPK Mini em outro canal (ou
+        // outro teclado) ficava mudo. O Genius já fazia assim.
+        const command = status & 0xf0;
 
         // Nota acionada (pressionada)
         if (command === 144 && velocity > 0) {
@@ -35,7 +39,7 @@ export const listenToMidiDevice = (
             onNoteOff(note, velocity);
         }
         // Mudança de controle (ex: giro de botões / knobs ou uso de pedais)
-        else if (command >= 176 && command <= 191) {
+        else if (command === 176) {
             onControlChange(note, velocity);
         }
     };

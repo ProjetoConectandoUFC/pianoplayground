@@ -186,22 +186,48 @@ const App: React.FC = () => {
     }, [settings.noteDensity, settings.noteRandomness, settings.noteSystem, viewportSize, settings.fontFamily, fontSizeMultiplier, projectionContainer]);
 
     // Inicializa o acesso MIDI ao carregar o aplicativo
+    // A lista de aparelhos é refeita a cada conexão ou desconexão (onstatechange),
+    // como já fazem o Genius e o Gelatina. Antes ela era lida uma vez só: se o
+    // MPK Mini fosse plugado depois de abrir o app (ou caísse e voltasse no meio
+    // do uso), o Tipográfico ficava preso na demonstração tocando notas sozinho.
     useEffect(() => {
+        let cancelado = false;
+        let acessoAtual: MIDIAccess | null = null;
         const initMidi = async () => {
             try {
                 const access = await requestMidiAccess();
+                if (cancelado) return;
+                acessoAtual = access;
                 setMidiAccess(access);
-                const midiInputs = Array.from(access.inputs.values()).map(input => ({
-                    id: input.id,
-                    name: input.name || 'Aparelho sem nome',
-                }));
-                setInputs(midiInputs);
-                if (midiInputs.length > 0) {
-                    setSelectedInputId(midiInputs[0].id);
-                } else {
-                    throw new Error("No MIDI input devices found.");
-                }
+                // -1 = ainda não listou. A demonstração só muda quando a quantidade
+                // passa de zero para algum aparelho ou o contrário: o onstatechange
+                // também dispara quando a porta abre, e isso não pode desligar uma
+                // demonstração que a pessoa ligou no painel.
+                let anterior = -1;
+                const listar = () => {
+                    const midiInputs = Array.from(access.inputs.values())
+                        .filter(input => input.state !== 'disconnected')
+                        .map(input => ({ id: input.id, name: input.name || 'Aparelho sem nome' }));
+                    setInputs(midiInputs);
+                    setSelectedInputId(prev => prev && midiInputs.some(i => i.id === prev) ? prev : (midiInputs[0]?.id ?? null));
+                    const temAgora = midiInputs.length > 0;
+                    const tinha = anterior > 0;
+                    const primeira = anterior < 0;
+                    anterior = midiInputs.length;
+                    if (!primeira && temAgora === tinha) return;
+                    if (temAgora) {
+                        // apareceu um teclado: sai da demonstração automática
+                        setMidiSupportError(null);
+                        setIsSimulationMode(false);
+                    } else {
+                        setMidiSupportError('Nenhum teclado MIDI encontrado.');
+                        setIsSimulationMode(true);
+                    }
+                };
+                access.onstatechange = listar;
+                listar();
             } catch (error) {
+                if (cancelado) return;
                 console.error('MIDI Init Error:', error);
                 if (error instanceof Error) {
                     setMidiSupportError(error.message);
@@ -213,6 +239,8 @@ const App: React.FC = () => {
         };
 
         initMidi();
+        // ao sair do jogo, para de ouvir conexões (o componente desmonta)
+        return () => { cancelado = true; if (acessoAtual) acessoAtual.onstatechange = null; };
     }, []);
 
     // Manipula quando uma nota MIDI é acionada (Note On)

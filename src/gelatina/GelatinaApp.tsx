@@ -267,10 +267,12 @@ const GelatinaApp: React.FC = () => {
     // ==========================================
     useEffect(() => {
         let cancelado = false;
+        let acessoAtual: MIDIAccess | null = null;
         const iniciar = async () => {
             try {
                 const access = await requestMidiAccess();
                 if (cancelado) return;
+                acessoAtual = access;
                 setMidiAccess(access);
                 const listar = () => {
                     const lista = Array.from(access.inputs.values()).map(i => ({
@@ -289,7 +291,8 @@ const GelatinaApp: React.FC = () => {
             }
         };
         iniciar();
-        return () => { cancelado = true; };
+        // ao sair do jogo, para de ouvir conexões (o componente desmonta)
+        return () => { cancelado = true; if (acessoAtual) acessoAtual.onstatechange = null; };
     }, []);
 
     const handleControlChange = useCallback((cc: number, value: number) => {
