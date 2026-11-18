@@ -2,7 +2,7 @@
 
 Aplicativo desktop do projeto Conectando (UFC Virtual) que une três jogos com teclado MIDI
 (AKAI MPK Mini) ou teclado do computador: Genius do Piano, Piano Tipográfico e Piano Gelatina.
-Repositório: github.com/ProjetoConectandoUFC/pianoplayground (branch de trabalho: `teste`).
+Repositório: github.com/ProjetoConectandoUFC/pianoplayground (branch de trabalho: `main`).
 
 ## Comandos
 
